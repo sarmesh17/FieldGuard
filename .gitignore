@@ -1,0 +1,46 @@
+# Environment / Secrets
+.env
+.env.*
+*.keystore
+*.jks
+key.properties
+
+# Firebase
+google-services.json
+GoogleService-Info.plist
+
+# VS Code
+.vscode/
+
+# Mac / Windows
+Thumbs.db
+
+# Coverage
+coverage/
+
+# Flutter generated
+.dart_tool/
+.packages
+.pubspec.lock
+
+# Fastlane
+**/fastlane/report.xml
+**/fastlane/Preview.html
+**/fastlane/screenshots
+
+# Kotlin / Gradle
+.gradle/
+local.properties
+
+# Generated plugin registrant
+**/generated_plugin_registrant.dart
+
+# Crashlytics
+firebase_crashlytics_build_id.xml
+
+# FVM
+.fvm/
+.fvmrc
+
+# Melos
+.melos_tool/
