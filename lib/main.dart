@@ -1,3 +1,4 @@
+import 'package:fieldguard/presentation/screens/splash_screen/splash_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:fieldguard/presentation/screens/onboarding_screen/onboarding_provider.dart';
@@ -18,7 +19,7 @@ class MyApp extends StatelessWidget {
 
       home: ChangeNotifierProvider(
         create: (_) => OnboardingProvider(),
-        child: OnboardingScreen(),
+        child: SplashScreen(),
       ),
     );
   }

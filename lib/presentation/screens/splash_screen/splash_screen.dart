@@ -8,6 +8,10 @@ class SplashScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
 
+    // 🔹 clamp for better scaling on very small/large devices
+    double titleSize = (size.width * 0.08).clamp(26, 34);
+    double subTitleSize = (size.width * 0.035).clamp(12, 16);
+
     return Scaffold(
       body: Container(
         width: double.infinity,
@@ -21,22 +25,23 @@ class SplashScreen extends StatelessWidget {
         ),
         child: SafeArea(
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween, // 🔥 key change
             children: [
-              const Spacer(flex: 3),
+              const SizedBox(), // top spacer
 
-              // Center Content
+              /// 🔹 Center Content
               Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const _Logo(),
 
-                  SizedBox(height: size.height * 0.04),
+                  SizedBox(height: size.height * 0.03),
 
-                  const Text(
+                  Text(
                     'FieldGuard',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 34,
+                      fontSize: titleSize,
                       fontFamily: 'Serif',
                       fontWeight: FontWeight.bold,
                       letterSpacing: 0.5,
@@ -46,18 +51,18 @@ class SplashScreen extends StatelessWidget {
                   SizedBox(height: size.height * 0.015),
 
                   Container(
-                    width: 60,
+                    width: size.width * 0.15, // 🔥 responsive
                     height: 1.5,
                     color: Colors.white.withOpacity(0.5),
                   ),
 
                   SizedBox(height: size.height * 0.02),
 
-                  const Text(
+                  Text(
                     'MANAGER',
                     style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
+                      color: Colors.white.withOpacity(0.65),
+                      fontSize: subTitleSize,
                       letterSpacing: 4,
                       fontWeight: FontWeight.bold,
                       fontFamily: 'Serif',
@@ -66,19 +71,25 @@ class SplashScreen extends StatelessWidget {
                 ],
               ),
 
-              const Spacer(flex: 4),
+              /// 🔹 Bottom Section
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const DotIndicator(),
 
-              // Bottom Indicators
-              DotIndicator(),
+                  SizedBox(height: size.height * 0.030),
 
-              SizedBox(height: size.height * 0.03),
+                  Text(
+                    'v1.0.0',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: (size.width * 0.03).clamp(10, 12),
+                    ),
+                  ),
 
-              const Text(
-                'v1.0.0',
-                style: TextStyle(color: Colors.white, fontSize: 12),
+                  SizedBox(height: size.height * 0.025),
+                ],
               ),
-
-              SizedBox(height: size.height * 0.03),
             ],
           ),
         ),
@@ -92,14 +103,22 @@ class _Logo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+
+    double logoSize = (size.width * 0.18).clamp(60, 90);
+
     return Container(
-      width: 70,
-      height: 70,
+      width: logoSize,
+      height: logoSize,
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.2),
         borderRadius: BorderRadius.circular(18),
       ),
-      child: const Icon(Icons.shield_outlined, color: Colors.white, size: 40),
+      child: Icon(
+        Icons.shield_outlined,
+        color: Colors.white,
+        size: logoSize * 0.55, // 🔥 proportional icon
+      ),
     );
   }
 }
