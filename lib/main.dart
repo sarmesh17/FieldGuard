@@ -19,7 +19,7 @@ class MyApp extends StatelessWidget {
 
       home: ChangeNotifierProvider(
         create: (_) => OnboardingProvider(),
-        child: SplashScreen(),
+        child: OnboardingScreen(),
       ),
     );
   }

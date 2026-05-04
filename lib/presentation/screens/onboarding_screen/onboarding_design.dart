@@ -1,19 +1,29 @@
 import 'package:flutter/material.dart';
 
 class OnboardingDesign extends StatelessWidget {
-  final String image ;
-  final String  title;
-  final String  subTitle;
+  final String image;
+  final String title;
+  final String subTitle;
 
-  OnboardingDesign({required this.image,required this.title, required this.subTitle});
+  const OnboardingDesign({
+    super.key,
+    required this.image,
+    required this.title,
+    required this.subTitle,
+  });
 
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    return Column(
-      children: [
-      
 
+    // 🔹 Responsive sizes with clamp
+    double titleSize = (size.width * 0.05).clamp(22, 32);
+    double subTitleSize = (size.width * 0.01).clamp(14, 18);
+    double imageHeight = (size.height * 0.30).clamp(200, 320);
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
         /// Image Card
         Container(
           width: double.infinity,
@@ -29,43 +39,46 @@ class OnboardingDesign extends StatelessWidget {
               ),
             ],
           ),
-          child: Container(
-            height: size.height * 0.32,
+          child: SizedBox(
+            height: imageHeight,
             child: ClipRRect(
-              borderRadius: BorderRadiusGeometry.circular(15),
+              borderRadius: BorderRadius.circular(15),
               child: Image.network(
                 image,
-                fit: BoxFit.fill,
+                fit: BoxFit.cover, // 🔥 better than fill
               ),
             ),
           ),
         ),
-
+    
         SizedBox(height: size.height * 0.02),
-
+    
         /// Title
-         Text(
+        Text(
           title,
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: 35,
+            fontSize: titleSize,
             fontWeight: FontWeight.bold,
             color: Colors.black87,
           ),
         ),
-
+    
         SizedBox(height: size.height * 0.01),
-
+    
         /// Subtitle
         Padding(
           padding: EdgeInsets.symmetric(horizontal: size.width * 0.04),
-          child:  Text(
+          child: Text(
             subTitle,
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 18, height: 1.5, color: Colors.black54),
+            style: TextStyle(
+              fontSize: subTitleSize,
+              height: 1.5,
+              color: Colors.black54,
+            ),
           ),
         ),
-        
       ],
     );
   }
