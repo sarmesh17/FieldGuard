@@ -1,7 +1,8 @@
-import 'package:fieldguard/presentation/screens/onboarding_screen/onboarding_design.dart';
-import 'package:fieldguard/presentation/screens/onboarding_screen/onboarding_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../core/responsive/responsive.dart';
+import 'onboarding_design.dart';
+import 'onboarding_provider.dart';
 
 class OnboardingScreen extends StatelessWidget {
   OnboardingScreen({super.key});
@@ -10,45 +11,43 @@ class OnboardingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-    final provider = context.watch<OnboardingProvider>();
-    final pages = provider.pages;
+    return ResponsiveBuilder(
+      builder: (context, screenType, orientation, constraints) {
+        final provider = context.watch<OnboardingProvider>();
+        final pages = provider.pages;
 
-    // 🔹 responsive text
-    double buttonTextSize = (size.width * 0.045).clamp(16, 20);
-    double backTextSize = (size.width * 0.04).clamp(14, 18);
-
-    return Scaffold(
-      backgroundColor: const Color(0xFFF4F4F1),
-      body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: size.width * 0.06),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween, // 🔥 key fix
-            children: [
-              /// 🔹 TOP SECTION
-              Column(
+        return Scaffold(
+          backgroundColor: const Color(0xFFF4F4F1),
+          body: SafeArea(
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
+              child: Column(
                 children: [
+                  /// Top: Skip button
                   Align(
                     alignment: Alignment.centerRight,
                     child: Padding(
-                      padding: EdgeInsets.only(top: size.height * 0.01),
-                      child: const Text(
-                        "Skip",
-                        style: TextStyle(
-                          color: Color(0xFF1F5E3B),
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
+                      padding: EdgeInsets.only(top: AppSpacing.sm),
+                      child: GestureDetector(
+                        onTap: () {
+                          // TODO: navigate to login/home
+                        },
+                        child: Text(
+                          "Skip",
+                          style: TextStyle(
+                            color: const Color(0xFF1F5E3B),
+                            fontSize: SizeConfig.scaledFontSize(15),
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
                     ),
                   ),
 
-                  SizedBox(height: size.height * 0.02),
+                  SizedBox(height: SizeConfig.heightPercent(1.5)),
 
-                  /// 🔹 PAGE VIEW
-                  SizedBox(
-                    height: size.height * 0.65,
+                  /// Page View — takes available space
+                  Expanded(
                     child: PageView.builder(
                       controller: _controller,
                       itemCount: pages.length,
@@ -64,102 +63,119 @@ class OnboardingScreen extends StatelessWidget {
                       },
                     ),
                   ),
+
+                  /// Bottom section
+                  _buildBottomSection(context, provider, pages),
                 ],
               ),
+            ),
+          ),
+        );
+      },
+    );
+  }
 
-              /// 🔹 BOTTOM SECTION
-              Column(
-                mainAxisAlignment: MainAxisAlignment.start,
+  Widget _buildBottomSection(
+    BuildContext context,
+    OnboardingProvider provider,
+    List<Map<String, String>> pages,
+  ) {
+    final isLastPage = provider.currentIndex == pages.length - 1;
 
-                children: [
-                  /// Indicator
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(
-                      pages.length,
-                      (index) => _dot(index == provider.currentIndex),
-                    ),
-                  ),
+    return Padding(
+      padding: EdgeInsets.only(bottom: AppSpacing.lg),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          /// Dot Indicator
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(
+              pages.length,
+              (index) => _dot(index == provider.currentIndex),
+            ),
+          ),
 
-                  SizedBox(height: size.height * 0.03),
+          SizedBox(height: SizeConfig.heightPercent(3)),
 
-                  /// Button
-                  InkWell(
-                    onTap: () {
-                      if (provider.currentIndex == pages.length - 1) {
-                        // TODO: navigate
-                      } else {
-                        _controller.nextPage(
-                          duration: const Duration(milliseconds: 400),
-                          curve: Curves.easeInOut,
-                        );
-                      }
-                    },
-                    child: Container(
-                      width: double.infinity,
-                      height: size.height * 0.075, // 🔥 responsive height
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF1F5E3B),
-                        borderRadius: BorderRadius.circular(14),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.08),
-                            blurRadius: 10,
-                            offset: const Offset(0, 6),
+          /// Next / Get Started Button
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () {
+                if (isLastPage) {
+                  // TODO: navigate to login/home
+                } else {
+                  _controller.nextPage(
+                    duration: const Duration(milliseconds: 400),
+                    curve: Curves.easeInOut,
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF1F5E3B),
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(
+                  vertical: SizeConfig.scale(16),
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(SizeConfig.scale(14)),
+                ),
+                elevation: 4,
+              ),
+              child: Text(
+                isLastPage ? 'Get Started' : 'Next',
+                style: TextStyle(
+                  fontSize: SizeConfig.scaledFontSize(16),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+
+          SizedBox(height: SizeConfig.heightPercent(2.5)),
+
+          /// Back / Login link
+          GestureDetector(
+            onTap: () {
+              if (!isLastPage && provider.currentIndex > 0) {
+                _controller.previousPage(
+                  duration: const Duration(milliseconds: 400),
+                  curve: Curves.easeInOut,
+                );
+              }
+            },
+            child: isLastPage
+                ? FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: RichText(
+                      text: TextSpan(
+                        style: TextStyle(
+                          color: Colors.black54,
+                          fontSize: SizeConfig.scaledFontSize(14),
+                        ),
+                        children: const [
+                          TextSpan(text: 'Already have an account?  '),
+                          TextSpan(
+                            text: 'Log In',
+                            style: TextStyle(
+                              color: Color(0xFF1F5E3B),
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ],
                       ),
-                      child: Center(
-                        child: Text(
-                          provider.currentIndex == pages.length - 1
-                              ? 'Get Started'
-                              : 'Next',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: buttonTextSize,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
+                    ),
+                  )
+                : Text(
+                    'Back',
+                    style: TextStyle(
+                      fontSize: SizeConfig.scaledFontSize(14),
+                      color: Colors.black54,
                     ),
                   ),
-
-                  SizedBox(height: size.height * 0.025),
-
-                  /// Back / Login
-                  InkWell(
-                    onTap: () {},
-                    child: provider.currentIndex == pages.length - 1
-                        ? RichText(
-                            text: TextSpan(
-                              style: TextStyle(
-                                color: Colors.black54,
-                                fontSize: backTextSize,
-                              ),
-                              children: const [
-                                TextSpan(text: 'Already have an account?  '),
-                                TextSpan(
-                                  text: 'Log In',
-                                  style: TextStyle(
-                                    color: Color(0xFF1F5E3B),
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                        : Text(
-                            'Back',
-                            style: TextStyle(fontSize: backTextSize),
-                          ),
-                  ),
-
-                  SizedBox(height: size.height * 0.04),
-                ],
-              ),
-            ],
           ),
-        ),
+        ],
       ),
     );
   }
@@ -167,12 +183,12 @@ class OnboardingScreen extends StatelessWidget {
   Widget _dot(bool active) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
-      margin: const EdgeInsets.symmetric(horizontal: 5),
-      width: active ? 22 : 8, // 🔥 balanced (30 was too big)
-      height: 8,
+      margin: EdgeInsets.symmetric(horizontal: SizeConfig.scale(5)),
+      width: active ? SizeConfig.scale(22) : SizeConfig.scale(8),
+      height: SizeConfig.scale(8),
       decoration: BoxDecoration(
         color: active ? const Color(0xFF1F5E3B) : Colors.grey.withOpacity(0.4),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(SizeConfig.scale(10)),
       ),
     );
   }
