@@ -19,15 +19,16 @@ class OnboardingScreen extends StatelessWidget {
     double backTextSize = (size.width * 0.04).clamp(14, 18);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F4F1),
+      backgroundColor: const Color.fromARGB(255, 237, 243, 239),
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: size.width * 0.06),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween, // 🔥 key fix
+            mainAxisAlignment: MainAxisAlignment.center, // 🔥 key fix
             children: [
               /// 🔹 TOP SECTION
               Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Align(
                     alignment: Alignment.centerRight,
@@ -44,11 +45,11 @@ class OnboardingScreen extends StatelessWidget {
                     ),
                   ),
 
-                  SizedBox(height: size.height * 0.02),
+                  SizedBox(height: size.height * 0.05),
 
                   /// 🔹 PAGE VIEW
                   SizedBox(
-                    height: size.height * 0.65,
+                    height: size.height * 0.60,
                     child: PageView.builder(
                       controller: _controller,
                       itemCount: pages.length,
@@ -97,15 +98,16 @@ class OnboardingScreen extends StatelessWidget {
                     },
                     child: Container(
                       width: double.infinity,
-                      height: size.height * 0.075, // 🔥 responsive height
+                      height: size.height * 0.065, // 🔥 responsive height
                       decoration: BoxDecoration(
                         color: const Color(0xFF1F5E3B),
                         borderRadius: BorderRadius.circular(14),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.08),
+                            color: Colors.black.withOpacity(0.2),
                             blurRadius: 10,
-                            offset: const Offset(0, 6),
+                            spreadRadius: 2,
+                            offset: Offset(0, 4),
                           ),
                         ],
                       ),
