@@ -1,6 +1,10 @@
+import 'dart:ffi';
+
 import 'package:fieldguard/presentation/screens/login_screen/login_provider.dart';
 import 'package:fieldguard/presentation/screens/login_screen/login_screen.dart';
 import 'package:fieldguard/presentation/screens/onboarding_screen/onboarding_screen.dart';
+import 'package:fieldguard/presentation/screens/signup_screen/signup_provider.dart';
+import 'package:fieldguard/presentation/screens/signup_screen/signup_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:fieldguard/presentation/screens/onboarding_screen/onboarding_provider.dart';
