@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import 'screens/home_screen.dart';
+import 'package:provider/provider.dart';
+import 'presentation/screens/login_screen/login_provider.dart';
+import 'presentation/screens/onboarding_screen/onboarding_provider.dart';
+import 'presentation/screens/splash_screen/splash_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -10,14 +13,20 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Field Guard',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => LoginProvider()),
+        ChangeNotifierProvider(create: (_) => OnboardingProvider()),
+      ],
+      child: MaterialApp(
+        title: 'FieldGuard',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+          useMaterial3: true,
+        ),
+        home: const SplashScreen(),
       ),
-      home: const HomeScreen(),
     );
   }
 }
