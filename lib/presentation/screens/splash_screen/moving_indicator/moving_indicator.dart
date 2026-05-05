@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import '../../../../core/responsive/responsive.dart';
 
 class DotIndicator extends StatefulWidget {
-  const DotIndicator();
+  const DotIndicator({super.key});
 
   @override
   State<DotIndicator> createState() => _DotIndicatorState();
@@ -14,9 +15,9 @@ class _DotIndicatorState extends State<DotIndicator> {
   void initState() {
     super.initState();
 
-    // loop animation
     Future.doWhile(() async {
       await Future.delayed(const Duration(milliseconds: 400));
+      if (!mounted) return false;
       setState(() {
         currentIndex = (currentIndex + 1) % 3;
       });
@@ -26,15 +27,18 @@ class _DotIndicatorState extends State<DotIndicator> {
 
   @override
   Widget build(BuildContext context) {
+    final dotSize = SizeConfig.scale(8);
+    final activeDotSize = SizeConfig.scale(12);
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: List.generate(
         3,
         (index) => AnimatedContainer(
           duration: const Duration(milliseconds: 300),
-          margin: const EdgeInsets.symmetric(horizontal: 6),
-          width: currentIndex == index ? 12 : 8,
-          height: currentIndex == index ? 12 : 8,
+          margin: EdgeInsets.symmetric(horizontal: SizeConfig.scale(6)),
+          width: currentIndex == index ? activeDotSize : dotSize,
+          height: currentIndex == index ? activeDotSize : dotSize,
           decoration: BoxDecoration(
             color: Colors.white.withOpacity(
               currentIndex == index ? 1 : 0.4,
