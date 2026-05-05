@@ -1,6 +1,8 @@
 import 'package:fieldguard/presentation/screens/login_screen/login_footer.dart';
 import 'package:fieldguard/presentation/screens/login_screen/login_header.dart';
+import 'package:fieldguard/presentation/screens/login_screen/login_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class LoginScreen extends StatelessWidget {
   @override
@@ -53,7 +55,7 @@ class LoginScreen extends StatelessWidget {
                     SizedBox(height: size.height * 0.02),
                     const _Label(text: "PASSWORD"),
                     SizedBox(height: size.height * 0.01),
-                     _PasswordField(),
+                    _PasswordField(),
                     SizedBox(height: size.height * 0.015),
                     Align(
                       alignment: Alignment.centerRight,
@@ -277,6 +279,7 @@ class _PasswordField extends StatelessWidget {
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     var controller = TextEditingController();
+    final provider = context.watch<LoginProvider>();
 
     return Container(
       height: size.height * 0.065,
@@ -301,14 +304,24 @@ class _PasswordField extends StatelessWidget {
           Expanded(
             child: TextField(
               controller: controller,
-              obscureText: true,
+              obscureText: provider.hidePassward== true? true: false,
               decoration: InputDecoration(
                 border: InputBorder.none,
                 hintText: "••••••••",
               ),
             ),
           ),
-          Icon(Icons.visibility_outlined, color: Colors.grey.shade600),
+          IconButton(
+            onPressed: () {
+              provider.showPassward();
+            },
+            icon: provider.hidePassward == true
+                ? Icon(
+                    Icons.visibility_off_outlined,
+                    color: Colors.grey.shade600,
+                  )
+                : Icon(Icons.visibility_outlined, color: Colors.grey.shade600),
+          ),
         ],
       ),
     );
