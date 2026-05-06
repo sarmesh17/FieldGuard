@@ -1,9 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/responsive/responsive.dart';
-import 'moving_indicator/moving_indicator.dart';
+import '../../../core/router/app_router.dart';
+import '../../widgets/moving_indicator.dart';
 
-class SplashScreen extends StatelessWidget {
+/// Splash screen — shown on app launch.
+/// Auto-navigates to onboarding after a short delay.
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
+
+  @override
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends ConsumerState<SplashScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _navigate();
+  }
+
+  Future<void> _navigate() async {
+    await Future.delayed(const Duration(seconds: 2));
+    if (!mounted) return;
+    context.go(AppRoutes.onboarding);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,11 +44,11 @@ class SplashScreen extends StatelessWidget {
             ),
             child: SafeArea(
               child: LayoutBuilder(
-                builder: (context, constraints) {
+                builder: (context, innerConstraints) {
                   return SingleChildScrollView(
                     child: ConstrainedBox(
                       constraints: BoxConstraints(
-                        minHeight: constraints.maxHeight,
+                        minHeight: innerConstraints.maxHeight,
                       ),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -70,13 +92,13 @@ class SplashScreen extends StatelessWidget {
         Container(
           width: SizeConfig.widthPercent(15),
           height: 1.5,
-          color: Colors.white.withOpacity(0.5),
+          color: Colors.white.withValues(alpha: 0.5),
         ),
         SizedBox(height: SizeConfig.heightPercent(2)),
         Text(
           'MANAGER',
           style: TextStyle(
-            color: Colors.white.withOpacity(0.65),
+            color: Colors.white.withValues(alpha: 0.65),
             fontSize: SizeConfig.scaledFontSize(14),
             letterSpacing: 4,
             fontWeight: FontWeight.bold,
@@ -117,7 +139,7 @@ class _Logo extends StatelessWidget {
       width: logoSize,
       height: logoSize,
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.2),
+        color: Colors.white.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(SizeConfig.scale(18)),
       ),
       child: Icon(

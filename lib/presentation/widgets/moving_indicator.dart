@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../../core/responsive/responsive.dart';
+import '../../core/responsive/responsive.dart';
 
+/// Animated loading dot indicator used on the splash screen.
 class DotIndicator extends StatefulWidget {
   const DotIndicator({super.key});
 
@@ -9,17 +10,20 @@ class DotIndicator extends StatefulWidget {
 }
 
 class _DotIndicatorState extends State<DotIndicator> {
-  int currentIndex = 0;
+  int _currentIndex = 0;
 
   @override
   void initState() {
     super.initState();
+    _startAnimation();
+  }
 
+  void _startAnimation() {
     Future.doWhile(() async {
       await Future.delayed(const Duration(milliseconds: 400));
       if (!mounted) return false;
       setState(() {
-        currentIndex = (currentIndex + 1) % 3;
+        _currentIndex = (_currentIndex + 1) % 3;
       });
       return true;
     });
@@ -37,11 +41,11 @@ class _DotIndicatorState extends State<DotIndicator> {
         (index) => AnimatedContainer(
           duration: const Duration(milliseconds: 300),
           margin: EdgeInsets.symmetric(horizontal: SizeConfig.scale(6)),
-          width: currentIndex == index ? activeDotSize : dotSize,
-          height: currentIndex == index ? activeDotSize : dotSize,
+          width: _currentIndex == index ? activeDotSize : dotSize,
+          height: _currentIndex == index ? activeDotSize : dotSize,
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(
-              currentIndex == index ? 1 : 0.4,
+            color: Colors.white.withValues(
+              alpha: _currentIndex == index ? 1.0 : 0.4,
             ),
             shape: BoxShape.circle,
           ),
