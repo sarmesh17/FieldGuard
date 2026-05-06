@@ -19,7 +19,7 @@ class Header extends StatelessWidget {
             borderRadius: BorderRadius.circular(SizeConfig.scale(20)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.15),
+                color: const Color(0x26000000),
                 blurRadius: 12,
                 offset: const Offset(0, 6),
               ),
