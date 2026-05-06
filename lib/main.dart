@@ -1,32 +1,31 @@
-import 'dart:ffi';
-
-import 'package:fieldguard/presentation/screens/login_screen/login_provider.dart';
-import 'package:fieldguard/presentation/screens/login_screen/login_screen.dart';
-import 'package:fieldguard/presentation/screens/onboarding_screen/onboarding_screen.dart';
-import 'package:fieldguard/presentation/screens/signup_screen/signup_provider.dart';
-import 'package:fieldguard/presentation/screens/signup_screen/signup_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:fieldguard/presentation/screens/onboarding_screen/onboarding_provider.dart';
-
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'core/router/app_router.dart';
+import 'core/theme/app_theme.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    // ProviderScope is the Riverpod equivalent of MultiProvider —
+    // it must wrap the entire widget tree.
+    const ProviderScope(
+      child: MyApp(),
+    ),
+  );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      debugShowCheckedModeBanner: false,
+  Widget build(BuildContext context, WidgetRef ref) {
+    // The router is provided by Riverpod so it can react to auth state changes.
+    final router = ref.watch(goRouterProvider);
 
-      home: ChangeNotifierProvider(
-        create: (_) => OnboardingProvider(),
-        child: OnboardingScreen(),
-      ),
+    return MaterialApp.router(
+      title: 'FieldGuard',
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.light,
+      routerConfig: router,
     );
   }
 }
