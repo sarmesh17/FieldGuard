@@ -1,6 +1,8 @@
+import 'package:fieldguard/presentation/screens/signup_screen/signup_provider.dart';
 import 'package:fieldguard/presentation/screens/signup_screen/signup_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:provider/provider.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 
@@ -27,6 +29,9 @@ class MyApp extends ConsumerWidget {
     //   routerConfig: router,
     // );
 
-    return MaterialApp(home: SignUpScreen());
+    return ChangeNotifierProvider(
+      create: (_) => SignupProvider(),
+      child: MaterialApp(home: SignupScreen()),
+    );
   }
 }
