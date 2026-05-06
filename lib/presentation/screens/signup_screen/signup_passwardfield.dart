@@ -1,7 +1,8 @@
-import 'package:fieldguard/presentation/screens/login_screen/login_provider.dart';
+
 import 'package:fieldguard/presentation/screens/signup_screen/signup_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 
 class SignupPasswardfield extends StatelessWidget {
   final TextEditingController controller;

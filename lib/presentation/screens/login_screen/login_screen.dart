@@ -300,7 +300,48 @@ class _Button extends StatelessWidget {
     );
   }
 }
+class _SelectedRole extends StatelessWidget {
+  const _SelectedRole();
 
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(vertical: SizeConfig.scale(14)),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(SizeConfig.scale(30)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 6,
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.person_outline,
+            color: const Color(0xFF1F5A3E),
+            size: SizeConfig.scale(18),
+          ),
+          SizedBox(width: SizeConfig.scale(6)),
+          Flexible(
+            child: Text(
+              "Manager",
+              style: TextStyle(
+                color: const Color(0xFF1F5A3E),
+                fontWeight: FontWeight.w600,
+                fontSize: SizeConfig.scaledFontSize(14),
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 class _UnselectedRole extends StatelessWidget {
   const _UnselectedRole();
 

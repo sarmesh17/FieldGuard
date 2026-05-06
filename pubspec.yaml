@@ -33,6 +33,7 @@ dependencies:
 
   # Functional programming
   dartz: ^0.10.1
+  provider: ^6.1.5+1
 
 dev_dependencies:
   flutter_test:
