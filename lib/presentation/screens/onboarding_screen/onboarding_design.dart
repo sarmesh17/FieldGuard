@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
 import '../../../core/responsive/responsive.dart';
 
+/// Displays a single onboarding page — image, title, and subtitle.
 class OnboardingDesign extends StatelessWidget {
-  final String image;
+  final String imageUrl;
   final String title;
   final String subTitle;
 
   const OnboardingDesign({
     super.key,
-    required this.image,
+    required this.imageUrl,
     required this.title,
     required this.subTitle,
   });
 
   @override
   Widget build(BuildContext context) {
-    // Adapt image height based on screen type
     final imageHeight = switch (SizeConfig.screenType) {
       ScreenType.small => SizeConfig.heightPercent(28),
       ScreenType.medium => SizeConfig.heightPercent(32),
@@ -26,7 +26,7 @@ class OnboardingDesign extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          /// Image Card
+          /// Image card
           Container(
             width: double.infinity,
             padding: EdgeInsets.all(SizeConfig.scale(16)),
@@ -35,7 +35,7 @@ class OnboardingDesign extends StatelessWidget {
               borderRadius: BorderRadius.circular(SizeConfig.scale(28)),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: const Color(0x0D000000),
                   blurRadius: 20,
                   offset: const Offset(0, 10),
                 ),
@@ -46,7 +46,7 @@ class OnboardingDesign extends StatelessWidget {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(SizeConfig.scale(15)),
                 child: Image.network(
-                  image,
+                  imageUrl,
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) => Center(
                     child: Icon(

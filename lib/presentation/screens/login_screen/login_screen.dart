@@ -1,12 +1,57 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/responsive/responsive.dart';
+import '../../../core/router/app_router.dart';
+import '../../notifiers/login_notifier.dart';
 import 'login_footer.dart';
 import 'login_header.dart';
-import 'login_provider.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
+
+  @override
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends ConsumerState<LoginScreen> {
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleSignIn() async {
+    await ref.read(loginNotifierProvider.notifier).signIn(
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+        );
+
+    if (!mounted) return;
+
+    final state = ref.read(loginNotifierProvider);
+
+    if (state.errorMessage != null) {
+      Fluttertoast.showToast(
+        msg: state.errorMessage!,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+    } else if (state.user != null) {
+      Fluttertoast.showToast(
+        msg: 'Welcome, ${state.user!.email}!',
+        backgroundColor: Colors.green,
+        textColor: Colors.white,
+      );
+      // TODO: navigate to home/dashboard once that route exists
+      // context.go(AppRoutes.home);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -16,38 +61,24 @@ class LoginScreen extends StatelessWidget {
           backgroundColor: const Color.fromARGB(255, 223, 238, 228),
           body: SafeArea(
             child: LayoutBuilder(
-              builder: (context, constraints) {
+              builder: (context, innerConstraints) {
                 return SingleChildScrollView(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: AppSpacing.md,
-                  ),
+                  padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
                   child: ConstrainedBox(
                     constraints: BoxConstraints(
-                      minHeight: constraints.maxHeight,
+                      minHeight: innerConstraints.maxHeight,
                     ),
                     child: IntrinsicHeight(
                       child: Column(
                         children: [
                           const Spacer(),
-
-                          /// Header Section
                           const Header(),
-
                           SizedBox(height: SizeConfig.heightPercent(3)),
-
-                          /// Role Toggle Card
                           const _RoleToggleCard(),
-
                           SizedBox(height: SizeConfig.heightPercent(2.5)),
-
-                          /// Form Card
-                          _buildFormCard(context),
-
+                          _buildFormCard(),
                           const Spacer(),
-
-                          /// Footer
                           const Footer(),
-
                           SizedBox(height: SizeConfig.heightPercent(2)),
                         ],
                       ),
@@ -62,19 +93,20 @@ class LoginScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFormCard(BuildContext context) {
+  Widget _buildFormCard() {
     return Container(
       width: double.infinity,
       constraints: BoxConstraints(
-        maxWidth: SizeConfig.screenType == ScreenType.large ? 500 : double.infinity,
+        maxWidth:
+            SizeConfig.screenType == ScreenType.large ? 500 : double.infinity,
       ),
       padding: EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.7),
+        color: Colors.white.withValues(alpha: 0.7),
         borderRadius: BorderRadius.circular(SizeConfig.scale(24)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withValues(alpha: 0.2),
             blurRadius: 10,
             spreadRadius: 1,
             offset: const Offset(0, 4),
@@ -87,49 +119,93 @@ class LoginScreen extends StatelessWidget {
         children: [
           const _Label(text: "EMAIL ADDRESS"),
           SizedBox(height: SizeConfig.heightPercent(1)),
-          const _InputField(
+          _InputField(
+            controller: _emailController,
             icon: Icons.mail_outline,
             hint: "manager@fieldguard.com",
           ),
           SizedBox(height: SizeConfig.heightPercent(2)),
           const _Label(text: "PASSWORD"),
           SizedBox(height: SizeConfig.heightPercent(1)),
-          const _PasswordField(),
+          _PasswordField(controller: _passwordController),
           SizedBox(height: SizeConfig.heightPercent(1.5)),
           Align(
             alignment: Alignment.centerRight,
-            child: Text(
-              "Forgot Password?",
-              style: TextStyle(
-                color: const Color(0xFF1F5A3E),
-                fontSize: SizeConfig.scaledFontSize(13),
-                fontWeight: FontWeight.w500,
+            child: GestureDetector(
+              onTap: () {
+                // TODO: navigate to forgot password screen
+              },
+              child: Text(
+                "Forgot Password?",
+                style: TextStyle(
+                  color: const Color(0xFF1F5A3E),
+                  fontSize: SizeConfig.scaledFontSize(13),
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
           ),
           SizedBox(height: SizeConfig.heightPercent(2.5)),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {
-                // TODO: handle sign in
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1F5A3E),
-                foregroundColor: Colors.white,
-                padding: EdgeInsets.symmetric(
-                  vertical: SizeConfig.scale(16),
+          Consumer(
+            builder: (context, ref, _) {
+              final isLoading =
+                  ref.watch(loginNotifierProvider.select((s) => s.isLoading));
+              return SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: isLoading ? null : _handleSignIn,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1F5A3E),
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(
+                      vertical: SizeConfig.scale(16),
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius:
+                          BorderRadius.circular(SizeConfig.scale(14)),
+                    ),
+                    elevation: 4,
+                  ),
+                  child: isLoading
+                      ? SizedBox(
+                          height: SizeConfig.scale(20),
+                          width: SizeConfig.scale(20),
+                          child: const CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : Text(
+                          "Sign In",
+                          style: TextStyle(
+                            fontSize: SizeConfig.scaledFontSize(16),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                 ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(SizeConfig.scale(14)),
-                ),
-                elevation: 4,
-              ),
-              child: Text(
-                "Sign In",
-                style: TextStyle(
-                  fontSize: SizeConfig.scaledFontSize(16),
-                  fontWeight: FontWeight.w600,
+              );
+            },
+          ),
+          SizedBox(height: SizeConfig.heightPercent(1.5)),
+          Center(
+            child: GestureDetector(
+              onTap: () => context.push(AppRoutes.signup),
+              child: RichText(
+                text: TextSpan(
+                  style: TextStyle(
+                    color: Colors.black54,
+                    fontSize: SizeConfig.scaledFontSize(13),
+                  ),
+                  children: const [
+                    TextSpan(text: "Don't have an account?  "),
+                    TextSpan(
+                      text: 'Sign Up',
+                      style: TextStyle(
+                        color: Color(0xFF1F5A3E),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -140,6 +216,8 @@ class LoginScreen extends StatelessWidget {
   }
 }
 
+// ─── Private sub-widgets ──────────────────────────────────────────────────────
+
 class _RoleToggleCard extends StatelessWidget {
   const _RoleToggleCard();
 
@@ -148,15 +226,16 @@ class _RoleToggleCard extends StatelessWidget {
     return Container(
       width: double.infinity,
       constraints: BoxConstraints(
-        maxWidth: SizeConfig.screenType == ScreenType.large ? 500 : double.infinity,
+        maxWidth:
+            SizeConfig.screenType == ScreenType.large ? 500 : double.infinity,
       ),
       padding: EdgeInsets.all(SizeConfig.scale(16)),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.7),
+        color: Colors.white.withValues(alpha: 0.7),
         borderRadius: BorderRadius.circular(SizeConfig.scale(24)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withValues(alpha: 0.2),
             blurRadius: 10,
             spreadRadius: 1,
             offset: const Offset(0, 4),
@@ -166,7 +245,7 @@ class _RoleToggleCard extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.all(SizeConfig.scale(6)),
         decoration: BoxDecoration(
-          color: Colors.grey.withOpacity(0.15),
+          color: Colors.grey.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(SizeConfig.scale(40)),
           border: Border.all(color: Colors.grey.shade300),
         ),
@@ -192,7 +271,10 @@ class _SelectedRole extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(SizeConfig.scale(30)),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 6),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 6,
+          ),
         ],
       ),
       child: Row(
@@ -273,10 +355,15 @@ class _Label extends StatelessWidget {
 }
 
 class _InputField extends StatelessWidget {
+  final TextEditingController controller;
   final IconData icon;
   final String hint;
 
-  const _InputField({required this.icon, required this.hint});
+  const _InputField({
+    required this.controller,
+    required this.icon,
+    required this.hint,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -288,7 +375,7 @@ class _InputField extends StatelessWidget {
         border: Border.all(color: Colors.grey.shade400),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 10,
             spreadRadius: 1,
             offset: const Offset(0, 4),
@@ -301,6 +388,7 @@ class _InputField extends StatelessWidget {
           SizedBox(width: SizeConfig.scale(12)),
           Expanded(
             child: TextField(
+              controller: controller,
               decoration: InputDecoration(
                 border: InputBorder.none,
                 hintText: hint,
@@ -321,12 +409,16 @@ class _InputField extends StatelessWidget {
   }
 }
 
-class _PasswordField extends StatelessWidget {
-  const _PasswordField();
+class _PasswordField extends ConsumerWidget {
+  final TextEditingController controller;
+
+  const _PasswordField({required this.controller});
 
   @override
-  Widget build(BuildContext context) {
-    final provider = context.watch<LoginProvider>();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final hidePassword = ref.watch(
+      loginNotifierProvider.select((s) => s.hidePassword),
+    );
 
     return Container(
       padding: EdgeInsets.symmetric(horizontal: SizeConfig.scale(16)),
@@ -336,7 +428,7 @@ class _PasswordField extends StatelessWidget {
         border: Border.all(color: Colors.grey.shade400),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 10,
             spreadRadius: 1,
             offset: const Offset(0, 4),
@@ -353,7 +445,8 @@ class _PasswordField extends StatelessWidget {
           SizedBox(width: SizeConfig.scale(12)),
           Expanded(
             child: TextField(
-              obscureText: provider.hidePassward,
+              controller: controller,
+              obscureText: hidePassword,
               decoration: InputDecoration(
                 border: InputBorder.none,
                 hintText: "••••••••",
@@ -365,9 +458,11 @@ class _PasswordField extends StatelessWidget {
             ),
           ),
           IconButton(
-            onPressed: () => provider.showPassward(),
+            onPressed: () => ref
+                .read(loginNotifierProvider.notifier)
+                .togglePasswordVisibility(),
             icon: Icon(
-              provider.hidePassward
+              hidePassword
                   ? Icons.visibility_off_outlined
                   : Icons.visibility_outlined,
               color: Colors.grey.shade600,
