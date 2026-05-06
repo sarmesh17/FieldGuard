@@ -74,7 +74,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.signup,
         pageBuilder: (context, state) => _slidePage(
           state: state,
-          child: const SignUpScreen(),
+          child: SignupScreen(),
         ),
       ),
     ],
