@@ -1,5 +1,7 @@
-import 'package:fieldguard/presentation/screens/dashboard/dashboard_screen.dart';
+import 'package:fieldguard/presentation/screens/dashboard/admin_dashboard/dashboard_screen.dart';
 import 'package:fieldguard/presentation/notifiers/signup_notifier.dart';
+import 'package:fieldguard/presentation/screens/dashboard/manager_dashboard/mdashboard_screen.dart';
+import 'package:fieldguard/presentation/screens/live_team_map/live_team_map_screen.dart';
 import 'package:fieldguard/presentation/screens/signup_screen/signup_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -34,7 +36,7 @@ class MyApp extends ConsumerWidget {
         useMaterial3: true,
         fontFamily: 'Roboto',
       ),
-      home: const SignupScreen(),
+      home: const ManagerDashboardScreen(),
     );
   }
 }
