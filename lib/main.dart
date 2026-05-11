@@ -1,4 +1,5 @@
-import 'package:fieldguard/presentation/screens/signup_screen/signup_notifier.dart';
+import 'package:fieldguard/presentation/screens/dashboard/dashboard_screen.dart';
+import 'package:fieldguard/presentation/notifiers/signup_notifier.dart';
 import 'package:fieldguard/presentation/screens/signup_screen/signup_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -20,11 +21,20 @@ class MyApp extends ConsumerWidget {
     // The router is provided by Riverpod so it can react to auth state changes.
     final router = ref.watch(goRouterProvider);
 
-    return MaterialApp.router(
-      title: 'FieldGuard',
+    // return MaterialApp.router(
+    //   title: 'FieldGuard',
+    //   debugShowCheckedModeBanner: false,
+    //   theme: AppTheme.light,
+    //   routerConfig: router,
+    // );
+
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.light,
-      routerConfig: router,
+      theme: ThemeData(
+        useMaterial3: true,
+        fontFamily: 'Roboto',
+      ),
+      home: const SignupScreen(),
     );
   }
 }

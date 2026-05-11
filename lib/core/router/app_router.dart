@@ -1,4 +1,4 @@
-import 'package:fieldguard/presentation/screens/signup_screen/signup_notifier.dart';
+import 'package:fieldguard/presentation/notifiers/signup_notifier.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
