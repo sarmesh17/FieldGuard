@@ -73,5 +73,4 @@ class LoginNotifier extends Notifier<LoginState> {
 
 // ─── Provider ─────────────────────────────────────────────────────────────────
 
-final loginNotifierProvider =
-    NotifierProvider<LoginNotifier, LoginState>(LoginNotifier.new);
+final loginNotifierProvider = NotifierProvider<LoginNotifier, LoginState>(LoginNotifier.new);
