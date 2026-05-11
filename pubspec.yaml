@@ -12,6 +12,7 @@ dependencies:
     sdk: flutter
 
   cupertino_icons: ^1.0.8
+  file_picker: ^8.0.0+1
 
   # State management
   flutter_riverpod: ^3.3.1
@@ -34,6 +35,7 @@ dependencies:
   # Functional programming
   dartz: ^0.10.1
   provider: ^6.1.5+1
+  open_file: ^3.5.11
 
 dev_dependencies:
   flutter_test:

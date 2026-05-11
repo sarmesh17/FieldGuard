@@ -12,7 +12,7 @@ class Footer extends StatelessWidget {
         Text(
           "FIELDGUARD MANAGER V1.0",
           style: TextStyle(
-            fontSize: SizeConfig.scaledFontSize(11),
+            fontSize: SizeConfig.scaledFontSize(8),
             letterSpacing: 1.2,
             color: Colors.grey.shade500,
           ),
@@ -24,7 +24,7 @@ class Footer extends StatelessWidget {
             "Access is granted by your organization admin only",
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: SizeConfig.scaledFontSize(13),
+              fontSize: SizeConfig.scaledFontSize(10),
               color: Colors.grey.shade600,
             ),
           ),

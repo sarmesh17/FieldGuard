@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/responsive/responsive.dart';
 import '../../../core/router/app_router.dart';
@@ -17,6 +16,7 @@ class LoginScreen extends ConsumerStatefulWidget {
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _emailController = TextEditingController();
+  final _phoneNoController = TextEditingController();
   final _passwordController = TextEditingController();
 
   @override
@@ -24,33 +24,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
-  }
-
-  Future<void> _handleSignIn() async {
-    await ref.read(loginNotifierProvider.notifier).signIn(
-          email: _emailController.text.trim(),
-          password: _passwordController.text,
-        );
-
-    if (!mounted) return;
-
-    final state = ref.read(loginNotifierProvider);
-
-    if (state.errorMessage != null) {
-      Fluttertoast.showToast(
-        msg: state.errorMessage!,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
-      );
-    } else if (state.user != null) {
-      Fluttertoast.showToast(
-        msg: 'Welcome, ${state.user!.email}!',
-        backgroundColor: Colors.green,
-        textColor: Colors.white,
-      );
-      // TODO: navigate to home/dashboard once that route exists
-      // context.go(AppRoutes.home);
-    }
   }
 
   @override
@@ -73,13 +46,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         children: [
                           const Spacer(),
                           const Header(),
-                          SizedBox(height: SizeConfig.heightPercent(3)),
-                          const _RoleToggleCard(),
                           SizedBox(height: SizeConfig.heightPercent(2.5)),
                           _buildFormCard(),
-                          const Spacer(),
+                          SizedBox(height: SizeConfig.heightPercent(2.5)),
                           const Footer(),
-                          SizedBox(height: SizeConfig.heightPercent(2)),
+                          const Spacer(),
                         ],
                       ),
                     ),
@@ -97,12 +68,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     return Container(
       width: double.infinity,
       constraints: BoxConstraints(
-        maxWidth:
-            SizeConfig.screenType == ScreenType.large ? 500 : double.infinity,
+        maxWidth: SizeConfig.screenType == ScreenType.large
+            ? 500
+            : double.infinity,
       ),
       padding: EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.7),
+        color: Colors.white.withValues(alpha: 0.8),
         borderRadius: BorderRadius.circular(SizeConfig.scale(24)),
         boxShadow: [
           BoxShadow(
@@ -117,7 +89,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          const _Label(text: "EMAIL ADDRESS"),
+          const _Label(text: "Phone Number"),
+          SizedBox(height: SizeConfig.heightPercent(1)),
+          _InputField(
+            controller: _phoneNoController,
+            icon: Icons.phone_outlined,
+            hint: "0000000000",
+          ),
+          SizedBox(height: SizeConfig.heightPercent(2)),
+          const _Label(text: "EMAIL ADDRES (optional)"),
           SizedBox(height: SizeConfig.heightPercent(1)),
           _InputField(
             controller: _emailController,
@@ -148,12 +128,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           SizedBox(height: SizeConfig.heightPercent(2.5)),
           Consumer(
             builder: (context, ref, _) {
-              final isLoading =
-                  ref.watch(loginNotifierProvider.select((s) => s.isLoading));
+              final isLoading = ref.watch(
+                loginNotifierProvider.select((s) => s.isLoading),
+              );
               return SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: isLoading ? null : _handleSignIn,
+                  onPressed: () {},
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF1F5A3E),
                     foregroundColor: Colors.white,
@@ -161,8 +142,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       vertical: SizeConfig.scale(16),
                     ),
                     shape: RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.circular(SizeConfig.scale(14)),
+                      borderRadius: BorderRadius.circular(SizeConfig.scale(14)),
                     ),
                     elevation: 4,
                   ),
@@ -208,165 +188,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ],
                 ),
               ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── Private sub-widgets ──────────────────────────────────────────────────────
-
-class _RoleToggleCard extends StatelessWidget {
-  const _RoleToggleCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      constraints: BoxConstraints(
-        maxWidth:
-            SizeConfig.screenType == ScreenType.large ? 500 : double.infinity,
-      ),
-      padding: EdgeInsets.all(SizeConfig.scale(16)),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.7),
-        borderRadius: BorderRadius.circular(SizeConfig.scale(24)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
-            blurRadius: 10,
-            spreadRadius: 1,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Container(
-        padding: EdgeInsets.all(SizeConfig.scale(6)),
-        decoration: BoxDecoration(
-          color: Colors.grey.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(SizeConfig.scale(40)),
-          border: Border.all(color: Colors.grey.shade300),
-        ),
-        child: const Row(
-          children: [
-            Expanded(child: _SelectedRole()),
-            Expanded(child: _UnselectedRole()),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _Button extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(vertical: SizeConfig.scale(14)),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(SizeConfig.scale(30)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 6,
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.person_outline,
-            color: const Color(0xFF1F5A3E),
-            size: SizeConfig.scale(18),
-          ),
-          SizedBox(width: SizeConfig.scale(6)),
-          Flexible(
-            child: Text(
-              "Manager",
-              style: TextStyle(
-                color: const Color(0xFF1F5A3E),
-                fontWeight: FontWeight.w600,
-                fontSize: SizeConfig.scaledFontSize(14),
-              ),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-class _SelectedRole extends StatelessWidget {
-  const _SelectedRole();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(vertical: SizeConfig.scale(14)),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(SizeConfig.scale(30)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 6,
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.person_outline,
-            color: const Color(0xFF1F5A3E),
-            size: SizeConfig.scale(18),
-          ),
-          SizedBox(width: SizeConfig.scale(6)),
-          Flexible(
-            child: Text(
-              "Manager",
-              style: TextStyle(
-                color: const Color(0xFF1F5A3E),
-                fontWeight: FontWeight.w600,
-                fontSize: SizeConfig.scaledFontSize(14),
-              ),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-class _UnselectedRole extends StatelessWidget {
-  const _UnselectedRole();
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: SizeConfig.scale(14)),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.shield_outlined,
-            color: Colors.grey,
-            size: SizeConfig.scale(18),
-          ),
-          SizedBox(width: SizeConfig.scale(6)),
-          Flexible(
-            child: Text(
-              "Admin",
-              style: TextStyle(
-                color: Colors.grey,
-                fontWeight: FontWeight.w600,
-                fontSize: SizeConfig.scaledFontSize(14),
-              ),
-              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
@@ -489,6 +310,10 @@ class _PasswordField extends ConsumerWidget {
               decoration: InputDecoration(
                 border: InputBorder.none,
                 hintText: "••••••••",
+                hintStyle: TextStyle(
+                  color: Colors.grey.shade500,
+                  fontSize: SizeConfig.scaledFontSize(14),
+                ),
                 contentPadding: EdgeInsets.symmetric(
                   vertical: SizeConfig.scale(14),
                 ),
