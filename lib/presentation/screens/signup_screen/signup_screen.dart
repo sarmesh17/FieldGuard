@@ -1,21 +1,26 @@
 import 'package:fieldguard/core/responsive/responsive.dart';
 import 'package:fieldguard/presentation/notifiers/login_notifier.dart';
-import 'package:fieldguard/presentation/screens/signup_screen/signup_provider.dart';
+import 'package:fieldguard/presentation/screens/signup_screen/signup_notifier.dart';
+import 'package:fieldguard/presentation/screens/signup_screen/uploadDocs_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-class SignupScreen extends StatefulWidget {
+class SignupScreen extends ConsumerStatefulWidget {
   const SignupScreen({super.key});
 
   @override
-  State<SignupScreen> createState() => _SignupScreenState();
+  ConsumerState<SignupScreen> createState() => _SignupScreenState();
 }
 
-class _SignupScreenState extends State<SignupScreen> {
+class _SignupScreenState extends ConsumerState<SignupScreen> {
   final passwardController = TextEditingController();
   final phoneNoController = TextEditingController();
-  final emailNoController = TextEditingController();
+  final panCardController = TextEditingController();
+  final companyNameController = TextEditingController();
+  final adminNameController = TextEditingController();
 
   @override
   void dispose() {
@@ -26,12 +31,14 @@ class _SignupScreenState extends State<SignupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.watch<SignupProvider>();
+    final signupState = ref.watch(signupNotifierProvider);
+
+    final notifier = ref.read(signupNotifierProvider.notifier);
 
     return ResponsiveBuilder(
       builder: (context, screenType, orientation, constraints) {
         return Scaffold(
-          backgroundColor: const Color.fromARGB(255, 237, 243, 239),
+          backgroundColor: const Color.fromARGB(255, 223, 238, 228),
           body: SafeArea(
             child: LayoutBuilder(
               builder: (context, innerConstraints) {
@@ -53,8 +60,8 @@ class _SignupScreenState extends State<SignupScreen> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Container(
-                                    height: SizeConfig.scale(30),
-                                    width: SizeConfig.scale(30),
+                                    height: SizeConfig.scale(40),
+                                    width: SizeConfig.scale(40),
                                     decoration: BoxDecoration(
                                       color: const Color(0xFF165C3D),
                                       borderRadius: BorderRadius.circular(
@@ -73,21 +80,12 @@ class _SignupScreenState extends State<SignupScreen> {
                                     child: Icon(
                                       Icons.shield_outlined,
                                       color: Colors.white,
-                                      size: SizeConfig.scale(20),
-                                    ),
-                                  ),
-                                  SizedBox(width: SizeConfig.scale(12)),
-                                  Text(
-                                    "FieldGuard",
-                                    style: TextStyle(
-                                      fontSize: SizeConfig.scaledFontSize(18),
-                                      fontWeight: FontWeight.w600,
-                                      color: const Color(0xFF165C3D),
+                                      size: SizeConfig.scale(30),
                                     ),
                                   ),
                                 ],
                               ),
-                              SizedBox(height: SizeConfig.heightPercent(2)),
+                              SizedBox(height: SizeConfig.heightPercent(1.5)),
                               Text(
                                 "Create Account",
                                 style: TextStyle(
@@ -106,7 +104,7 @@ class _SignupScreenState extends State<SignupScreen> {
                             ],
                           ),
 
-                          SizedBox(height: SizeConfig.heightPercent(3)),
+                          SizedBox(height: SizeConfig.heightPercent(1.5)),
 
                           /// ================= FORM CARD =================
                           Container(
@@ -119,9 +117,9 @@ class _SignupScreenState extends State<SignupScreen> {
                             ),
                             padding: EdgeInsets.all(AppSpacing.md),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: Colors.white.withValues(alpha: 0.8),
                               borderRadius: BorderRadius.circular(
-                                SizeConfig.scale(20),
+                                SizeConfig.scale(24),
                               ),
                               boxShadow: [
                                 BoxShadow(
@@ -136,73 +134,38 @@ class _SignupScreenState extends State<SignupScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 /// EMAIL
-                                _label("Email Address"),
+                                _label("Company Name"),
                                 SizedBox(height: SizeConfig.heightPercent(1)),
 
                                 _InputField(
-                                  controller: emailNoController,
-                                  icon: Icons.mail_outline,
-                                  hint: "manager@fieldguard.com",
+                                  controller: companyNameController,
+                                  icon: Icons.corporate_fare_outlined,
+                                  hint: "xyz Pvt.Ltd.",
                                 ),
 
                                 SizedBox(height: SizeConfig.heightPercent(2)),
 
                                 /// AUTHORITY
-                                _label("Authority"),
+                                _label("Pan Card Number"),
                                 SizedBox(height: SizeConfig.heightPercent(1)),
 
-                                Container(
-                                  height: SizeConfig.scale(50),
-                                  alignment: Alignment.center,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(14),
-                                    border: Border.all(
-                                      color: Colors.grey.shade400,
-                                    ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withValues(
-                                          alpha: 0.1,
-                                        ),
-                                        blurRadius: 10,
-                                        spreadRadius: 1,
-                                        offset: const Offset(0, 4),
-                                      ),
-                                    ],
-                                  ),
-                                  child: DropdownButtonFormField<String>(
-                                    borderRadius: BorderRadius.circular(14),
-                                    value: provider.selectedRole,
-                                    decoration: const InputDecoration(
-                                      border: InputBorder.none,
-                                      contentPadding: EdgeInsets.symmetric(
-                                        horizontal: 16,
-                                        vertical: 14,
-                                      ),
-                                    ),
-                                    items:
-                                        {
-                                          "Admin": Icons.shield_outlined,
-                                          "Manager": Icons.person_outline,
-                                        }.entries.map((entry) {
-                                          return DropdownMenuItem(
-                                            value: entry.key,
-                                            child: Row(
-                                              children: [
-                                                Icon(entry.value),
-                                                const SizedBox(width: 8),
-                                                Text(entry.key),
-                                              ],
-                                            ),
-                                          );
-                                        }).toList(),
-                                    onChanged: (value) {
-                                      if (value != null) {
-                                        provider.setRole(value);
-                                      }
-                                    },
-                                  ),
+                                _InputField(
+                                  controller: panCardController,
+                                  icon: Icons.contact_page_outlined,
+                                  hint: "ABCDE 1234 N",
+                                  buttonText: 'verify',
+                                ),
+
+                                SizedBox(height: SizeConfig.heightPercent(2)),
+
+                                /// AUTHORITY
+                                _label("Adim Name"),
+                                SizedBox(height: SizeConfig.heightPercent(1)),
+
+                                _InputField(
+                                  controller: adminNameController,
+                                  icon: Icons.shield_outlined,
+                                  hint: "John Doe",
                                 ),
 
                                 SizedBox(height: SizeConfig.heightPercent(2)),
@@ -219,28 +182,41 @@ class _SignupScreenState extends State<SignupScreen> {
                                         horizontal: SizeConfig.scale(7),
                                       ),
                                       decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(14),
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(
+                                          SizeConfig.scale(14),
+                                        ),
                                         border: Border.all(
                                           color: Colors.grey.shade400,
                                         ),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withValues(
+                                              alpha: 0.1,
+                                            ),
+                                            blurRadius: 10,
+                                            spreadRadius: 1,
+                                            offset: const Offset(0, 4),
+                                          ),
+                                        ],
                                       ),
                                       child: DropdownButtonHideUnderline(
                                         child: DropdownButton<String>(
                                           borderRadius: BorderRadius.circular(
                                             14,
                                           ),
-                                          value: provider.selectedKey,
+                                          value: signupState.selectedKey,
                                           icon: const Icon(
                                             Icons.arrow_drop_down,
                                           ),
                                           onChanged: (value) {
                                             if (value != null) {
-                                              provider.setSelectedCountry(
+                                              notifier.setSelectedCountry(
                                                 value,
                                               );
                                             }
                                           },
-                                          items: provider.images1.entries.map((
+                                          items: notifier.images.entries.map((
                                             entry,
                                           ) {
                                             return DropdownMenuItem(
@@ -268,16 +244,69 @@ class _SignupScreenState extends State<SignupScreen> {
 
                                     Expanded(
                                       child: SizedBox(
-                                        height: SizeConfig.scale(50),
-                                        child: TextField(
-                                          expands: true,
-                                          maxLines: null,
-                                          controller: phoneNoController,
-                                          decoration: InputDecoration(
-                                            hintText: "0000000000",
-                                            border: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(15),
+                                        height: SizeConfig.scale(55),
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius: BorderRadius.circular(
+                                              SizeConfig.scale(14),
+                                            ),
+                                            border: Border.all(
+                                              color: Colors.grey.shade400,
+                                            ),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: Colors.black.withValues(
+                                                  alpha: 0.1,
+                                                ),
+                                                blurRadius: 10,
+                                                spreadRadius: 1,
+                                                offset: const Offset(0, 4),
+                                              ),
+                                            ],
+                                          ),
+                                          child: TextField(
+                                            keyboardType: TextInputType.number,
+                                            inputFormatters: [
+                                              FilteringTextInputFormatter
+                                                  .digitsOnly,
+                                            ],
+                                            expands: true,
+                                            maxLines: null,
+                                            controller: phoneNoController,
+                                            decoration: InputDecoration(
+                                              isDense: true,
+                                              filled: true,
+                                              fillColor: Colors.white,
+                                              hintText: "0000000000",
+                                              hintStyle: TextStyle(
+                                                color: Colors.grey.shade500,
+                                                fontSize:
+                                                    SizeConfig.scaledFontSize(
+                                                      14,
+                                                    ),
+                                              ),
+                                              enabledBorder: OutlineInputBorder(
+                                                borderSide: BorderSide(
+                                                  color: Colors.grey.shade400,
+                                                ),
+                                                borderRadius:
+                                                    BorderRadius.circular(14),
+                                              ),
+                                              focusedBorder: OutlineInputBorder(
+                                                borderSide: BorderSide(
+                                                  color: Colors.grey.shade400,
+                                                ),
+                                                borderRadius:
+                                                    BorderRadius.circular(14),
+                                              ),
+                                              border: OutlineInputBorder(
+                                                borderSide: BorderSide(
+                                                  color: Colors.grey.shade400,
+                                                ),
+                                                borderRadius:
+                                                    BorderRadius.circular(14),
+                                              ),
                                             ),
                                           ),
                                         ),
@@ -310,13 +339,22 @@ class _SignupScreenState extends State<SignupScreen> {
                                   controller: passwardController,
                                 ),
 
-                                SizedBox(height: SizeConfig.heightPercent(3)),
+                                SizedBox(height: SizeConfig.heightPercent(2)),
+                                _label('CitizenShip Proof'),
+                                SizedBox(height: SizeConfig.heightPercent(1)),
+                                UploaddocsScreen(),
 
-                                /// BUTTON
+                                SizedBox(height: SizeConfig.heightPercent(2)),
+                                _label('Registration Document'),
+                                SizedBox(height: SizeConfig.heightPercent(1)),
+                                UploaddocsScreen(),
+
+                                SizedBox(height: SizeConfig.heightPercent(3)),
                                 SizedBox(
                                   width: double.infinity,
                                   child: ElevatedButton(
                                     style: ElevatedButton.styleFrom(
+                                      elevation: 4,
                                       backgroundColor: const Color(0xFF165C3D),
                                       padding: EdgeInsets.symmetric(
                                         vertical: SizeConfig.scale(16),
@@ -327,9 +365,11 @@ class _SignupScreenState extends State<SignupScreen> {
                                         ),
                                       ),
                                     ),
-                                    onPressed: () {},
+                                    onPressed: () {
+                                      context.go('/login');
+                                    },
                                     child: Text(
-                                      "Sign In",
+                                      "Sign Up",
                                       style: TextStyle(
                                         fontSize: SizeConfig.scaledFontSize(16),
                                         color: Colors.white,
@@ -353,7 +393,7 @@ class _SignupScreenState extends State<SignupScreen> {
                                     Text(
                                       "SECURE END-TO-END ENCRYPTION",
                                       style: TextStyle(
-                                        fontSize: SizeConfig.scaledFontSize(11),
+                                        fontSize: SizeConfig.scaledFontSize(8),
                                         letterSpacing: 1,
                                         color: Colors.grey,
                                       ),
@@ -399,7 +439,7 @@ class SignupPasswordField extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final hidePassword = ref.watch(
-      loginNotifierProvider.select((s) => s.hidePassword),
+      signupNotifierProvider.select((s) => s.hidePassword),
     );
 
     return Container(
@@ -432,6 +472,10 @@ class SignupPasswordField extends ConsumerWidget {
               decoration: InputDecoration(
                 border: InputBorder.none,
                 hintText: "••••••••",
+                hintStyle: TextStyle(
+                  color: Colors.grey.shade500,
+                  fontSize: SizeConfig.scaledFontSize(14),
+                ),
                 contentPadding: EdgeInsets.symmetric(
                   vertical: SizeConfig.scale(14),
                 ),
@@ -441,7 +485,7 @@ class SignupPasswordField extends ConsumerWidget {
           ),
           IconButton(
             onPressed: () => ref
-                .read(loginNotifierProvider.notifier)
+                .read(signupNotifierProvider.notifier)
                 .togglePasswordVisibility(),
             icon: Icon(
               hidePassword
@@ -457,19 +501,25 @@ class SignupPasswordField extends ConsumerWidget {
   }
 }
 
-class _InputField extends StatelessWidget {
+class _InputField extends ConsumerWidget {
   final TextEditingController controller;
   final IconData icon;
   final String hint;
+  final String? buttonText;
 
   const _InputField({
     required this.controller,
     required this.icon,
     required this.hint,
+    this.buttonText,
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final signupState = ref.watch(signupNotifierProvider);
+
+    final notifier = ref.read(signupNotifierProvider.notifier);
+
     return Container(
       padding: EdgeInsets.symmetric(horizontal: SizeConfig.scale(16)),
       decoration: BoxDecoration(
@@ -488,21 +538,58 @@ class _InputField extends StatelessWidget {
       child: Row(
         children: [
           Icon(icon, color: Colors.grey.shade600, size: SizeConfig.scale(20)),
+
           SizedBox(width: SizeConfig.scale(12)),
+
           Expanded(
             child: TextField(
               controller: controller,
               decoration: InputDecoration(
+                suffixIcon: buttonText != 'verify'
+                    ? null
+                    : signupState.isVerifying
+                    ? Padding(
+                        padding: EdgeInsets.all(SizeConfig.scale(12)),
+                        child: SizedBox(
+                          height: SizeConfig.scale(18),
+                          width: SizeConfig.scale(18),
+                          child: const CircularProgressIndicator(
+                            strokeWidth: 2,
+                          ),
+                        ),
+                      )
+                    : TextButton(
+                        style: ButtonStyle(
+                          splashFactory: NoSplash.splashFactory,
+                        ),
+
+                        onPressed: () {
+                          notifier.setVerificationLoading(true);
+                        },
+
+                        child: Text(
+                          buttonText!,
+                          style: TextStyle(
+                            color: const Color(0xFF165C3D),
+                            fontSize: SizeConfig.scale(12),
+                          ),
+                        ),
+                      ),
+
                 border: InputBorder.none,
+
                 hintText: hint,
+
                 hintStyle: TextStyle(
                   color: Colors.grey.shade500,
                   fontSize: SizeConfig.scaledFontSize(14),
                 ),
+
                 contentPadding: EdgeInsets.symmetric(
                   vertical: SizeConfig.scale(14),
                 ),
               ),
+
               style: TextStyle(fontSize: SizeConfig.scaledFontSize(14)),
             ),
           ),
