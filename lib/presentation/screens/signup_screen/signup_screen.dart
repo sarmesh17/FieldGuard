@@ -1,6 +1,6 @@
 import 'package:fieldguard/core/responsive/responsive.dart';
 import 'package:fieldguard/presentation/notifiers/login_notifier.dart';
-import 'package:fieldguard/presentation/screens/signup_screen/signup_notifier.dart';
+import 'package:fieldguard/presentation/notifiers/signup_notifier.dart';
 import 'package:fieldguard/presentation/screens/signup_screen/uploadDocs_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -246,6 +246,11 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                       child: SizedBox(
                                         height: SizeConfig.scale(55),
                                         child: Container(
+                                          alignment: Alignment.center,
+                                          padding: EdgeInsets.symmetric(
+                                            vertical: SizeConfig.scale(6),
+                                            horizontal: SizeConfig.scale(7),
+                                          ),
                                           decoration: BoxDecoration(
                                             color: Colors.white,
                                             borderRadius: BorderRadius.circular(
@@ -271,8 +276,10 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                               FilteringTextInputFormatter
                                                   .digitsOnly,
                                             ],
-                                            expands: true,
-                                            maxLines: null,
+                                            style: TextStyle(
+                                              fontSize:
+                                                  SizeConfig.scaledFontSize(14),
+                                            ),
                                             controller: phoneNoController,
                                             decoration: InputDecoration(
                                               isDense: true,
@@ -286,27 +293,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                                       14,
                                                     ),
                                               ),
-                                              enabledBorder: OutlineInputBorder(
-                                                borderSide: BorderSide(
-                                                  color: Colors.grey.shade400,
-                                                ),
-                                                borderRadius:
-                                                    BorderRadius.circular(14),
-                                              ),
-                                              focusedBorder: OutlineInputBorder(
-                                                borderSide: BorderSide(
-                                                  color: Colors.grey.shade400,
-                                                ),
-                                                borderRadius:
-                                                    BorderRadius.circular(14),
-                                              ),
-                                              border: OutlineInputBorder(
-                                                borderSide: BorderSide(
-                                                  color: Colors.grey.shade400,
-                                                ),
-                                                borderRadius:
-                                                    BorderRadius.circular(14),
-                                              ),
+                                              border: InputBorder.none,
                                             ),
                                           ),
                                         ),

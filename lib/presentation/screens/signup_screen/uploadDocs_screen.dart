@@ -119,15 +119,17 @@ class _UploadDocsScreenState extends State<UploaddocsScreen> {
                       ),
                     ),
 
-                    TextButton(
-                      onPressed: openDocument,
-                      child: Text(
-                        'view',
-                        style: TextStyle(
-                          fontSize: SizeConfig.scaledFontSize(14),
+                    InkWell(
+                      onTap: openDocument,
+                       child: Text(
+                          'view',
+                          style: TextStyle(
+                            color: const Color(0xFF165C3D),
+                            fontSize: SizeConfig.scaledFontSize(10),
+                          ),
                         ),
-                      ),
-                    ),
+                     ),
+                    
                   ],
                 ),
               ),
