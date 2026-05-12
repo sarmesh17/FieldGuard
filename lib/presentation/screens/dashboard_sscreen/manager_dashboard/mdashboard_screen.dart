@@ -1,6 +1,6 @@
 
-import 'package:fieldguard/presentation/screens/dashboard/manager_dashboard/admin_overview_card.dart';
-import 'package:fieldguard/presentation/screens/dashboard/manager_dashboard/mdashboard_header.dart';
+import 'package:fieldguard/presentation/screens/dashboard_sscreen/manager_dashboard/admin_overview_card.dart';
+import 'package:fieldguard/presentation/screens/dashboard_sscreen/manager_dashboard/mdashboard_header.dart';
 import 'package:fieldguard/presentation/widgets/bottom_bar.dart';
 import 'package:flutter/material.dart';
 
