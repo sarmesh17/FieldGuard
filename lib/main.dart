@@ -1,11 +1,4 @@
-import 'package:fieldguard/presentation/screens/alert_notification_screen/notification_screen.dart';
-import 'package:fieldguard/presentation/screens/dashboard_sscreen/admin_dashboard/dashboard_screen.dart';
-import 'package:fieldguard/presentation/notifiers/signup_notifier.dart';
-import 'package:fieldguard/presentation/screens/dashboard_sscreen/manager_dashboard/mdashboard_screen.dart';
-import 'package:fieldguard/presentation/screens/fraud_alert_screen/fraud_alert_screen.dart';
-import 'package:fieldguard/presentation/screens/live_team_map_screen/live_team_map_screen.dart';
-import 'package:fieldguard/presentation/screens/payment_overview_screen/payment_overview_screen.dart';
-import 'package:fieldguard/presentation/screens/representative_detail_screen.dart/representative_detail_screen.dart';
+
 import 'package:fieldguard/presentation/screens/shop_management_screen/shop_management_screen.dart';
 import 'package:fieldguard/presentation/screens/signup_screen/signup_screen.dart';
 import 'package:fieldguard/presentation/screens/visit_history_screen/visit_history_screen.dart';
