@@ -1,5 +1,5 @@
-import 'package:fieldguard/presentation/screens/live_team_map/live_team_map_card.dart';
-import 'package:fieldguard/presentation/screens/live_team_map/live_team_map_header.dart';
+import 'package:fieldguard/presentation/screens/live_team_map_screen/live_team_map_card.dart';
+import 'package:fieldguard/presentation/screens/live_team_map_screen/live_team_map_header.dart';
 import 'package:flutter/material.dart';
 
 
