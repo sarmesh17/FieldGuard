@@ -1,4 +1,7 @@
 
+import 'package:fieldguard/presentation/screens/admin_panel/admin_panel.dart';
+import 'package:fieldguard/presentation/screens/daily_report_screen/daily_report_screen.dart';
+import 'package:fieldguard/presentation/screens/register_shop_screen/register_shop_screen.dart';
 import 'package:fieldguard/presentation/screens/shop_management_screen/shop_management_screen.dart';
 import 'package:fieldguard/presentation/screens/signup_screen/signup_screen.dart';
 import 'package:fieldguard/presentation/screens/visit_history_screen/visit_history_screen.dart';
@@ -20,17 +23,13 @@ class MyApp extends ConsumerWidget {
     // The router is provided by Riverpod so it can react to auth state changes.
     final router = ref.watch(goRouterProvider);
 
-    // return MaterialApp.router(
-    //   title: 'FieldGuard',
-    //   debugShowCheckedModeBanner: false,
-    //   theme: AppTheme.light,
-    //   routerConfig: router,
-    // );
-
-    return MaterialApp(
+    return MaterialApp.router(
+      title: 'FieldGuard',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(useMaterial3: true, fontFamily: 'Roboto'),
-      home: VisitHistoryScreen(),
+      theme: AppTheme.light,
+      routerConfig: router,
     );
+
+   
   }
 }
