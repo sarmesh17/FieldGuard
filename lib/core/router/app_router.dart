@@ -1,23 +1,17 @@
-import 'package:fieldguard/presentation/notifiers/signup_notifier.dart';
+import 'package:fieldguard/core/router/app_routes.dart';
+import 'package:fieldguard/features/admin_profile/admin_profile.dart';
+import 'package:fieldguard/features/auth/login/presentation/providers/login_provider.dart';
+import 'package:fieldguard/features/auth/login/presentation/providers/login_state.dart';
+import 'package:fieldguard/features/auth/login/presentation/screens/login_screen.dart';
+import 'package:fieldguard/features/auth/signup/presentation/screens/signup_screen.dart';
+import 'package:fieldguard/features/dashboard_sscreen/admin_dashboard/dashboard_screen.dart';
+import 'package:fieldguard/features/shop_management_screen/shop_management_screen.dart';
+import 'package:fieldguard/features/splash_screen/splash_screen.dart';
+import 'package:fieldguard/features/visit_history_screen/visit_history_screen.dart';
+import 'package:fieldguard/widgets/bottom_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart' hide Provider;
-import '../../presentation/notifiers/login_notifier.dart';
-import '../../presentation/screens/login_screen/login_screen.dart';
-import '../../presentation/screens/signup_screen/signup_screen.dart';
-import '../../presentation/screens/splash_screen/splash_screen.dart';
-
-// ─── Route paths ──────────────────────────────────────────────────────────────
-
-/// Single source of truth for all route paths.
-class AppRoutes {
-  AppRoutes._();
-
-  static const String splash = '/';
-  static const String login = '/login';
-  static const String signup = '/signup';
-}
 
 // ─── Router provider ──────────────────────────────────────────────────────────
 
@@ -29,7 +23,7 @@ class AppRoutes {
 final goRouterProvider = Provider<GoRouter>((ref) {
   // Listen to auth state so the router refreshes when the user signs in/out.
   final isAuthenticated = ref.watch(
-    loginNotifierProvider.select((state) => state.user != null),
+    loginNotifierProvider.select((state) => state is LoginSuccess),
   );
 
   return GoRouter(
@@ -41,10 +35,12 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       final isOnAuthRoute =
           state.matchedLocation == AppRoutes.login ||
           state.matchedLocation == AppRoutes.signup;
+      
+      final isOnSplash = state.matchedLocation == AppRoutes.splash;
 
-      // If authenticated and trying to visit auth screens
-      if (isAuthenticated && isOnAuthRoute) {
-        return AppRoutes.login;
+      // If authenticated and trying to visit auth screens or splash
+      if (isAuthenticated && (isOnAuthRoute || isOnSplash)) {
+        return AppRoutes.dashboard;
       }
 
       return null;
@@ -66,6 +62,55 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) =>
             _slidePage(state: state, child: SignupScreen()),
       ),
+      
+      // ── Bottom Navigation Shell ────────────────────────────────────────────
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) {
+          return ScaffoldWithNavBar(navigationShell: navigationShell);
+        },
+        branches: [
+          // Dashboard Tab
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.dashboard,
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: DashboardScreen()),
+              ),
+            ],
+          ),
+          // Shops Tab
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.shops,
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: ShopsScreen()),
+              ),
+            ],
+          ),
+          // History Tab
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.history,
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: VisitHistoryScreen()),
+              ),
+            ],
+          ),
+          // Profile Tab
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.profile,
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: AdminProfileScreen()),
+              ),
+            ],
+          ),
+        ],
+      ),
     ],
 
     // ── Error page ──────────────────────────────────────────────────────────
@@ -73,6 +118,36 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         _fadePage(state: state, child: const SplashScreen()),
   );
 });
+
+// ─── Scaffold with Bottom Navigation ──────────────────────────────────────────
+
+/// Scaffold with bottom navigation bar that wraps the navigation shell
+class ScaffoldWithNavBar extends StatelessWidget {
+  const ScaffoldWithNavBar({
+    required this.navigationShell,
+    super.key,
+  });
+
+  final StatefulNavigationShell navigationShell;
+
+  void _onTap(int index) {
+    navigationShell.goBranch(
+      index,
+      initialLocation: index == navigationShell.currentIndex,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: navigationShell,
+      bottomNavigationBar: BottomNavBar(
+        currentIndex: navigationShell.currentIndex,
+        onTap: _onTap,
+      ),
+    );
+  }
+}
 
 // ─── Transition helpers ───────────────────────────────────────────────────────
 

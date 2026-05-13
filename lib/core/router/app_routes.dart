@@ -1,0 +1,15 @@
+// ─── Route paths ──────────────────────────────────────────────────────────────
+
+/// Single source of truth for all route paths.
+class AppRoutes {
+  AppRoutes._();
+
+  static const String splash = '/';
+  static const String login = '/login';
+  static const String signup = '/signup';
+  static const String home = '/home';
+  static const String dashboard = '/dashboard';
+  static const String shops = '/shops';
+  static const String history = '/history';
+  static const String profile = '/profile';
+}
