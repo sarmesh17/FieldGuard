@@ -19,52 +19,72 @@ class SectionCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(w * .04),
-        border: Border.all(
-          color: const Color(0xffDDD6CE),
-        ),
+        borderRadius: BorderRadius.circular(w * 0.045),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 20,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          if (highlighted)
-            Container(
-              width: w * .012,
-              decoration: BoxDecoration(
-                color: const Color(0xff635BFF),
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(w * .04),
-                  bottomLeft: Radius.circular(w * .04),
-                ),
-              ),
+          // Section header
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+              w * 0.045,
+              w * 0.042,
+              w * 0.045,
+              w * 0.028,
             ),
-          Expanded(
-            child: Column(
+            child: Row(
               children: [
-                Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: w * .05,
-                    vertical: w * .045,
-                  ),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: w * .045,
-                        letterSpacing: 1,
-                        fontWeight: FontWeight.w500,
-                        color: highlighted
-                            ? const Color(0xff635BFF)
-                            : const Color(0xff667085),
+                if (highlighted) ...[
+                  Container(
+                    width: w * 0.009,
+                    height: w * 0.042,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xff6558FF), Color(0xff9B4EFF)],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
                       ),
+                      borderRadius: BorderRadius.circular(w * 0.01),
                     ),
                   ),
+                  SizedBox(width: w * 0.025),
+                ],
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: w * 0.032,
+                    letterSpacing: 1.4,
+                    fontWeight: FontWeight.w700,
+                    color: highlighted
+                        ? const Color(0xff635BFF)
+                        : const Color(0xff9CA3AF),
+                  ),
                 ),
-                const Divider(height: 1),
-                ...items,
               ],
             ),
           ),
+          Container(
+            height: 1,
+            color: const Color(0xffF3F4F6),
+          ),
+          // Items with dividers between them
+          for (int i = 0; i < items.length; i++) ...[
+            items[i],
+            if (i < items.length - 1)
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: w * 0.045),
+                child: Container(height: 1, color: const Color(0xffF3F4F6)),
+              ),
+          ],
+          SizedBox(height: w * 0.01),
         ],
       ),
     );
