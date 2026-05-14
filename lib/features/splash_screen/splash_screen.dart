@@ -1,4 +1,6 @@
 import 'package:fieldguard/core/router/app_routes.dart';
+import 'package:fieldguard/features/auth/login/presentation/providers/login_provider.dart';
+import 'package:fieldguard/features/auth/login/presentation/providers/login_state.dart';
 import 'package:fieldguard/widgets/moving_indicator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,7 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/responsive/responsive.dart';
 
 /// Splash screen — shown on app launch.
-/// Auto-navigates to onboarding after a short delay.
+/// Checks authentication state and navigates accordingly.
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
@@ -22,9 +24,21 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   }
 
   Future<void> _navigate() async {
+    // Wait minimum 2 seconds for splash screen
     await Future.delayed(const Duration(seconds: 2));
+    
     if (!mounted) return;
-    context.go(AppRoutes.login);
+    
+    // Check auth state
+    final authState = ref.read(loginNotifierProvider);
+    
+    if (authState is LoginSuccess) {
+      // User is already logged in, go to dashboard
+      context.go(AppRoutes.dashboard);
+    } else {
+      // User not logged in, go to login
+      context.go(AppRoutes.login);
+    }
   }
 
   @override

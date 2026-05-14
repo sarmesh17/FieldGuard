@@ -93,10 +93,12 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
       return Tween<Offset>(
         begin: const Offset(0, 0.55),
         end: Offset.zero,
-      ).animate(CurvedAnimation(
-        parent: _ctrl,
-        curve: Interval(start, end, curve: Curves.easeOut),
-      ));
+      ).animate(
+        CurvedAnimation(
+          parent: _ctrl,
+          curve: Interval(start, end, curve: Curves.easeOut),
+        ),
+      );
     });
 
     _ctrl.forward();
@@ -134,7 +136,9 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
       return;
     }
 
-    ref.read(signupNotifierProvider.notifier).register(
+    ref
+        .read(signupNotifierProvider.notifier)
+        .register(
           companyName: companyName,
           panNumber: panCard,
           adminName: adminName,
@@ -145,15 +149,14 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
         );
   }
 
-  void _snack(String msg, {Color? bg}) =>
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(msg), backgroundColor: bg),
-      );
+  void _snack(String msg, {Color? bg}) => ScaffoldMessenger.of(
+    context,
+  ).showSnackBar(SnackBar(content: Text(msg), backgroundColor: bg));
 
   Widget _item(int i, Widget child) => FadeTransition(
-        opacity: _itemFades[i],
-        child: SlideTransition(position: _itemSlides[i], child: child),
-      );
+    opacity: _itemFades[i],
+    child: SlideTransition(position: _itemSlides[i], child: child),
+  );
 
   // ──────────────────────────────────────────────────────────────────────────
   @override
@@ -189,15 +192,18 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
 
               // ── Decorative circles ──────────────────────────────────────────
               Positioned(
-                top: -70, right: -70,
+                top: -70,
+                right: -70,
                 child: _BgCircle(size: 240, opacity: 0.09),
               ),
               Positioned(
-                top: 140, left: -90,
+                top: 140,
+                left: -90,
                 child: _BgCircle(size: 210, opacity: 0.06),
               ),
               Positioned(
-                bottom: -50, right: -50,
+                bottom: -50,
+                right: -50,
                 child: _BgCircle(size: 200, opacity: 0.07),
               ),
 
@@ -334,11 +340,19 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
                                           ),
                                         ),
                                         SizedBox(
-                                            height:
-                                                SizeConfig.heightPercent(2)),
+                                          height: SizeConfig.heightPercent(2),
+                                        ),
 
-                                        _item(0, const _FieldLabel('Company Name', required: true)),
-                                        SizedBox(height: SizeConfig.heightPercent(0.7)),
+                                        _item(
+                                          0,
+                                          const _FieldLabel(
+                                            'Company Name',
+                                            required: true,
+                                          ),
+                                        ),
+                                        SizedBox(
+                                          height: SizeConfig.heightPercent(0.7),
+                                        ),
                                         _item(
                                           0,
                                           _InputField(
@@ -348,9 +362,19 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
                                           ),
                                         ),
 
-                                        SizedBox(height: SizeConfig.heightPercent(2)),
-                                        _item(1, const _FieldLabel('PAN Card Number', required: true)),
-                                        SizedBox(height: SizeConfig.heightPercent(0.7)),
+                                        SizedBox(
+                                          height: SizeConfig.heightPercent(2),
+                                        ),
+                                        _item(
+                                          1,
+                                          const _FieldLabel(
+                                            'PAN Card Number',
+                                            required: true,
+                                          ),
+                                        ),
+                                        SizedBox(
+                                          height: SizeConfig.heightPercent(0.7),
+                                        ),
                                         _item(
                                           1,
                                           _InputField(
@@ -361,10 +385,19 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
                                           ),
                                         ),
 
-                                        SizedBox(height: SizeConfig.heightPercent(3.5)),
-                                        _item(2, const _SectionConnector(
-                                            step: 1, nextStep: 2)),
-                                        SizedBox(height: SizeConfig.heightPercent(3.5)),
+                                        SizedBox(
+                                          height: SizeConfig.heightPercent(3.5),
+                                        ),
+                                        _item(
+                                          2,
+                                          const _SectionConnector(
+                                            step: 1,
+                                            nextStep: 2,
+                                          ),
+                                        ),
+                                        SizedBox(
+                                          height: SizeConfig.heightPercent(3.5),
+                                        ),
 
                                         // ── ② Admin ───────────────────────────
                                         _item(
@@ -374,14 +407,23 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
                                             label: 'Admin Details',
                                             subtitle:
                                                 'Primary account administrator',
-                                            icon:
-                                                Icons.person_outline_rounded,
+                                            icon: Icons.person_outline_rounded,
                                           ),
                                         ),
-                                        SizedBox(height: SizeConfig.heightPercent(2)),
+                                        SizedBox(
+                                          height: SizeConfig.heightPercent(2),
+                                        ),
 
-                                        _item(2, const _FieldLabel('Admin Name', required: true)),
-                                        SizedBox(height: SizeConfig.heightPercent(0.7)),
+                                        _item(
+                                          2,
+                                          const _FieldLabel(
+                                            'Admin Name',
+                                            required: true,
+                                          ),
+                                        ),
+                                        SizedBox(
+                                          height: SizeConfig.heightPercent(0.7),
+                                        ),
                                         _item(
                                           2,
                                           _InputField(
@@ -391,24 +433,59 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
                                           ),
                                         ),
 
-                                        SizedBox(height: SizeConfig.heightPercent(2)),
-                                        _item(3, const _FieldLabel('Mobile Number', required: true)),
-                                        SizedBox(height: SizeConfig.heightPercent(0.7)),
-                                        _item(3, _PhoneField(controller: _phoneNoController)),
+                                        SizedBox(
+                                          height: SizeConfig.heightPercent(2),
+                                        ),
+                                        _item(
+                                          3,
+                                          const _FieldLabel(
+                                            'Mobile Number',
+                                            required: true,
+                                          ),
+                                        ),
+                                        SizedBox(
+                                          height: SizeConfig.heightPercent(0.7),
+                                        ),
+                                        _item(
+                                          3,
+                                          _PhoneField(
+                                            controller: _phoneNoController,
+                                          ),
+                                        ),
 
-                                        SizedBox(height: SizeConfig.heightPercent(2)),
-                                        _item(4, const _FieldLabel('Password', required: true)),
-                                        SizedBox(height: SizeConfig.heightPercent(0.7)),
+                                        SizedBox(
+                                          height: SizeConfig.heightPercent(2),
+                                        ),
+                                        _item(
+                                          4,
+                                          const _FieldLabel(
+                                            'Password',
+                                            required: true,
+                                          ),
+                                        ),
+                                        SizedBox(
+                                          height: SizeConfig.heightPercent(0.7),
+                                        ),
                                         _item(
                                           4,
                                           _SignupPasswordField(
-                                              controller: _passwordController),
+                                            controller: _passwordController,
+                                          ),
                                         ),
 
-                                        SizedBox(height: SizeConfig.heightPercent(3.5)),
-                                        _item(5, const _SectionConnector(
-                                            step: 2, nextStep: 3)),
-                                        SizedBox(height: SizeConfig.heightPercent(3.5)),
+                                        SizedBox(
+                                          height: SizeConfig.heightPercent(3.5),
+                                        ),
+                                        _item(
+                                          5,
+                                          const _SectionConnector(
+                                            step: 2,
+                                            nextStep: 3,
+                                          ),
+                                        ),
+                                        SizedBox(
+                                          height: SizeConfig.heightPercent(3.5),
+                                        ),
 
                                         // ── ③ Documents ───────────────────────
                                         _item(
@@ -421,34 +498,55 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
                                             icon: Icons.folder_copy_outlined,
                                           ),
                                         ),
-                                        SizedBox(height: SizeConfig.heightPercent(2)),
+                                        SizedBox(
+                                          height: SizeConfig.heightPercent(2),
+                                        ),
 
-                                        _item(5, const _FieldLabel('Citizenship Proof', required: true)),
-                                        SizedBox(height: SizeConfig.heightPercent(0.7)),
+                                        _item(
+                                          5,
+                                          const _FieldLabel(
+                                            'Citizenship Proof',
+                                            required: true,
+                                          ),
+                                        ),
+                                        SizedBox(
+                                          height: SizeConfig.heightPercent(0.7),
+                                        ),
                                         _item(
                                           5,
                                           _DocField(
                                             onFileSelected: (path) => setState(
-                                              () => _citizenshipImagePath =
-                                                  path,
+                                              () =>
+                                                  _citizenshipImagePath = path,
                                             ),
                                           ),
                                         ),
 
-                                        SizedBox(height: SizeConfig.heightPercent(2)),
-                                        _item(6, const _FieldLabel('Registration Document', required: true)),
-                                        SizedBox(height: SizeConfig.heightPercent(0.7)),
+                                        SizedBox(
+                                          height: SizeConfig.heightPercent(2),
+                                        ),
+                                        _item(
+                                          6,
+                                          const _FieldLabel(
+                                            'Registration Document',
+                                            required: true,
+                                          ),
+                                        ),
+                                        SizedBox(
+                                          height: SizeConfig.heightPercent(0.7),
+                                        ),
                                         _item(
                                           6,
                                           _DocField(
                                             onFileSelected: (path) => setState(
-                                              () => _registrationDocPath =
-                                                  path,
+                                              () => _registrationDocPath = path,
                                             ),
                                           ),
                                         ),
 
-                                        SizedBox(height: SizeConfig.heightPercent(4)),
+                                        SizedBox(
+                                          height: SizeConfig.heightPercent(4),
+                                        ),
 
                                         // ── Submit ─────────────────────────────
                                         _item(
@@ -459,7 +557,9 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
                                           ),
                                         ),
 
-                                        SizedBox(height: SizeConfig.heightPercent(2.5)),
+                                        SizedBox(
+                                          height: SizeConfig.heightPercent(2.5),
+                                        ),
                                         _item(
                                           7,
                                           Center(
@@ -472,16 +572,17 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
                                                   color: Colors.grey.shade400,
                                                 ),
                                                 SizedBox(
-                                                    width:
-                                                        SizeConfig.scale(5)),
+                                                  width: SizeConfig.scale(5),
+                                                ),
                                                 Text(
                                                   'SECURE END-TO-END ENCRYPTION',
                                                   style: TextStyle(
-                                                    fontSize: SizeConfig
-                                                        .scaledFontSize(8),
+                                                    fontSize:
+                                                        SizeConfig.scaledFontSize(
+                                                          8,
+                                                        ),
                                                     letterSpacing: 1.2,
-                                                    color:
-                                                        Colors.grey.shade400,
+                                                    color: Colors.grey.shade400,
                                                   ),
                                                 ),
                                               ],
@@ -508,8 +609,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
                               text: TextSpan(
                                 style: TextStyle(
                                   fontSize: SizeConfig.scaledFontSize(13),
-                                  color:
-                                      Colors.white.withValues(alpha: 0.80),
+                                  color: Colors.white.withValues(alpha: 0.80),
                                 ),
                                 children: const [
                                   TextSpan(text: 'Already have an account?  '),
@@ -550,13 +650,13 @@ class _BgCircle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: Colors.white.withValues(alpha: opacity),
-        ),
-      );
+    width: size,
+    height: size,
+    decoration: BoxDecoration(
+      shape: BoxShape.circle,
+      color: Colors.white.withValues(alpha: opacity),
+    ),
+  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -758,10 +858,7 @@ class _SectionConnector extends StatelessWidget {
             height: 1,
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [
-                  Colors.transparent,
-                  Colors.grey.shade200,
-                ],
+                colors: [Colors.transparent, Colors.grey.shade200],
               ),
             ),
           ),
@@ -775,9 +872,7 @@ class _SectionConnector extends StatelessWidget {
           decoration: BoxDecoration(
             color: _kPrimary.withValues(alpha: 0.07),
             borderRadius: BorderRadius.circular(SizeConfig.scale(20)),
-            border: Border.all(
-              color: _kPrimary.withValues(alpha: 0.15),
-            ),
+            border: Border.all(color: _kPrimary.withValues(alpha: 0.15)),
           ),
           child: Text(
             'Step $step of 3 complete',
@@ -794,10 +889,7 @@ class _SectionConnector extends StatelessWidget {
             height: 1,
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [
-                  Colors.grey.shade200,
-                  Colors.transparent,
-                ],
+                colors: [Colors.grey.shade200, Colors.transparent],
               ),
             ),
           ),
@@ -895,9 +987,26 @@ class _FieldShellState extends State<_FieldShell> {
       decoration: BoxDecoration(
         color: _focused ? _kFieldFocus : Colors.white,
         borderRadius: BorderRadius.circular(SizeConfig.scale(14)),
-        border: Border.all(
-          color: _focused ? _kMid : Colors.grey.shade300,
-          width: _focused ? 1.5 : 1.0,
+        border: Border(
+          left: BorderSide(
+            color: _focused ? _kMid : Colors.grey.shade300,
+            width: _focused ? 3.0 : 1.0,
+          ),
+          top: BorderSide(
+            color: _focused
+                ? _kMid.withValues(alpha: 0.5)
+                : Colors.grey.shade300,
+          ),
+          right: BorderSide(
+            color: _focused
+                ? _kMid.withValues(alpha: 0.5)
+                : Colors.grey.shade300,
+          ),
+          bottom: BorderSide(
+            color: _focused
+                ? _kMid.withValues(alpha: 0.5)
+                : Colors.grey.shade300,
+          ),
         ),
         boxShadow: [
           BoxShadow(
@@ -954,8 +1063,9 @@ class _InputFieldState extends ConsumerState<_InputField> {
 
   @override
   Widget build(BuildContext context) {
-    final isVerifying =
-        ref.watch(signupNotifierProvider.select((s) => s.isVerifying));
+    final isVerifying = ref.watch(
+      signupNotifierProvider.select((s) => s.isVerifying),
+    );
     final notifier = ref.read(signupNotifierProvider.notifier);
 
     return _FieldShell(
@@ -979,52 +1089,52 @@ class _InputFieldState extends ConsumerState<_InputField> {
                   color: Colors.grey.shade400,
                   fontSize: SizeConfig.scaledFontSize(14),
                 ),
-                contentPadding:
-                    EdgeInsets.symmetric(vertical: SizeConfig.scale(15)),
+                contentPadding: EdgeInsets.symmetric(
+                  vertical: SizeConfig.scale(15),
+                ),
                 suffixIcon: widget.buttonText != 'verify'
                     ? null
                     : isVerifying
-                        ? Padding(
-                            padding: EdgeInsets.all(SizeConfig.scale(12)),
-                            child: SizedBox(
-                              height: SizeConfig.scale(16),
-                              width: SizeConfig.scale(16),
-                              child: const CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: _kPrimary,
+                    ? Padding(
+                        padding: EdgeInsets.all(SizeConfig.scale(12)),
+                        child: SizedBox(
+                          height: SizeConfig.scale(16),
+                          width: SizeConfig.scale(16),
+                          child: const CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: _kPrimary,
+                          ),
+                        ),
+                      )
+                    : Padding(
+                        padding: EdgeInsets.symmetric(
+                          vertical: SizeConfig.scale(10),
+                          horizontal: SizeConfig.scale(8),
+                        ),
+                        child: GestureDetector(
+                          onTap: () => notifier.setVerificationLoading(true),
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: SizeConfig.scale(10),
+                              vertical: SizeConfig.scale(4),
+                            ),
+                            decoration: BoxDecoration(
+                              color: _kPrimary,
+                              borderRadius: BorderRadius.circular(
+                                SizeConfig.scale(20),
                               ),
                             ),
-                          )
-                        : Padding(
-                            padding: EdgeInsets.symmetric(
-                              vertical: SizeConfig.scale(10),
-                              horizontal: SizeConfig.scale(8),
-                            ),
-                            child: GestureDetector(
-                              onTap: () =>
-                                  notifier.setVerificationLoading(true),
-                              child: Container(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: SizeConfig.scale(10),
-                                  vertical: SizeConfig.scale(4),
-                                ),
-                                decoration: BoxDecoration(
-                                  color: _kPrimary,
-                                  borderRadius: BorderRadius.circular(
-                                    SizeConfig.scale(20),
-                                  ),
-                                ),
-                                child: Text(
-                                  'Verify',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: SizeConfig.scaledFontSize(11),
-                                  ),
-                                ),
+                            child: Text(
+                              'Verify',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                                fontSize: SizeConfig.scaledFontSize(11),
                               ),
                             ),
                           ),
+                        ),
+                      ),
               ),
               style: TextStyle(
                 fontSize: SizeConfig.scaledFontSize(14),
@@ -1041,17 +1151,17 @@ class _InputFieldState extends ConsumerState<_InputField> {
 // ─────────────────────────────────────────────────────────────────────────────
 // Password field with strength meter
 // ─────────────────────────────────────────────────────────────────────────────
-class _SignupPasswordField extends StatefulWidget {
+class _SignupPasswordField extends ConsumerStatefulWidget {
   final TextEditingController controller;
   const _SignupPasswordField({required this.controller});
 
   @override
-  State<_SignupPasswordField> createState() => _SignupPasswordFieldState();
+  ConsumerState<_SignupPasswordField> createState() =>
+      _SignupPasswordFieldState();
 }
 
-class _SignupPasswordFieldState extends State<_SignupPasswordField> {
+class _SignupPasswordFieldState extends ConsumerState<_SignupPasswordField> {
   late final FocusNode _focusNode;
-  bool _hidePassword = true;
 
   @override
   void initState() {
@@ -1067,6 +1177,10 @@ class _SignupPasswordFieldState extends State<_SignupPasswordField> {
 
   @override
   Widget build(BuildContext context) {
+    final hide = ref.watch(
+      signupNotifierProvider.select((s) => s.hidePassword),
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1084,7 +1198,7 @@ class _SignupPasswordFieldState extends State<_SignupPasswordField> {
                 child: TextField(
                   controller: widget.controller,
                   focusNode: _focusNode,
-                  obscureText: _hidePassword,
+                  obscureText: hide,
                   decoration: InputDecoration(
                     border: InputBorder.none,
                     hintText: '••••••••',
@@ -1103,10 +1217,11 @@ class _SignupPasswordFieldState extends State<_SignupPasswordField> {
                 ),
               ),
               IconButton(
-                onPressed: () =>
-                    setState(() => _hidePassword = !_hidePassword),
+                onPressed: () => ref
+                    .read(signupNotifierProvider.notifier)
+                    .togglePasswordVisibility(),
                 icon: Icon(
-                  _hidePassword
+                  hide
                       ? Icons.visibility_off_outlined
                       : Icons.visibility_outlined,
                   color: Colors.grey.shade500,
@@ -1116,15 +1231,11 @@ class _SignupPasswordFieldState extends State<_SignupPasswordField> {
             ],
           ),
         ),
+        SizedBox(height: SizeConfig.scale(8)),
         ValueListenableBuilder(
           valueListenable: widget.controller,
-          builder: (context, value, _) {
-            if (value.text.isEmpty) return const SizedBox.shrink();
-            return Padding(
-              padding: EdgeInsets.only(top: SizeConfig.scale(8)),
-              child: _PasswordStrengthBar(password: value.text),
-            );
-          },
+          builder: (context, value, _) =>
+              _PasswordStrengthBar(password: value.text),
         ),
       ],
     );
@@ -1239,8 +1350,9 @@ class _PhoneFieldState extends ConsumerState<_PhoneField> {
 
   @override
   Widget build(BuildContext context) {
-    final selectedKey =
-        ref.watch(signupNotifierProvider.select((s) => s.selectedKey));
+    final selectedKey = ref.watch(
+      signupNotifierProvider.select((s) => s.selectedKey),
+    );
     final notifier = ref.read(signupNotifierProvider.notifier);
 
     return Row(
@@ -1385,9 +1497,7 @@ class _DocFieldState extends State<_DocField> {
         width: double.infinity,
         padding: EdgeInsets.all(SizeConfig.scale(14)),
         decoration: BoxDecoration(
-          color: uploaded
-              ? _kFieldFocus
-              : Colors.grey.shade50,
+          color: uploaded ? _kFieldFocus : Colors.grey.shade50,
           borderRadius: BorderRadius.circular(SizeConfig.scale(14)),
           border: Border.all(
             color: uploaded ? _kMid : Colors.grey.shade300,
@@ -1436,8 +1546,7 @@ class _DocFieldState extends State<_DocField> {
                     duration: const Duration(milliseconds: 200),
                     style: TextStyle(
                       fontSize: SizeConfig.scaledFontSize(13),
-                      fontWeight:
-                          uploaded ? FontWeight.w600 : FontWeight.w500,
+                      fontWeight: uploaded ? FontWeight.w600 : FontWeight.w500,
                       color: uploaded ? _kPrimary : Colors.grey.shade600,
                     ),
                     child: Text(
@@ -1461,9 +1570,7 @@ class _DocFieldState extends State<_DocField> {
 
             // Trailing icon
             Icon(
-              uploaded
-                  ? Icons.edit_outlined
-                  : Icons.arrow_forward_ios_rounded,
+              uploaded ? Icons.edit_outlined : Icons.arrow_forward_ios_rounded,
               color: uploaded ? _kMid : Colors.grey.shade400,
               size: SizeConfig.scale(15),
             ),
