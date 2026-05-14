@@ -5,9 +5,10 @@ import 'package:fieldguard/features/auth/login/presentation/providers/login_stat
 import 'package:fieldguard/features/auth/login/presentation/screens/login_screen.dart';
 import 'package:fieldguard/features/auth/signup/presentation/screens/signup_screen.dart';
 import 'package:fieldguard/features/dashboard_sscreen/admin_dashboard/dashboard_screen.dart';
+import 'package:fieldguard/features/routes/presentation/screens/routes_screen.dart';
 import 'package:fieldguard/features/shop_management_screen/shop_management_screen.dart';
 import 'package:fieldguard/features/splash_screen/splash_screen.dart';
-import 'package:fieldguard/features/visit_history_screen/visit_history_screen.dart';
+import 'package:fieldguard/features/team/presentation/screens/team_management_screen.dart';
 import 'package:fieldguard/widgets/bottom_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -32,11 +33,17 @@ final goRouterProvider = Provider<GoRouter>((ref) {
 
     // ── Redirect logic ──────────────────────────────────────────────────────
     redirect: (context, state) {
+      final authState = ref.read(loginNotifierProvider);
       final isOnAuthRoute =
           state.matchedLocation == AppRoutes.login ||
           state.matchedLocation == AppRoutes.signup;
       
       final isOnSplash = state.matchedLocation == AppRoutes.splash;
+
+      // If still checking auth state, stay on splash
+      if (authState is LoginChecking) {
+        return AppRoutes.splash;
+      }
 
       // If authenticated and trying to visit auth screens or splash
       if (isAuthenticated && (isOnAuthRoute || isOnSplash)) {
@@ -89,13 +96,23 @@ final goRouterProvider = Provider<GoRouter>((ref) {
               ),
             ],
           ),
-          // History Tab
+          // Routes Tab
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: AppRoutes.history,
+                path: AppRoutes.routes,
                 pageBuilder: (context, state) =>
-                    const NoTransitionPage(child: VisitHistoryScreen()),
+                    const NoTransitionPage(child: RoutesScreen()),
+              ),
+            ],
+          ),
+          // Team Tab
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.team,
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: TeamManagementScreen()),
               ),
             ],
           ),

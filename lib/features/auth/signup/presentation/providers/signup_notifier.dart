@@ -55,11 +55,11 @@ class SignupNotifier extends StateNotifier<SignupState> {
     state = switch (result) {
       Success() => state.copyWith(isLoading: false, isSuccess: true),
       Failure(:final exception) => state.copyWith(
-          isLoading: false,
-          errorMessage: exception is AppException
-              ? exception.message
-              : AppStrings.serverError,
-        ),
+        isLoading: false,
+        errorMessage: exception is AppException
+            ? exception.message
+            : AppStrings.serverError,
+      ),
     };
   }
 }

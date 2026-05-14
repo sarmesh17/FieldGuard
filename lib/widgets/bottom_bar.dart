@@ -30,9 +30,14 @@ class BottomNavBar extends StatelessWidget {
           label: 'Shops',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.history_outlined),
-          activeIcon: Icon(Icons.history),
-          label: 'History',
+          icon: Icon(Icons.route_outlined),
+          activeIcon: Icon(Icons.route),
+          label: 'Routes',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.people_outline),
+          activeIcon: Icon(Icons.people),
+          label: 'Team',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.person_outline),
