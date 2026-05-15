@@ -1,5 +1,4 @@
 import 'package:fieldguard/features/shop_management_screen/shop_card.dart';
-import 'package:fieldguard/widgets/bottom_bar.dart';
 import 'package:flutter/material.dart';
 
 class ShopsScreen extends StatelessWidget {

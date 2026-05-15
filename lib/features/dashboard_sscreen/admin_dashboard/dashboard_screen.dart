@@ -5,14 +5,10 @@ class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
 
   static const Color _green = Color(0xFF0E5D3B);
-  static const Color _lightGreen = Color(0xFFDDF5E0);
-  static const Color _softGreen = Color(0xFFE4F4E6);
   static const Color _orange = Color(0xFFF6A04D);
   static const Color _softOrange = Color(0xFFFFF4E4);
   static const Color _red = Color(0xFFFF3B3B);
   static const Color _softRed = Color(0xFFFFE3E6);
-  static const Color _textDark = Color(0xFF222222);
-  static const Color _textMuted = Color(0xFF6F7480);
   static const Color _cardBorder = Color(0xFFE7DFD2);
 
   @override
