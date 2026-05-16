@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(xargs grep -l \"ProfileScreen\\\\|profile_screen\")",
+      "Bash(xargs head -20)",
+      "Bash(xargs grep -l \"SharedPreferences\\\\|save.*user\\\\|cache.*user\")"
     ]
   }
 }

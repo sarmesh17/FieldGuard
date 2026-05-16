@@ -249,11 +249,12 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen>
                   context,
                   MaterialPageRoute(
                     builder: (context) => EditEmployeeScreen(
-                      employeeId: widget.employeeId,
+                      employeeId: int.parse(widget.employeeId),
                       currentFullName: _employee!.fullName,
                       currentPhoneNumber: _employee!.phoneNumber,
                       currentEmail: _employee!.email,
                       currentIsActive: _employee!.isActive,
+                      currentProfileImage: _employee!.profileImage,
                     ),
                   ),
                 );

@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
@@ -6,6 +5,7 @@ import 'package:fieldguard/core/networks/dio_client.dart';
 import 'package:fieldguard/core/responsive/responsive.dart';
 import 'package:fieldguard/features/manager/data/datasource/manager_datasource_impl.dart';
 import 'package:fieldguard/features/manager/data/dto/create_manager_request.dart';
+import 'package:fieldguard/features/uploads/image_upload_service.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
@@ -27,7 +27,8 @@ class _CreateManagerScreenState extends State<CreateManagerScreen>
   bool _hidePassword = true;
   bool _isLoading = false;
   File? _selectedImage;
-  String? _base64Image;
+  String? _uploadedImageKey;
+  bool _isUploadingImage = false;
 
   late AnimationController _animController;
   late Animation<double> _fadeAnimation;
@@ -73,17 +74,64 @@ class _CreateManagerScreenState extends State<CreateManagerScreen>
       );
 
       if (result != null && result.files.single.path != null) {
-        final file = File(result.files.single.path!);
-        final bytes = await file.readAsBytes();
         setState(() {
-          _selectedImage = file;
-          _base64Image = base64Encode(bytes);
+          _selectedImage = File(result.files.single.path!);
         });
+        await _uploadImage();
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error picking image: $e')),
+          SnackBar(
+            content: Text('Error picking image: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _uploadImage() async {
+    if (_selectedImage == null) return;
+
+    setState(() {
+      _isUploadingImage = true;
+    });
+
+    try {
+      final dio = DioClient.createDio();
+      final uploadService = ImageUploadService(dio);
+      
+      // Use a temporary entityId (0) since manager doesn't exist yet
+      final uploadResult = await uploadService.upload(
+        filePath: _selectedImage!.path,
+        category: 'profiles',
+        entityId: 0, // Temporary ID, will be updated after manager creation
+      );
+      
+      setState(() {
+        _uploadedImageKey = uploadResult.imageKey;
+        _isUploadingImage = false;
+      });
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Image uploaded successfully'),
+            backgroundColor: Color(0xff6558FF),
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _isUploadingImage = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to upload image: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
@@ -102,7 +150,7 @@ class _CreateManagerScreenState extends State<CreateManagerScreen>
             ? null
             : _emailController.text.trim(),
         password: _passwordController.text,
-        profileImage: _base64Image,
+        imageKey: _uploadedImageKey,
       );
 
       final dio = DioClient.createDio();
@@ -224,47 +272,100 @@ class _CreateManagerScreenState extends State<CreateManagerScreen>
                     children: [
                       // Profile Image Picker
                       Center(
-                        child: GestureDetector(
-                          onTap: _pickImage,
-                          child: Container(
-                            width: SizeConfig.scale(120),
-                            height: SizeConfig.scale(120),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              gradient: const LinearGradient(
-                                colors: [Color(0xff6558FF), Color(0xff8B3DFF)],
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: const Color(0xff6558FF)
-                                      .withValues(alpha: 0.4),
-                                  blurRadius: 20,
-                                  offset: const Offset(0, 8),
-                                ),
-                              ],
-                            ),
-                            child: _selectedImage != null
-                                ? ClipOval(
-                                    child: Image.file(
-                                      _selectedImage!,
-                                      fit: BoxFit.cover,
-                                    ),
-                                  )
-                                : Icon(
-                                    Icons.add_a_photo_rounded,
-                                    size: SizeConfig.scale(40),
-                                    color: Colors.white,
+                        child: Stack(
+                          children: [
+                            Container(
+                              width: SizeConfig.scale(120),
+                              height: SizeConfig.scale(120),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                gradient: _selectedImage != null
+                                    ? null
+                                    : const LinearGradient(
+                                        colors: [Color(0xff6558FF), Color(0xff8B3DFF)],
+                                      ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xff6558FF)
+                                        .withValues(alpha: 0.4),
+                                    blurRadius: 20,
+                                    offset: const Offset(0, 8),
                                   ),
-                          ),
+                                ],
+                              ),
+                              child: _isUploadingImage
+                                  ? Container(
+                                      decoration: const BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: Color(0xffE5E7EB),
+                                      ),
+                                      child: const Center(
+                                        child: CircularProgressIndicator(
+                                          color: Color(0xff6558FF),
+                                        ),
+                                      ),
+                                    )
+                                  : _selectedImage != null
+                                      ? ClipOval(
+                                          child: Image.file(
+                                            _selectedImage!,
+                                            fit: BoxFit.cover,
+                                          ),
+                                        )
+                                      : Icon(
+                                          Icons.person_rounded,
+                                          size: SizeConfig.scale(50),
+                                          color: Colors.white,
+                                        ),
+                            ),
+                            Positioned(
+                              right: 0,
+                              bottom: 0,
+                              child: GestureDetector(
+                                onTap: _isUploadingImage ? null : _pickImage,
+                                child: Container(
+                                  width: SizeConfig.scale(40),
+                                  height: SizeConfig.scale(40),
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: const Color(0xff6558FF),
+                                    border: Border.all(
+                                      color: Colors.white,
+                                      width: 2.5,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: const Color(0xff6558FF).withValues(alpha: 0.4),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 3),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Icon(
+                                    Icons.camera_alt_rounded,
+                                    color: Colors.white,
+                                    size: SizeConfig.scale(20),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       SizedBox(height: SizeConfig.heightPercent(1)),
                       Center(
                         child: Text(
-                          'Tap to add profile photo',
+                          _uploadedImageKey != null
+                              ? 'Image uploaded successfully'
+                              : 'Tap camera icon to add profile photo',
                           style: TextStyle(
-                            color: const Color(0xff667085),
+                            color: _uploadedImageKey != null
+                                ? const Color(0xff6558FF)
+                                : const Color(0xff667085),
                             fontSize: SizeConfig.scaledFontSize(12),
+                            fontWeight: _uploadedImageKey != null
+                                ? FontWeight.w600
+                                : FontWeight.normal,
                           ),
                         ),
                       ),

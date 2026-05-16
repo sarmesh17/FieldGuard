@@ -1,3 +1,6 @@
+import 'package:fieldguard/features/admin_profile/presentation/providers/profile_provider.dart';
+import 'package:fieldguard/features/admin_profile/presentation/providers/profile_state.dart';
+import 'package:fieldguard/features/admin_profile/presentation/screens/personal_information_screen.dart';
 import 'package:fieldguard/features/admin_profile/section_card.dart';
 import 'package:fieldguard/features/auth/login/presentation/providers/login_provider.dart';
 import 'package:fieldguard/features/employee/presentation/screens/create_employee_screen.dart';
@@ -23,6 +26,12 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen>
   @override
   void initState() {
     super.initState();
+    
+    // Fetch profile data when screen loads
+    Future.microtask(
+      () => ref.read(profileNotifierProvider.notifier).fetchProfile(),
+    );
+    
     _controller = AnimationController(
       duration: const Duration(milliseconds: 1400),
       vsync: this,
@@ -68,13 +77,111 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen>
     super.dispose();
   }
 
+  void _navigateToPersonalInformation() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const PersonalInformationScreen(),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final profileState = ref.watch(profileNotifierProvider);
     final size = MediaQuery.of(context).size;
     final w = size.width;
     final h = size.height;
     final avatarSize = w * 0.28;
     final headerHeight = h * 0.30;
+
+    // Show loading or error states
+    if (profileState is ProfileLoading) {
+      return const Scaffold(
+        backgroundColor: Color(0xFFF5F6FA),
+        body: Center(
+          child: CircularProgressIndicator(
+            color: Color(0xff0E5A3B),
+          ),
+        ),
+      );
+    }
+
+    if (profileState is ProfileFailure) {
+      return Scaffold(
+        backgroundColor: const Color(0xFFF5F6FA),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.error_outline_rounded,
+                size: w * 0.15,
+                color: Colors.red.shade400,
+              ),
+              SizedBox(height: h * 0.02),
+              Text(
+                'Failed to load profile',
+                style: TextStyle(
+                  fontSize: w * 0.045,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey.shade800,
+                ),
+              ),
+              SizedBox(height: h * 0.01),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: w * 0.1),
+                child: Text(
+                  profileState.message,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: w * 0.035,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+              ),
+              SizedBox(height: h * 0.03),
+              ElevatedButton.icon(
+                onPressed: () {
+                  ref.read(profileNotifierProvider.notifier).fetchProfile();
+                },
+                icon: const Icon(Icons.refresh_rounded),
+                label: const Text('Retry'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xff0E5A3B),
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: w * 0.08,
+                    vertical: h * 0.015,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(w * 0.03),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Get profile data
+    final profile = profileState is ProfileSuccess
+        ? profileState.profile
+        : profileState is ProfileUpdateSuccess
+            ? profileState.profile
+            : null;
+
+    if (profile == null) {
+      return const Scaffold(
+        backgroundColor: Color(0xFFF5F6FA),
+        body: Center(
+          child: CircularProgressIndicator(
+            color: Color(0xff0E5A3B),
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6FA),
@@ -99,7 +206,7 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen>
                       opacity: _fadeAnimation,
                       child: ScaleTransition(
                         scale: _scaleAnimation,
-                        child: _buildAvatar(avatarSize, w),
+                        child: _buildAvatar(avatarSize, w, profile.profileImage),
                       ),
                     ),
                   ),
@@ -112,7 +219,7 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen>
               opacity: _fadeAnimation,
               child: SlideTransition(
                 position: _slideAnimation,
-                child: _buildProfileInfo(w),
+                child: _buildProfileInfo(w, profile),
               ),
             ),
             SizedBox(height: h * 0.025),
@@ -198,14 +305,15 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen>
                 position: _slideAnimation,
                 child: FadeTransition(
                   opacity: _fadeAnimation,
-                  child: const SectionCard(
+                  child: SectionCard(
                     title: 'ACCOUNT',
                     items: [
                       SectionTile(
                         icon: Icons.person_outline_rounded,
                         title: 'Personal Information',
+                        onTap: _navigateToPersonalInformation,
                       ),
-                      SectionTile(
+                      const SectionTile(
                         icon: Icons.shield_outlined,
                         title: 'Security & Passwords',
                       ),
@@ -315,74 +423,61 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen>
     );
   }
 
-  Widget _buildAvatar(double avatarSize, double w) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Container(
-          width: avatarSize,
-          height: avatarSize,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.white, width: 4),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xff0E5A3B).withValues(alpha: 0.28),
-                blurRadius: 28,
-                offset: const Offset(0, 14),
-              ),
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
-                blurRadius: 8,
-                offset: const Offset(0, 4),
-              ),
-            ],
+  Widget _buildAvatar(double avatarSize, double w, String? profileImage) {
+    return Container(
+      width: avatarSize,
+      height: avatarSize,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.white, width: 4),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xff0E5A3B).withValues(alpha: 0.28),
+            blurRadius: 28,
+            offset: const Offset(0, 14),
           ),
-          child: ClipOval(
-            child: Image.network(
-              'https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=800&auto=format&fit=crop',
-              fit: BoxFit.cover,
-            ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
           ),
-        ),
-        Positioned(
-          right: 2,
-          bottom: 2,
-          child: Container(
-            width: w * 0.09,
-            height: w * 0.09,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: const LinearGradient(
-                colors: [Color(0xff0E5A3B), Color(0xff1D7A51)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              border: Border.all(color: Colors.white, width: 2.5),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xff0E5A3B).withValues(alpha: 0.4),
-                  blurRadius: 8,
-                  offset: const Offset(0, 3),
+        ],
+      ),
+      child: ClipOval(
+        child: profileImage != null
+            ? Image.network(
+                profileImage.startsWith('http')
+                    ? profileImage
+                    : 'https://fieldguard-be.onrender.com/$profileImage',
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    color: const Color(0xffE5E7EB),
+                    child: Icon(
+                      Icons.person_rounded,
+                      size: w * 0.15,
+                      color: const Color(0xff9CA3AF),
+                    ),
+                  );
+                },
+              )
+            : Container(
+                color: const Color(0xffE5E7EB),
+                child: Icon(
+                  Icons.person_rounded,
+                  size: w * 0.15,
+                  color: const Color(0xff9CA3AF),
                 ),
-              ],
-            ),
-            child: Icon(
-              Icons.edit_rounded,
-              color: Colors.white,
-              size: w * 0.045,
-            ),
-          ),
-        ),
-      ],
+              ),
+      ),
     );
   }
 
-  Widget _buildProfileInfo(double w) {
+  Widget _buildProfileInfo(double w, profile) {
     return Column(
       children: [
         Text(
-          'Alex Sterling',
+          profile.fullName,
           style: TextStyle(
             fontSize: w * 0.068,
             fontWeight: FontWeight.w800,
@@ -401,7 +496,7 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen>
             ),
             SizedBox(width: w * 0.012),
             Text(
-              'alex.s@fieldops.inc',
+              profile.company?.email ?? 'No company email',
               style: TextStyle(
                 fontSize: w * 0.037,
                 color: const Color(0xff6B7280),
@@ -441,7 +536,7 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen>
               ),
               SizedBox(width: w * 0.015),
               Text(
-                'System Admin',
+                profile.role.toUpperCase(),
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: w * 0.033,

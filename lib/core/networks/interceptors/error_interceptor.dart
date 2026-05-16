@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:fieldguard/core/constant/api_constant.dart';
+import 'package:fieldguard/core/services/auth_event_bus.dart';
 import 'package:fieldguard/core/services/token_storage.dart';
 import 'package:flutter/foundation.dart';
 
@@ -17,26 +18,31 @@ class ErrorInterceptor extends Interceptor {
       try {
         final refreshToken = await TokenStorage.getRefreshToken();
 
-        final respnse = await Dio().post(
-          ApiConstant.baseUrl,
+        if (refreshToken == null || refreshToken.isEmpty) {
+          await _expireSession();
+          handler.next(err);
+          return;
+        }
+
+        final response = await Dio().post(
+          ApiConstant.refreshTokenEndpoint, // was: ApiConstant.baseUrl
           data: {'refreshToken': refreshToken},
         );
 
-        final newAccessToken = respnse.data['accessToken'] as String;
-        final newRefreshToken = respnse.data['refreshToken'] as String;
+        final newAccessToken = response.data['accessToken'] as String;
+        final newRefreshToken = response.data['refreshToken'] as String;
 
         await TokenStorage.saveTokens(
           accessToken: newAccessToken,
           refreshToken: newRefreshToken,
         );
 
-        // Retry the original request with the new access token
         err.requestOptions.headers['Authorization'] = 'Bearer $newAccessToken';
         final retryResponse = await _dio.fetch(err.requestOptions);
         handler.resolve(retryResponse);
         return;
       } catch (_) {
-        await TokenStorage.clearTokens();
+        await _expireSession();
       }
     }
 
@@ -46,5 +52,10 @@ class ErrorInterceptor extends Interceptor {
       );
     }
     handler.next(err);
+  }
+
+  Future<void> _expireSession() async {
+    await TokenStorage.clearTokens();
+    AuthEventBus.triggerSessionExpired();
   }
 }
