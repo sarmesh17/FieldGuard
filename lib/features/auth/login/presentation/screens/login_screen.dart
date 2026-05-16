@@ -100,19 +100,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   Widget build(BuildContext context) {
     ref.listen<LoginState>(loginNotifierProvider, (_, next) {
       if (next is LoginSuccess) context.go(AppRoutes.dashboard);
-      if (next is LoginFailure) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(next.message),
-            backgroundColor: Colors.red.shade700,
-          ),
-        );
-      }
     });
 
-    final isLoading = ref.watch(
-      loginNotifierProvider.select((s) => s is LoginLoading),
-    );
+    final loginState = ref.watch(loginNotifierProvider);
+    final isLoading = loginState is LoginLoading;
+    final errorMessage = loginState is LoginFailure ? loginState.message : null;
 
     // collapseProgress: 0 = keyboard hidden, 1 = fully collapsed.
     // Driven directly by keyboard inset so layout syncs frame-by-frame
@@ -347,6 +339,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                             passwordController: _passwordController,
                             hidePassword: _hidePassword,
                             isLoading: isLoading,
+                            errorMessage: errorMessage,
                             onTogglePassword: () =>
                                 setState(() => _hidePassword = !_hidePassword),
                             onSignIn: _onSignIn,
@@ -480,6 +473,7 @@ class _FormCard extends StatelessWidget {
   final TextEditingController passwordController;
   final bool hidePassword;
   final bool isLoading;
+  final String? errorMessage;
   final VoidCallback onTogglePassword;
   final VoidCallback onSignIn;
 
@@ -488,6 +482,7 @@ class _FormCard extends StatelessWidget {
     required this.passwordController,
     required this.hidePassword,
     required this.isLoading,
+    this.errorMessage,
     required this.onTogglePassword,
     required this.onSignIn,
   });
@@ -610,6 +605,36 @@ class _FormCard extends StatelessWidget {
                   hide: hidePassword,
                   onToggle: onTogglePassword,
                 ),
+
+                // ── Error message (inline) ───────────────────────────────────
+                if (errorMessage != null)
+                  Padding(
+                    padding: EdgeInsets.only(
+                      top: SizeConfig.scale(8),
+                      left: SizeConfig.scale(4),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.error_outline_rounded,
+                          color: Colors.red.shade600,
+                          size: SizeConfig.scale(14),
+                        ),
+                        SizedBox(width: SizeConfig.scale(6)),
+                        Expanded(
+                          child: Text(
+                            errorMessage!,
+                            style: TextStyle(
+                              color: Colors.red.shade600,
+                              fontSize: SizeConfig.scaledFontSize(11),
+                              fontWeight: FontWeight.w500,
+                              height: 1.3,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
 
                 // ── Forgot password ──────────────────────────────────────────
                 Align(

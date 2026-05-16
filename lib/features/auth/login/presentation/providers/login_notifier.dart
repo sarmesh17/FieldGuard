@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:fieldguard/core/constant/app_strings.dart';
 import 'package:fieldguard/core/errors/app_exception.dart';
+import 'package:fieldguard/core/services/auth_event_bus.dart';
 import 'package:fieldguard/core/services/token_storage.dart';
 import 'package:fieldguard/core/utils/results.dart';
 import 'package:fieldguard/features/auth/login/data/dto/login_response.dart';
@@ -11,35 +14,54 @@ class LoginNotifier extends StateNotifier<LoginState> {
   final LoginUsecase _loginUsecase;
 
   LoginNotifier(this._loginUsecase) : super(const LoginChecking()) {
-    // Check for existing session on initialization
+    AuthEventBus.registerSessionExpiredCallback(_handleSessionExpired);
     _checkExistingSession();
+  }
+
+  void _handleSessionExpired() {
+    if (mounted) state = const LoginInitial();
+  }
+
+  @override
+  void dispose() {
+    AuthEventBus.unregister();
+    super.dispose();
   }
 
   Future<void> _checkExistingSession() async {
     try {
       final accessToken = await TokenStorage.getAccessToken();
-      
+
       if (accessToken != null && accessToken.isNotEmpty) {
-        // User has a valid token, create a mock response to set success state
-        // The actual user data will be fetched by the app when needed
-        final mockResponse = LoginResponse(
+        final claims = _decodeJwtPayload(accessToken);
+        final restoredResponse = LoginResponse(
           accessToken: accessToken,
           refreshToken: await TokenStorage.getRefreshToken() ?? '',
-          user: const LoginUser(
-            id: 0,
+          user: LoginUser(
+            id: (claims['userId'] as num?)?.toInt() ?? 0,
             name: '',
-            role: '',
-            companyId: 0,
+            role: (claims['role'] as String?) ?? '',
+            companyId: (claims['companyId'] as num?)?.toInt() ?? 0,
             employeeCode: '',
           ),
         );
-        state = LoginSuccess(mockResponse);
+        state = LoginSuccess(restoredResponse);
       } else {
         state = const LoginInitial();
       }
     } catch (e) {
-      // If there's any error reading tokens, go to initial state
       state = const LoginInitial();
+    }
+  }
+
+  Map<String, dynamic> _decodeJwtPayload(String token) {
+    try {
+      final payload = token.split('.')[1];
+      final normalized = base64Url.normalize(payload);
+      final decoded = utf8.decode(base64Url.decode(normalized));
+      return jsonDecode(decoded) as Map<String, dynamic>;
+    } catch (_) {
+      return {};
     }
   }
 

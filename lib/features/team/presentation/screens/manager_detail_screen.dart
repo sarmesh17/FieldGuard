@@ -249,11 +249,12 @@ class _ManagerDetailScreenState extends State<ManagerDetailScreen>
                   context,
                   MaterialPageRoute(
                     builder: (context) => EditManagerScreen(
-                      managerId: widget.managerId,
+                      managerId: int.parse(widget.managerId),
                       currentFullName: _manager!.fullName,
                       currentPhoneNumber: _manager!.phoneNumber,
                       currentEmail: _manager!.email,
                       currentIsActive: _manager!.isActive,
+                      currentProfileImage: _manager!.profileImage,
                     ),
                   ),
                 );
