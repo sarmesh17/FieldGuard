@@ -21,3 +21,8 @@ class LoginFailure extends LoginState {
   final String message;
   const LoginFailure(this.message);
 }
+
+// New state for checking existing session
+class LoginChecking extends LoginState {
+  const LoginChecking();
+}
