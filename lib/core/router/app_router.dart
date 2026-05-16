@@ -1,12 +1,15 @@
 import 'package:fieldguard/core/router/app_routes.dart';
 import 'package:fieldguard/features/admin_profile/admin_profile.dart';
+import 'package:fieldguard/features/tasks/presentation/screens/tasks_list_screen.dart';
 import 'package:fieldguard/features/auth/login/presentation/providers/login_provider.dart';
 import 'package:fieldguard/features/auth/login/presentation/providers/login_state.dart';
 import 'package:fieldguard/features/auth/login/presentation/screens/login_screen.dart';
 import 'package:fieldguard/features/auth/signup/presentation/screens/signup_screen.dart';
-import 'package:fieldguard/features/dashboard_sscreen/admin_dashboard/dashboard_screen.dart';
+import 'package:fieldguard/features/dashboard/dashboard_screen.dart';
 import 'package:fieldguard/features/routes/presentation/screens/routes_screen.dart';
-import 'package:fieldguard/features/shop_management_screen/shop_management_screen.dart';
+import 'package:fieldguard/features/shops/data/dto/shops_hierarchy_response.dart';
+import 'package:fieldguard/features/shops/presentation/screens/shops_screen.dart';
+import 'package:fieldguard/features/shops/presentation/screens/update_shop_screen.dart';
 import 'package:fieldguard/features/splash_screen/splash_screen.dart';
 import 'package:fieldguard/features/team/presentation/screens/team_management_screen.dart';
 import 'package:fieldguard/widgets/bottom_bar.dart';
@@ -50,6 +53,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         return AppRoutes.dashboard;
       }
 
+      // If not authenticated and not on an auth/splash screen, go to login
+      if (!isAuthenticated && !isOnAuthRoute && !isOnSplash) {
+        return AppRoutes.login;
+      }
+
       return null;
     },
     // ── Routes ──────────────────────────────────────────────────────────────
@@ -69,7 +77,12 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) =>
             _slidePage(state: state, child: SignupScreen()),
       ),
-      
+      GoRoute(
+        path: AppRoutes.tasks,
+        pageBuilder: (context, state) =>
+            _slidePage(state: state, child: const TasksListScreen()),
+      ),
+
       // ── Bottom Navigation Shell ────────────────────────────────────────────
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
@@ -82,7 +95,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: AppRoutes.dashboard,
                 pageBuilder: (context, state) =>
-                    const NoTransitionPage(child: DashboardScreen()),
+                    const NoTransitionPage(child: Dashboard()),
               ),
             ],
           ),
@@ -93,6 +106,18 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                 path: AppRoutes.shops,
                 pageBuilder: (context, state) =>
                     const NoTransitionPage(child: ShopsScreen()),
+                routes: [
+                  GoRoute(
+                    path: 'edit/:id',
+                    pageBuilder: (context, state) {
+                      final shop = state.extra as Shop;
+                      return _slidePage(
+                        state: state,
+                        child: UpdateShopScreen(shop: shop),
+                      );
+                    },
+                  ),
+                ],
               ),
             ],
           ),
