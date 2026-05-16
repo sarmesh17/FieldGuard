@@ -1,16 +1,20 @@
+import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:fieldguard/core/networks/dio_client.dart';
 import 'package:fieldguard/core/responsive/responsive.dart';
 import 'package:fieldguard/features/employee/data/datasource/employee_datasource_impl.dart';
 import 'package:fieldguard/features/employee/data/dto/update_employee_request.dart';
+import 'package:fieldguard/features/uploads/image_upload_service.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
 class EditEmployeeScreen extends StatefulWidget {
-  final String employeeId;
+  final int employeeId;
   final String currentFullName;
   final String currentPhoneNumber;
   final String? currentEmail;
   final bool currentIsActive;
+  final String? currentProfileImage;
 
   const EditEmployeeScreen({
     super.key,
@@ -19,6 +23,7 @@ class EditEmployeeScreen extends StatefulWidget {
     required this.currentPhoneNumber,
     this.currentEmail,
     required this.currentIsActive,
+    this.currentProfileImage,
   });
 
   @override
@@ -32,6 +37,9 @@ class _EditEmployeeScreenState extends State<EditEmployeeScreen> {
   late TextEditingController _emailController;
   late bool _isActive;
   bool _isLoading = false;
+  File? _selectedImage;
+  String? _uploadedImageKey;
+  bool _isUploadingImage = false;
 
   @override
   void initState() {
@@ -48,6 +56,65 @@ class _EditEmployeeScreenState extends State<EditEmployeeScreen> {
     _phoneController.dispose();
     _emailController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickImage() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      allowMultiple: false,
+    );
+
+    if (result != null && result.files.single.path != null) {
+      setState(() {
+        _selectedImage = File(result.files.single.path!);
+      });
+      await _uploadImage();
+    }
+  }
+
+  Future<void> _uploadImage() async {
+    if (_selectedImage == null) return;
+
+    setState(() {
+      _isUploadingImage = true;
+    });
+
+    try {
+      final dio = DioClient.createDio();
+      final uploadService = ImageUploadService(dio);
+      
+      final uploadResult = await uploadService.upload(
+        filePath: _selectedImage!.path,
+        category: 'profiles',
+        entityId: widget.employeeId,
+      );
+      
+      setState(() {
+        _uploadedImageKey = uploadResult.imageKey;
+        _isUploadingImage = false;
+      });
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Image uploaded successfully'),
+            backgroundColor: Color(0xff0E5A3B),
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _isUploadingImage = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to upload image: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _updateEmployee() async {
@@ -70,9 +137,10 @@ class _EditEmployeeScreenState extends State<EditEmployeeScreen> {
             ? null 
             : _emailController.text.trim(),
         isActive: _isActive,
+        imageKey: _uploadedImageKey,
       );
 
-      await dataSource.updateEmployee(widget.employeeId, request);
+      await dataSource.updateEmployee(widget.employeeId.toString(), request);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -157,6 +225,105 @@ class _EditEmployeeScreenState extends State<EditEmployeeScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   SizedBox(height: SizeConfig.heightPercent(2)),
+                  
+                  // Profile Image Section
+                  Center(
+                    child: Stack(
+                      children: [
+                        Container(
+                          width: SizeConfig.scale(120),
+                          height: SizeConfig.scale(120),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: const Color(0xff0E5A3B),
+                              width: 3,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xff0E5A3B).withValues(alpha: 0.2),
+                                blurRadius: 20,
+                                offset: const Offset(0, 10),
+                              ),
+                            ],
+                          ),
+                          child: ClipOval(
+                            child: _isUploadingImage
+                                ? Container(
+                                    color: const Color(0xffE5E7EB),
+                                    child: const Center(
+                                      child: CircularProgressIndicator(
+                                        color: Color(0xff0E5A3B),
+                                      ),
+                                    ),
+                                  )
+                                : _selectedImage != null
+                                    ? Image.file(
+                                        _selectedImage!,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : widget.currentProfileImage != null
+                                        ? Image.network(
+                                            widget.currentProfileImage!.startsWith('http')
+                                                ? widget.currentProfileImage!
+                                                : 'https://fieldguard-be.onrender.com/${widget.currentProfileImage}',
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (context, error, stackTrace) {
+                                              return Container(
+                                                color: const Color(0xffE5E7EB),
+                                                child: Icon(
+                                                  Icons.person_rounded,
+                                                  size: SizeConfig.scale(50),
+                                                  color: const Color(0xff9CA3AF),
+                                                ),
+                                              );
+                                            },
+                                          )
+                                        : Container(
+                                            color: const Color(0xffE5E7EB),
+                                            child: Icon(
+                                              Icons.person_rounded,
+                                              size: SizeConfig.scale(50),
+                                              color: const Color(0xff9CA3AF),
+                                            ),
+                                          ),
+                          ),
+                        ),
+                        Positioned(
+                          right: 0,
+                          bottom: 0,
+                          child: GestureDetector(
+                            onTap: _isUploadingImage ? null : _pickImage,
+                            child: Container(
+                              width: SizeConfig.scale(40),
+                              height: SizeConfig.scale(40),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: const Color(0xff0E5A3B),
+                                border: Border.all(
+                                  color: Colors.white,
+                                  width: 2.5,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xff0E5A3B).withValues(alpha: 0.4),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 3),
+                                  ),
+                                ],
+                              ),
+                              child: Icon(
+                                Icons.camera_alt_rounded,
+                                color: Colors.white,
+                                size: SizeConfig.scale(20),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: SizeConfig.heightPercent(3)),
                   
                   // Full Name Field
                   _buildTextField(

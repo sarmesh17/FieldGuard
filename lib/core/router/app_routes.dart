@@ -10,7 +10,9 @@ class AppRoutes {
   static const String home = '/home';
   static const String dashboard = '/dashboard';
   static const String shops = '/shops';
+  static const String updateShop = '/shops/edit';
   static const String routes = '/routes';
   static const String team = '/team';
   static const String profile = '/profile';
+  static const String tasks = '/tasks';
 }

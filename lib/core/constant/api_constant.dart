@@ -22,6 +22,24 @@ class ApiConstant {
   // The endpoint for getting list of managers
   static const String getManagersEndpoint = "$baseUrl/api/v1/managers";
 
+  // The endpoint for getting shops hierarchy / creating a shop
+  static const String getShopsEndpoint = "$baseUrl/api/v1/shops";
+
+  // The endpoint for requesting a pre-signed S3 upload URL
+  static const String presignedUrlEndpoint = "$baseUrl/api/v1/uploads/presigned-url";
+
+  // The endpoint for updating a shop (append /{id})
+  static const String updateShopEndpoint = "$baseUrl/api/v1/shops";
+
+  // The endpoint for getting admin profile
+  static const String getProfileEndpoint = "$baseUrl/api/v1/auth/me";
+
+  // The endpoint for updating admin profile
+  static const String updateProfileEndpoint = "$baseUrl/api/v1/auth/profile";
+
+  // The endpoint for listing / creating tasks
+  static const String tasksEndpoint = "/api/v1/tasks";
+
   // Timeouts (Good to keep centralized)
   static const int connectTimeout = 30;
   static const int receiveTimeout = 30;

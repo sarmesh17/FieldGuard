@@ -3,14 +3,14 @@ class CreateManagerRequest {
   final String phoneNumber;
   final String? email;
   final String password;
-  final String? profileImage; // Base64 encoded image
+  final String? imageKey; // S3 image key from upload service
 
   CreateManagerRequest({
     required this.fullName,
     required this.phoneNumber,
     this.email,
     required this.password,
-    this.profileImage,
+    this.imageKey,
   });
 
   Map<String, dynamic> toJson() {
@@ -24,8 +24,8 @@ class CreateManagerRequest {
       data['email'] = email;
     }
 
-    if (profileImage != null && profileImage!.isNotEmpty) {
-      data['profileImage'] = profileImage;
+    if (imageKey != null && imageKey!.isNotEmpty) {
+      data['imageKey'] = imageKey;
     }
 
     return data;

@@ -4,7 +4,7 @@ class CreateEmployeeRequest {
   final String? email;
   final String password;
   final String? managerId;
-  final String? profileImage; // Base64 encoded image
+  final String? imageKey; // S3 image key from upload service
 
   CreateEmployeeRequest({
     required this.fullName,
@@ -12,7 +12,7 @@ class CreateEmployeeRequest {
     this.email,
     required this.password,
     this.managerId,
-    this.profileImage,
+    this.imageKey,
   });
 
   Map<String, dynamic> toJson() {
@@ -30,8 +30,8 @@ class CreateEmployeeRequest {
       data['managerId'] = managerId;
     }
 
-    if (profileImage != null && profileImage!.isNotEmpty) {
-      data['profileImage'] = profileImage;
+    if (imageKey != null && imageKey!.isNotEmpty) {
+      data['imageKey'] = imageKey;
     }
 
     return data;

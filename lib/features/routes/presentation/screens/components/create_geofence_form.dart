@@ -1,3 +1,12 @@
+import 'dart:io';
+
+import 'package:dio/dio.dart';
+import 'package:fieldguard/core/networks/dio_client.dart';
+import 'package:fieldguard/features/shops/data/datasource/shop_datasource_impl.dart';
+import 'package:fieldguard/features/shops/data/dto/create_shop_request.dart';
+import 'package:fieldguard/features/uploads/image_upload_service.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:flutter/material.dart';
 
 class CreateGeofenceForm extends StatefulWidget {
@@ -15,20 +24,213 @@ class CreateGeofenceForm extends StatefulWidget {
 }
 
 class _CreateGeofenceFormState extends State<CreateGeofenceForm> {
-  final _labelController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  final _shopNameController = TextEditingController();
+  final _addressController = TextEditingController();
+  final _contactNameController = TextEditingController();
+  final _contactPhoneController = TextEditingController();
+  final _panNumberController = TextEditingController();
+
+  String? _shopImagePath;
+  String? _imageKey;
+  UploadStatus _uploadStatus = UploadStatus.idle;
+  double _uploadProgress = 0.0;
+
+  bool _isLoading = false;
+  bool _isFetchingAddress = false;
+
+  late final ShopDataSourceImpl _shopDataSource;
+  late final ImageUploadService _uploadService;
+  final ImagePicker _imagePicker = ImagePicker();
+
+  @override
+  void initState() {
+    super.initState();
+    _shopDataSource = ShopDataSourceImpl(DioClient.createDio());
+    _uploadService = ImageUploadService(DioClient.createDio());
+    _fetchAddressFromCoordinates();
+  }
 
   @override
   void dispose() {
-    _labelController.dispose();
+    _shopNameController.dispose();
+    _addressController.dispose();
+    _contactNameController.dispose();
+    _contactPhoneController.dispose();
+    _panNumberController.dispose();
     super.dispose();
+  }
+
+  Future<void> _fetchAddressFromCoordinates() async {
+    setState(() => _isFetchingAddress = true);
+
+    try {
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        widget.latitude,
+        widget.longitude,
+      );
+
+      if (placemarks.isNotEmpty) {
+        final place = placemarks.first;
+        final addressParts = [
+          place.street,
+          place.subLocality,
+          place.locality,
+          place.subAdministrativeArea,
+          place.administrativeArea,
+          place.country,
+        ].where((part) => part != null && part.isNotEmpty).toList();
+
+        final address = addressParts.join(', ');
+        
+        if (mounted) {
+          setState(() {
+            _addressController.text = address;
+            _isFetchingAddress = false;
+          });
+        }
+      } else {
+        if (mounted) {
+          setState(() => _isFetchingAddress = false);
+        }
+      }
+    } catch (e) {
+      // Silently fail - user can enter address manually
+      if (mounted) {
+        setState(() => _isFetchingAddress = false);
+      }
+    }
+  }
+
+  Future<void> _takePhoto() async {
+    try {
+      final XFile? photo = await _imagePicker.pickImage(
+        source: ImageSource.camera,
+        imageQuality: 85,
+        maxWidth: 1920,
+        maxHeight: 1920,
+      );
+
+      if (photo == null) return;
+
+      final path = photo.path;
+      setState(() {
+        _shopImagePath = path;
+        _imageKey = null;
+        _uploadStatus = UploadStatus.uploading;
+        _uploadProgress = 0.0;
+      });
+
+      try {
+        final result = await _uploadService.upload(
+          filePath: path,
+          category: 'shops',
+          entityId: 0,
+          onProgress: (p) {
+            if (mounted) setState(() => _uploadProgress = p);
+          },
+        );
+        if (mounted) {
+          setState(() {
+            _imageKey = result.imageKey;
+            _uploadStatus = UploadStatus.done;
+          });
+        }
+      } catch (_) {
+        if (mounted) setState(() => _uploadStatus = UploadStatus.error);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to access camera: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  void _removeImage() => setState(() {
+        _shopImagePath = null;
+        _imageKey = null;
+        _uploadStatus = UploadStatus.idle;
+        _uploadProgress = 0.0;
+      });
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    if (_uploadStatus == UploadStatus.uploading) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('Please wait for image upload to complete')),
+      );
+      return;
+    }
+
+    if (_uploadStatus == UploadStatus.error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content:
+              Text('Image upload failed. Please remove the image or try again.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      await _shopDataSource.createShop(
+        CreateShopRequest(
+          name: _shopNameController.text.trim(),
+          panNumber: _panNumberController.text.trim().isEmpty
+              ? null
+              : _panNumberController.text.trim(),
+          address: _addressController.text.trim(),
+          latitude: widget.latitude,
+          longitude: widget.longitude,
+          contactName: _contactNameController.text.trim(),
+          contactPhone: _contactPhoneController.text.trim(),
+          imageKey: _imageKey,
+        ),
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Shop created successfully'),
+            backgroundColor: Color(0xff0E5A3B),
+          ),
+        );
+        Navigator.of(context).pop(true);
+      }
+    } on DioException catch (e) {
+      if (!mounted) return;
+      final message = e.response?.data?['message']?.toString() ??
+          'Failed to create geofence. Please try again.';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message), backgroundColor: Colors.red),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('An unexpected error occurred. Please try again.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
+      padding:
+          EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Container(
         decoration: const BoxDecoration(
           color: Colors.white,
@@ -36,136 +238,412 @@ class _CreateGeofenceFormState extends State<CreateGeofenceForm> {
         ),
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Handle bar
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE5E7EB),
-                    borderRadius: BorderRadius.circular(2),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE5E7EB),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 20),
-
-              // Title
-              const Text(
-                'Set Geofence',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF111827),
+                const SizedBox(height: 20),
+                const Text(
+                  'Create Geofence',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF111827),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 4),
-              const Text(
-                'A 50 m radius zone will be drawn at your current location.',
-                style: TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
-              ),
-              const SizedBox(height: 20),
-
-              // GPS coordinates card
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF0FDF4),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFD1FADF)),
+                const SizedBox(height: 4),
+                const Text(
+                  'Fill in the shop details for this location.',
+                  style: TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
                 ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.my_location,
-                        color: Color(0xff0E5A3B), size: 18),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'Lat: ${widget.latitude.toStringAsFixed(6)}   '
-                        'Lng: ${widget.longitude.toStringAsFixed(6)}',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: Color(0xff0E5A3B),
-                          fontWeight: FontWeight.w500,
+                const SizedBox(height: 20),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 14, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF0FDF4),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFD1FADF)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.my_location,
+                          color: Color(0xff0E5A3B), size: 18),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Lat: ${widget.latitude.toStringAsFixed(6)}   '
+                          'Lng: ${widget.longitude.toStringAsFixed(6)}',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Color(0xff0E5A3B),
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                _FieldLabel('Shop Photo (Optional)'),
+                const SizedBox(height: 8),
+                _buildImagePicker(),
+                const SizedBox(height: 16),
+                _FieldLabel('Shop Name'),
+                const SizedBox(height: 6),
+                _buildField(
+                  controller: _shopNameController,
+                  hint: 'e.g. Rajan Enterprises',
+                  icon: Icons.storefront_outlined,
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? 'Shop name is required'
+                      : null,
+                ),
+                const SizedBox(height: 16),
+                _FieldLabel('Address'),
+                const SizedBox(height: 6),
+                Stack(
+                  children: [
+                    _buildField(
+                      controller: _addressController,
+                      hint: 'e.g. Birgunj, Nepal',
+                      icon: Icons.location_on_outlined,
+                      validator: (v) => (v == null || v.trim().isEmpty)
+                          ? 'Address is required'
+                          : null,
+                    ),
+                    if (_isFetchingAddress)
+                      Positioned(
+                        right: 12,
+                        top: 0,
+                        bottom: 0,
+                        child: Center(
+                          child: SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: const Color(0xff0E5A3B),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                _FieldLabel('Contact Name'),
+                const SizedBox(height: 6),
+                _buildField(
+                  controller: _contactNameController,
+                  hint: 'e.g. Bhupendra Prasad',
+                  icon: Icons.person_outline,
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? 'Contact name is required'
+                      : null,
+                ),
+                const SizedBox(height: 16),
+                _FieldLabel('Contact Phone'),
+                const SizedBox(height: 6),
+                _buildField(
+                  controller: _contactPhoneController,
+                  hint: 'e.g. 9804208475',
+                  icon: Icons.phone_outlined,
+                  keyboardType: TextInputType.phone,
+                  maxLength: 10,
+                  validator: (v) {
+                    if (v == null || v.trim().isEmpty) {
+                      return 'Contact phone is required';
+                    }
+                    if (v.trim().length != 10) {
+                      return 'Phone number must be exactly 10 digits';
+                    }
+                    if (!RegExp(r'^[0-9]+$').hasMatch(v.trim())) {
+                      return 'Phone number must contain only digits';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                _FieldLabel('PAN Number (Optional)'),
+                const SizedBox(height: 6),
+                _buildField(
+                  controller: _panNumberController,
+                  hint: 'e.g. ABCDE1234F',
+                  icon: Icons.credit_card_outlined,
+                ),
+                const SizedBox(height: 28),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xff0E5A3B),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14)),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      elevation: 0,
+                    ),
+                    onPressed: _isLoading ? null : _submit,
+                    child: _isLoading
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : const Text(
+                            'Create Geofence',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildImagePicker() {
+    if (_shopImagePath != null) {
+      return Stack(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image.file(
+              File(_shopImagePath!),
+              width: double.infinity,
+              height: 160,
+              fit: BoxFit.cover,
+            ),
+          ),
+          if (_uploadStatus == UploadStatus.uploading)
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.black54,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircularProgressIndicator(
+                      value: _uploadProgress > 0 ? _uploadProgress : null,
+                      color: Colors.white,
+                      strokeWidth: 3,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      _uploadProgress > 0
+                          ? '${(_uploadProgress * 100).toInt()}%'
+                          : 'Uploading...',
+                      style: const TextStyle(
+                          color: Colors.white, fontSize: 14),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          if (_uploadStatus == UploadStatus.error)
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.black54,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error_outline,
+                        color: Colors.redAccent, size: 32),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Upload failed',
+                      style:
+                          TextStyle(color: Colors.white, fontSize: 13),
+                    ),
+                    const SizedBox(height: 8),
+                    TextButton(
+                      onPressed: _takePhoto,
+                      child: const Text(
+                        'Retry',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold),
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 20),
+            ),
+          if (_uploadStatus == UploadStatus.done)
+            Positioned(
+              top: 8,
+              left: 8,
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: const BoxDecoration(
+                  color: Color(0xff0E5A3B),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.check,
+                    color: Colors.white, size: 16),
+              ),
+            ),
+          if (_uploadStatus != UploadStatus.uploading)
+            Positioned(
+              top: 8,
+              right: 8,
+              child: GestureDetector(
+                onTap: _removeImage,
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: const BoxDecoration(
+                    color: Colors.black54,
+                    shape: BoxShape.circle,
+                  ),
+                  child:
+                      const Icon(Icons.close, color: Colors.white, size: 18),
+                ),
+              ),
+            ),
+          if (_uploadStatus == UploadStatus.done)
+            Positioned(
+              bottom: 8,
+              right: 8,
+              child: GestureDetector(
+                onTap: _takePhoto,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.camera_alt, color: Colors.white, size: 14),
+                      SizedBox(width: 4),
+                      Text('Retake',
+                          style:
+                              TextStyle(color: Colors.white, fontSize: 12)),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+        ],
+      );
+    }
 
-              // Optional label
-              const Text(
-                'Label (optional)',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF374151),
-                ),
-              ),
-              const SizedBox(height: 6),
-              TextFormField(
-                controller: _labelController,
-                decoration: InputDecoration(
-                  hintText: 'e.g. Warehouse Zone A',
-                  hintStyle:
-                      const TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
-                  prefixIcon: const Icon(Icons.label_outline,
-                      color: Color(0xFF9CA3AF), size: 20),
-                  filled: true,
-                  fillColor: const Color(0xFFF9FAFB),
-                  contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 14),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide:
-                        const BorderSide(color: Color(0xFFE5E7EB)),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide:
-                        const BorderSide(color: Color(0xFFE5E7EB)),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(
-                        color: Color(0xff0E5A3B), width: 1.5),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 28),
-
-              // Confirm button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xff0E5A3B),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14)),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    elevation: 0,
-                  ),
-                  onPressed: () => Navigator.of(context).pop(true),
-                  icon: const Icon(Icons.fence, color: Colors.white, size: 20),
-                  label: const Text(
-                    'Set Geofence',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
+    return GestureDetector(
+      onTap: _takePhoto,
+      child: Container(
+        width: double.infinity,
+        height: 120,
+        decoration: BoxDecoration(
+          color: const Color(0xFFF9FAFB),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFE5E7EB)),
         ),
+        child: const Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.camera_alt,
+                size: 32, color: Color(0xFF9CA3AF)),
+            SizedBox(height: 8),
+            Text(
+              'Tap to take shop photo',
+              style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildField({
+    required TextEditingController controller,
+    required String hint,
+    required IconData icon,
+    TextInputType keyboardType = TextInputType.text,
+    int? maxLength,
+    String? Function(String?)? validator,
+  }) {
+    return TextFormField(
+      controller: controller,
+      keyboardType: keyboardType,
+      maxLength: maxLength,
+      validator: validator,
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle:
+            const TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
+        prefixIcon:
+            Icon(icon, color: const Color(0xFF9CA3AF), size: 20),
+        filled: true,
+        fillColor: const Color(0xFFF9FAFB),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        counterText: '',
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide:
+              const BorderSide(color: Color(0xff0E5A3B), width: 1.5),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.red),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide:
+              const BorderSide(color: Colors.red, width: 1.5),
+        ),
+      ),
+    );
+  }
+}
+
+class _FieldLabel extends StatelessWidget {
+  final String text;
+  const _FieldLabel(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: const TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
+        color: Color(0xFF374151),
       ),
     );
   }
