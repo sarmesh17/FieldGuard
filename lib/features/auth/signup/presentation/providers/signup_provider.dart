@@ -24,6 +24,7 @@ final signupUsecaseProvider = Provider<SignupUsecase>(
   (ref) => SignupUsecase(ref.watch(signupRepositoryProvider)),
 );
 
-final signupNotifierProvider = StateNotifierProvider<SignupNotifier, SignupState>(
-  (ref) => SignupNotifier(ref.watch(signupUsecaseProvider)),
-);
+final signupNotifierProvider =
+    StateNotifierProvider<SignupNotifier, SignupState>(
+      (ref) => SignupNotifier(ref.watch(signupUsecaseProvider)),
+    );
