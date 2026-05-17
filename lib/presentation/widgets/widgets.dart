@@ -1,2 +1,2 @@
 // Barrel file for shared presentation widgets.
-export 'moving_indicator.dart';
+export '../../widgets/moving_indicator.dart';
