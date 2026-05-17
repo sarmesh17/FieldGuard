@@ -22,6 +22,11 @@ jobs:
         with:
           channel: stable
 
+      - name: Create CI assets
+        run: |
+          mkdir -p assets/images
+          echo "MAPBOX_PUBLIC_TOKEN=ci_placeholder" > .env
+
       - name: Install dependencies
         run: flutter pub get
 
@@ -37,6 +42,11 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+
+      - name: Create CI assets
+        run: |
+          mkdir -p assets/images
+          echo "MAPBOX_PUBLIC_TOKEN=ci_placeholder" > .env
 
       - name: Install dependencies
         run: flutter pub get
@@ -63,8 +73,10 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Create dummy .env for CI
-        run: echo "MAPBOX_PUBLIC_TOKEN=ci_placeholder" > .env
+      - name: Create CI assets
+        run: |
+          mkdir -p assets/images
+          echo "MAPBOX_PUBLIC_TOKEN=ci_placeholder" > .env
 
       - name: Build APK
         run: flutter build apk --release
