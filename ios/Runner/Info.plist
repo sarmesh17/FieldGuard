@@ -4,6 +4,15 @@
 <dict>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>FieldGuard needs access to your photo library to upload shop images.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>FieldGuard uses your location to show your position on the live map while you are in the field.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>FieldGuard sends your location to your team in the background while field tracking is on.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+		<string>fetch</string>
+	</array>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
