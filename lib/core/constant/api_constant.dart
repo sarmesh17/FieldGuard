@@ -19,6 +19,11 @@ class ApiConstant {
   // The endpoint for getting list of employees
   static const String getEmployeesEndpoint = "$baseUrl/api/v1/employees";
 
+  // The endpoint for live/online employees (Redis-backed).
+  // ADMIN sees whole company; MANAGER sees only their team.
+  static const String getLiveEmployeesEndpoint =
+      "$baseUrl/api/v1/employees/live";
+
   // The endpoint for getting list of managers
   static const String getManagersEndpoint = "$baseUrl/api/v1/managers";
 

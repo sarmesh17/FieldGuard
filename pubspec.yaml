@@ -50,6 +50,7 @@ dependencies:
 
   # Image compression
   flutter_image_compress: ^2.4.0
+  socket_io_client: ^3.1.4
 
 dev_dependencies:
   flutter_test:
