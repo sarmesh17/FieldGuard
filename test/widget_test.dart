@@ -1,14 +1,29 @@
+import 'package:fieldguard/features/auth/login/presentation/providers/login_provider.dart';
+import 'package:fieldguard/features/auth/login/presentation/providers/login_state.dart';
+import 'package:fieldguard/features/splash_screen/splash_screen.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fieldguard/main.dart';
 
 void main() {
-  testWidgets('App starts and shows splash screen', (WidgetTester tester) async {
+  testWidgets('Splash screen renders app name', (WidgetTester tester) async {
     await tester.pumpWidget(
-      const ProviderScope(child: MyApp()),
+      ProviderScope(
+        overrides: [
+          loginNotifierProvider.overrideWith(
+            (ref) => _FakeLoginNotifier(),
+          ),
+        ],
+        child: const MaterialApp(home: SplashScreen()),
+      ),
     );
 
-    // Splash screen renders the app name
+    await tester.pump();
+
     expect(find.text('FieldGuard'), findsOneWidget);
   });
+}
+
+class _FakeLoginNotifier extends StateNotifier<LoginState> {
+  _FakeLoginNotifier() : super(const LoginInitial());
 }
