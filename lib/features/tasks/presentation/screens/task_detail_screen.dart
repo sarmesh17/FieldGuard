@@ -1,7 +1,22 @@
+import 'dart:io';
+
+import 'package:fieldguard/core/networks/dio_client.dart';
+import 'package:fieldguard/core/utils/results.dart';
+import 'package:fieldguard/features/auth/login/presentation/providers/login_provider.dart';
+import 'package:fieldguard/features/auth/login/presentation/providers/login_state.dart';
 import 'package:fieldguard/features/tasks/data/dto/create_task_response.dart';
+import 'package:fieldguard/features/tasks/data/dto/update_task_request.dart';
 import 'package:fieldguard/features/tasks/presentation/providers/tasks_provider.dart';
+import 'package:fieldguard/features/tasks/presentation/screens/task_history_screen.dart';
+import 'package:fieldguard/features/tasks/presentation/screens/task_live_tracking_screen.dart';
+import 'package:fieldguard/features/collections/presentation/screens/collect_payment_screen.dart';
+import 'package:fieldguard/features/routes/presentation/providers/navigate_target_provider.dart';
+import 'package:fieldguard/features/uploads/image_upload_service.dart';
+import 'package:fieldguard/core/router/app_routes.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shimmer/shimmer.dart';
 
 const _kBrand = Color(0xff005C33);
@@ -31,7 +46,16 @@ class TaskDetailScreen extends ConsumerWidget {
             onRetry: () => ref.invalidate(taskDetailProvider(taskId)),
           ),
         ),
-        data: (response) => _TaskDetailBody(task: response.task),
+        data: (response) {
+          // Only ADMIN / MANAGER may live-track an assignee (the spec's
+          // "viewers"); an EMPLOYEE viewing their own task can't.
+          final login = ref.watch(loginNotifierProvider);
+          final role = login is LoginSuccess
+              ? login.response.user.role.toUpperCase()
+              : '';
+          final canTrack = role == 'ADMIN' || role == 'MANAGER';
+          return _TaskDetailBody(task: response.task, canTrack: canTrack);
+        },
       ),
     );
   }
@@ -66,16 +90,17 @@ class _DetailScaffold extends StatelessWidget {
 
 // ─── Body ─────────────────────────────────────────────────────────────────────
 
-class _TaskDetailBody extends StatefulWidget {
+class _TaskDetailBody extends ConsumerStatefulWidget {
   final TaskData task;
+  final bool canTrack;
 
-  const _TaskDetailBody({required this.task});
+  const _TaskDetailBody({required this.task, required this.canTrack});
 
   @override
-  State<_TaskDetailBody> createState() => _TaskDetailBodyState();
+  ConsumerState<_TaskDetailBody> createState() => _TaskDetailBodyState();
 }
 
-class _TaskDetailBodyState extends State<_TaskDetailBody>
+class _TaskDetailBodyState extends ConsumerState<_TaskDetailBody>
     with TickerProviderStateMixin {
   late final AnimationController _entrance;
 
@@ -92,6 +117,77 @@ class _TaskDetailBodyState extends State<_TaskDetailBody>
   void dispose() {
     _entrance.dispose();
     super.dispose();
+  }
+
+  bool _canUpdate(String status) {
+    final s = status.toUpperCase();
+    return s == 'PENDING' || s == 'IN_PROGRESS';
+  }
+
+  /// The task's shop coordinates, preferring the linked shop's and falling
+  /// back to the legacy raw coordinates. Null when neither is parseable —
+  /// then there's nothing to navigate to.
+  ({double lat, double lng})? _navCoords(TaskData task) {
+    final lat = double.tryParse(task.shop?.latitude ?? task.shopLatitude ?? '');
+    final lng =
+        double.tryParse(task.shop?.longitude ?? task.shopLongitude ?? '');
+    if (lat == null || lng == null) return null;
+    return (lat: lat, lng: lng);
+  }
+
+  /// Logged-in user's role (`ADMIN` / `MANAGER` / `EMPLOYEE`), or empty
+  /// string when the session is somehow unresolved. Matches the same lookup
+  /// the outer [TaskDetailScreen] uses for [canTrack].
+  String _userRole() {
+    final login = ref.read(loginNotifierProvider);
+    return login is LoginSuccess
+        ? login.response.user.role.toUpperCase()
+        : '';
+  }
+
+  /// Opens the collection form for this task's shop. The collection endpoint
+  /// is task-independent (only needs shopId), so we pass through from the
+  /// linked shop directly.
+  void _collectPayment(TaskData task) {
+    final shop = task.shop;
+    if (shop == null) return;
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => CollectPaymentScreen(
+          shopId: shop.id,
+          shopName: shop.name,
+        ),
+      ),
+    );
+  }
+
+  /// Sets the navigation target and switches to the Routes tab, which draws
+  /// the driving route to this task's shop. The shop's own 20 m geofence is
+  /// armed separately by [AutoGeofenceService] for any IN_PROGRESS task, so
+  /// enter/stay/exit is recorded regardless of whether the user taps this.
+  void _navigateToShop(TaskData task) {
+    final c = _navCoords(task);
+    if (c == null) return;
+    ref.read(navigateTargetProvider.notifier).state = NavigateTarget(
+      taskId: task.id,
+      lat: c.lat,
+      lng: c.lng,
+      shopName: task.shop?.name ?? task.title,
+      address: task.shop?.address,
+    );
+    context.go(AppRoutes.routes);
+  }
+
+  Future<void> _showUpdateSheet(TaskData task) async {
+    final updated = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _UpdateTaskSheet(task: task),
+    );
+    if (updated == true && mounted) {
+      ref.invalidate(taskDetailProvider(task.id));
+    }
   }
 
   /// Staggered fade + rise so the sections cascade in on open.
@@ -120,6 +216,11 @@ class _TaskDetailBodyState extends State<_TaskDetailBody>
     final task = widget.task;
     final sections = <Widget>[
       _StatusTrackerCard(task: task),
+      if (widget.canTrack &&
+          task.status.toUpperCase() == 'IN_PROGRESS') ...[
+        const SizedBox(height: 14),
+        _TrackLiveButton(task: task),
+      ],
       const SizedBox(height: 18),
       if (task.description.isNotEmpty) ...[
         _LabeledCard(
@@ -150,9 +251,10 @@ class _TaskDetailBodyState extends State<_TaskDetailBody>
         ),
         const SizedBox(height: 14),
       ],
-      _LocationCard(
-        latitude: task.shopLatitude,
-        longitude: task.shopLongitude,
+      _ShopCard(
+        shop: task.shop,
+        legacyLatitude: task.shopLatitude,
+        legacyLongitude: task.shopLongitude,
       ),
       _LabeledCard(
         icon: Icons.groups_rounded,
@@ -184,6 +286,10 @@ class _TaskDetailBodyState extends State<_TaskDetailBody>
           ],
         ),
       ),
+      if (task.geofenceVisits.isNotEmpty) ...[
+        const SizedBox(height: 14),
+        _VisitsCard(visits: task.geofenceVisits),
+      ],
       if (task.remarks != null && task.remarks!.isNotEmpty) ...[
         const SizedBox(height: 14),
         _LabeledCard(
@@ -196,24 +302,143 @@ class _TaskDetailBodyState extends State<_TaskDetailBody>
           ),
         ),
       ],
-      const SizedBox(height: 14),
-      _TimelineCard(task: task),
       const SizedBox(height: 36),
     ];
 
-    return CustomScrollView(
-      slivers: [
-        _DetailAppBar(task: task),
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(16, 18, 16, 0),
-          sliver: SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (_, i) => _stagger(i, sections[i]),
-              childCount: sections.length,
+    final bottomPad = MediaQuery.of(context).padding.bottom;
+    return Stack(
+      children: [
+        CustomScrollView(
+          slivers: [
+            _DetailAppBar(task: task),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 18, 16, 0),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (_, i) => _stagger(i, sections[i]),
+                  childCount: sections.length,
+                ),
+              ),
             ),
+          ],
+        ),
+        Positioned(
+          bottom: bottomPad + 20,
+          right: 20,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              if (task.status.toUpperCase() == 'IN_PROGRESS' &&
+                  _navCoords(task) != null) ...[
+                _NavigateFab(onTap: () => _navigateToShop(task)),
+                const SizedBox(height: 12),
+              ],
+              // Collect Payment: IN_PROGRESS + shop linked + not ADMIN
+              // (server returns 403 for ADMIN; this matches that scope).
+              if (task.status.toUpperCase() == 'IN_PROGRESS' &&
+                  task.shop != null &&
+                  _userRole() != 'ADMIN') ...[
+                _CollectPaymentFab(onTap: () => _collectPayment(task)),
+                const SizedBox(height: 12),
+              ],
+              if (_canUpdate(task.status))
+                _UpdateFab(onTap: () => _showUpdateSheet(task)),
+            ],
           ),
         ),
       ],
+    );
+  }
+}
+
+// ─── Track Live ───────────────────────────────────────────────────────────────
+
+class _TrackLiveButton extends StatelessWidget {
+  final TaskData task;
+
+  const _TrackLiveButton({required this.task});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => TaskLiveTrackingScreen(
+              taskId: task.id,
+              employeeId: task.assignee.id,
+              taskTitle: task.title,
+              employeeName: task.assignee.fullName,
+            ),
+          ),
+        ),
+        child: Ink(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [_kBrand, _kBrandLight],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: _kBrand.withValues(alpha: 0.35),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+            child: Row(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.18),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.my_location_rounded,
+                      color: Colors.white, size: 20),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Track Live',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 15.5,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Follow ${task.assignee.fullName} on the map',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.85),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.chevron_right_rounded,
+                    color: Colors.white, size: 22),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -238,6 +463,21 @@ class _DetailAppBar extends StatelessWidget {
             color: Colors.white, size: 20),
         onPressed: () => Navigator.pop(context),
       ),
+      actions: [
+        IconButton(
+          tooltip: 'Task history',
+          icon: const Icon(Icons.history_rounded, color: Colors.white, size: 22),
+          onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => TaskHistoryScreen(
+                taskId: task.id,
+                taskTitle: task.title,
+              ),
+            ),
+          ),
+        ),
+      ],
       flexibleSpace: FlexibleSpaceBar(
         background: Stack(
           fit: StackFit.expand,
@@ -345,7 +585,7 @@ class _StatusTrackerCard extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           if (isCancelled)
-            const _CancelledState()
+            _CancelledState(task: task)
           else
             _StatusStepper(status: task.status),
         ],
@@ -629,55 +869,104 @@ class _ProgressCaption extends StatelessWidget {
 }
 
 class _CancelledState extends StatelessWidget {
-  const _CancelledState();
+  final TaskData task;
+
+  const _CancelledState({required this.task});
+
+  static const _red = Color(0xffFF3347);
+
+  static String _reasonLabel(String? raw) => switch (raw) {
+        'SHOP_CLOSED' => 'Shop Closed',
+        'SHOP_RELOCATED' => 'Shop Relocated',
+        'SHOP_PERMANENTLY_CLOSED' => 'Shop Permanently Closed',
+        'SHOP_NOT_FOUND' => 'Shop Not Found',
+        'OTHER' => 'Other',
+        _ => 'Unknown Reason',
+      };
 
   @override
   Widget build(BuildContext context) {
-    const red = Color(0xffFF3347);
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
-        gradient: LinearGradient(
-          colors: [red.withValues(alpha: 0.10), red.withValues(alpha: 0.04)],
-        ),
-        border: Border.all(color: red.withValues(alpha: 0.25)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: red.withValues(alpha: 0.15),
-            ),
-            child: const Icon(Icons.cancel_rounded, color: red, size: 24),
-          ),
-          const SizedBox(width: 14),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Task Cancelled',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                    color: red,
-                  ),
-                ),
-                SizedBox(height: 2),
-                Text(
-                  'This task is no longer active.',
-                  style: TextStyle(fontSize: 12.5, color: Color(0xff8A7178)),
-                ),
+    final reasonLabel = task.cancelReason != null
+        ? _reasonLabel(task.cancelReason)
+        : null;
+    final hasImage = task.cancelImage != null && task.cancelImage!.isNotEmpty;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            gradient: LinearGradient(
+              colors: [
+                _red.withValues(alpha: 0.10),
+                _red.withValues(alpha: 0.04),
               ],
+            ),
+            border: Border.all(color: _red.withValues(alpha: 0.25)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: _red.withValues(alpha: 0.15),
+                ),
+                child:
+                    const Icon(Icons.cancel_rounded, color: _red, size: 24),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Task Cancelled',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: _red,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      reasonLabel != null
+                          ? 'Reason: $reasonLabel'
+                          : 'This task is no longer active.',
+                      style: const TextStyle(
+                          fontSize: 12.5, color: Color(0xff8A7178)),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (hasImage) ...[
+          const SizedBox(height: 10),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image.network(
+              task.cancelImage!,
+              width: double.infinity,
+              height: 180,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stack) => Container(
+                height: 180,
+                color: _red.withValues(alpha: 0.06),
+                child: const Center(
+                  child: Icon(Icons.broken_image_rounded,
+                      color: _red, size: 32),
+                ),
+              ),
             ),
           ),
         ],
-      ),
+      ],
     );
   }
 }
@@ -714,22 +1003,39 @@ class _DueChip extends StatelessWidget {
   }
 }
 
-// ─── Location ─────────────────────────────────────────────────────────────────
+// ─── Shop / Location ──────────────────────────────────────────────────────────
 
-/// Shop coordinates arrive from the API as strings (DB decimal), so we
-/// `double.tryParse` (the Dart equivalent of parseFloat) before showing
-/// them. If either value is missing or unparseable we hide the card.
-class _LocationCard extends StatelessWidget {
-  final String? latitude;
-  final String? longitude;
+/// Shows the linked shop (name + image + address) when present. Falls back
+/// to raw coordinates for legacy tasks created before the shopId migration —
+/// those don't carry a `shop` object, only the coordinates that were
+/// captured at the time. Shop coordinates arrive as DB-decimal strings, so
+/// we `double.tryParse` before formatting them.
+class _ShopCard extends StatelessWidget {
+  final TaskShop? shop;
+  final String? legacyLatitude;
+  final String? legacyLongitude;
 
-  const _LocationCard({required this.latitude, required this.longitude});
+  const _ShopCard({
+    required this.shop,
+    required this.legacyLatitude,
+    required this.legacyLongitude,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final lat = latitude == null ? null : double.tryParse(latitude!);
-    final lng = longitude == null ? null : double.tryParse(longitude!);
+    if (shop != null) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 14),
+        child: _LabeledCard(
+          icon: Icons.storefront_rounded,
+          title: 'Shop',
+          child: _ShopBody(shop: shop!),
+        ),
+      );
+    }
 
+    final lat = legacyLatitude == null ? null : double.tryParse(legacyLatitude!);
+    final lng = legacyLongitude == null ? null : double.tryParse(legacyLongitude!);
     if (lat == null || lng == null) return const SizedBox.shrink();
 
     return Padding(
@@ -771,6 +1077,16 @@ class _LocationCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    const Text(
+                      'Legacy task — no shop linked',
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w700,
+                        color: _kMuted,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
                     _CoordLine(label: 'LAT', value: lat.toStringAsFixed(5)),
                     const SizedBox(height: 4),
                     _CoordLine(label: 'LNG', value: lng.toStringAsFixed(5)),
@@ -780,6 +1096,107 @@ class _LocationCard extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _ShopBody extends StatelessWidget {
+  final TaskShop shop;
+
+  const _ShopBody({required this.shop});
+
+  @override
+  Widget build(BuildContext context) {
+    final hasImage = shop.shopImage != null && shop.shopImage!.isNotEmpty;
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            _kBrand.withValues(alpha: 0.08),
+            _kBrandLight.withValues(alpha: 0.03),
+          ],
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              width: 56,
+              height: 56,
+              color: Colors.white,
+              child: hasImage
+                  ? Image.network(
+                      shop.shopImage!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, _, _) => const Icon(
+                        Icons.store_rounded,
+                        color: _kBrand,
+                        size: 26,
+                      ),
+                    )
+                  : const Icon(
+                      Icons.store_rounded,
+                      color: _kBrand,
+                      size: 26,
+                    ),
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  shop.name,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: _kInk,
+                  ),
+                ),
+                if (shop.address != null && shop.address!.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    shop.address!,
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      color: Color(0xff5A6472),
+                      height: 1.35,
+                    ),
+                  ),
+                ],
+                if (shop.latitude != null && shop.longitude != null) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      const Icon(Icons.place_rounded, size: 14, color: _kMuted),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          '${shop.latitude}, ${shop.longitude}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w600,
+                            color: _kMuted,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -826,105 +1243,237 @@ class _CoordLine extends StatelessWidget {
   }
 }
 
-// ─── Timeline ─────────────────────────────────────────────────────────────────
+// ─── Geofence Visits ──────────────────────────────────────────────────────────
 
-class _TimelineCard extends StatelessWidget {
-  final TaskData task;
+/// Timeline of geofence visits for the task (enter-time ascending), rendered
+/// as a vertical list of entry → exit cards. Each shows the stay duration and
+/// flags exits the system had to estimate.
+class _VisitsCard extends StatelessWidget {
+  final List<TaskGeofenceVisit> visits;
 
-  const _TimelineCard({required this.task});
+  const _VisitsCard({required this.visits});
 
   @override
   Widget build(BuildContext context) {
-    final events = <(String, String, IconData)>[
-      ('Created', _formatDateTime(task.createdAt), Icons.add_circle_outline_rounded),
-      ('Last updated', _formatDateTime(task.updatedAt), Icons.update_rounded),
-      if (task.completedAt != null)
-        ('Completed', _formatDateTime(task.completedAt!),
-            Icons.task_alt_rounded),
-    ];
-
     return _LabeledCard(
-      icon: Icons.history_rounded,
-      title: 'Activity',
+      icon: Icons.pin_drop_rounded,
+      title: 'Visits',
+      trailing: _CountPill(count: visits.length),
       child: Column(
         children: [
-          for (var i = 0; i < events.length; i++)
-            _TimelineRow(
-              label: events[i].$1,
-              value: events[i].$2,
-              icon: events[i].$3,
-              isLast: i == events.length - 1,
-            ),
+          for (var i = 0; i < visits.length; i++) ...[
+            if (i > 0) const SizedBox(height: 12),
+            _VisitRow(visit: visits[i], index: i),
+          ],
         ],
       ),
     );
   }
 }
 
-class _TimelineRow extends StatelessWidget {
-  final String label;
-  final String value;
-  final IconData icon;
-  final bool isLast;
+class _VisitRow extends StatelessWidget {
+  final TaskGeofenceVisit visit;
+  final int index;
 
-  const _TimelineRow({
-    required this.label,
-    required this.value,
+  const _VisitRow({required this.visit, required this.index});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        color: _kBg,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 26,
+                height: 26,
+                alignment: Alignment.center,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [_kBrand, _kBrandLight],
+                  ),
+                ),
+                child: Text(
+                  '${index + 1}',
+                  style: const TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              _DurationPill(seconds: visit.stayDurationSeconds),
+              const Spacer(),
+              if (visit.exitEstimated) const _ApproxBadge(),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _VisitStop(
+            icon: Icons.login_rounded,
+            label: 'Entered',
+            time: visit.enteredAt,
+            lat: visit.enterLatitude,
+            lng: visit.enterLongitude,
+          ),
+          const Padding(
+            padding: EdgeInsets.only(left: 11, top: 2, bottom: 2),
+            child: SizedBox(
+              height: 14,
+              child: VerticalDivider(
+                width: 2,
+                thickness: 2,
+                color: Color(0xffD7DDE4),
+              ),
+            ),
+          ),
+          _VisitStop(
+            icon: Icons.logout_rounded,
+            label: 'Exited',
+            time: visit.exitedAt,
+            lat: visit.exitLatitude,
+            lng: visit.exitLongitude,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// One end of a visit (enter or exit): local time plus the captured coords.
+class _VisitStop extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final DateTime time;
+  final double lat;
+  final double lng;
+
+  const _VisitStop({
     required this.icon,
-    required this.isLast,
+    required this.label,
+    required this.time,
+    required this.lat,
+    required this.lng,
   });
 
   @override
   Widget build(BuildContext context) {
-    return IntrinsicHeight(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Column(
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 16, color: _kBrand),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 30,
-                height: 30,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: _kBrand.withValues(alpha: 0.10),
-                ),
-                child: Icon(icon, size: 15, color: _kBrand),
-              ),
-              if (!isLast)
-                Expanded(
-                  child: Container(
-                    width: 2,
-                    margin: const EdgeInsets.symmetric(vertical: 4),
-                    color: const Color(0xffEAEEF2),
+              Row(
+                children: [
+                  Text(
+                    label,
+                    style: const TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w700,
+                      color: _kMuted,
+                    ),
                   ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _formatDateTime(time),
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: _kInk,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 2),
+              Text(
+                '${lat.toStringAsFixed(5)}, ${lng.toStringAsFixed(5)}',
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: _kMuted,
+                  letterSpacing: 0.2,
                 ),
+              ),
             ],
           ),
-          const SizedBox(width: 12),
-          Padding(
-            padding: EdgeInsets.only(bottom: isLast ? 0 : 16, top: 5),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: _kMuted,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: _kInk,
-                  ),
-                ),
-              ],
+        ),
+      ],
+    );
+  }
+}
+
+class _DurationPill extends StatelessWidget {
+  final int seconds;
+
+  const _DurationPill({required this.seconds});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: _kBrand.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.timer_outlined, size: 13, color: _kBrand),
+          const SizedBox(width: 5),
+          Text(
+            _formatDuration(seconds),
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              color: _kBrand,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Shown when an exit was estimated rather than cleanly observed.
+class _ApproxBadge extends StatelessWidget {
+  const _ApproxBadge();
+
+  static const _amber = Color(0xffB7791F);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xffF59E0B).withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.help_outline_rounded, size: 12, color: _amber),
+          SizedBox(width: 4),
+          Text(
+            '~approx exit',
+            style: TextStyle(
+              fontSize: 10.5,
+              fontWeight: FontWeight.w800,
+              color: _amber,
             ),
           ),
         ],
@@ -1418,14 +1967,752 @@ String _formatDate(String isoDate) {
   }
 }
 
-String _formatDateTime(String isoDate) {
-  try {
-    final dt = DateTime.parse(isoDate).toLocal();
-    final h = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
-    final m = dt.minute.toString().padLeft(2, '0');
-    final ap = dt.hour < 12 ? 'AM' : 'PM';
-    return '${_formatDate(isoDate)} · $h:$m $ap';
-  } catch (_) {
-    return isoDate;
+const _months = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+];
+
+/// `May 24, 9:00 AM` — date dropped to the day, time to the minute. Input is
+/// converted to local before formatting.
+String _formatDateTime(DateTime utc) {
+  final dt = utc.toLocal();
+  final hour12 = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+  final minute = dt.minute.toString().padLeft(2, '0');
+  final meridiem = dt.hour < 12 ? 'AM' : 'PM';
+  return '${_months[dt.month - 1]} ${dt.day}, $hour12:$minute $meridiem';
+}
+
+/// Compact human duration: `45s`, `12m`, `1h 18m`. Visit durations are
+/// client-authoritative seconds (kept as sent, even for estimated exits).
+String _formatDuration(int seconds) {
+  if (seconds < 60) return '${seconds}s';
+  final minutes = seconds ~/ 60;
+  if (minutes < 60) return '${minutes}m';
+  final hours = minutes ~/ 60;
+  final remMinutes = minutes % 60;
+  return remMinutes == 0 ? '${hours}h' : '${hours}h ${remMinutes}m';
+}
+
+// ─── Navigate FAB ─────────────────────────────────────────────────────────────
+
+/// Switches to the Routes tab to draw the driving route to this task's shop.
+/// White pill so it reads as secondary to the brand-coloured Update FAB above
+/// which it sits.
+class _NavigateFab extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _NavigateFab({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(30),
+      elevation: 6,
+      shadowColor: Colors.black.withValues(alpha: 0.20),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(30),
+        child: const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 22, vertical: 14),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.navigation_rounded, color: _kBrand, size: 18),
+              SizedBox(width: 8),
+              Text(
+                'Navigate',
+                style: TextStyle(
+                  color: _kBrand,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
+
+// ─── Collect Payment FAB ──────────────────────────────────────────────────────
+
+/// Amber FAB so it reads as a distinct action from the white Navigate and
+/// brand-green Update buttons it sits with. Same `field_guard_re` colour
+/// language so designs stay consistent across the two apps.
+class _CollectPaymentFab extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _CollectPaymentFab({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    const amber = Color(0xffB45309);
+    return Material(
+      color: amber,
+      borderRadius: BorderRadius.circular(30),
+      elevation: 6,
+      shadowColor: amber.withValues(alpha: 0.40),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(30),
+        child: const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 22, vertical: 14),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.payments_rounded, color: Colors.white, size: 18),
+              SizedBox(width: 8),
+              Text(
+                'Collect Payment',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Update FAB ───────────────────────────────────────────────────────────────
+
+class _UpdateFab extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _UpdateFab({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: _kBrand,
+      borderRadius: BorderRadius.circular(30),
+      elevation: 6,
+      shadowColor: _kBrand.withValues(alpha: 0.40),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(30),
+        child: const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 22, vertical: 14),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.edit_rounded, color: Colors.white, size: 18),
+              SizedBox(width: 8),
+              Text(
+                'Update',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Update Task Sheet ────────────────────────────────────────────────────────
+
+class _UpdateTaskSheet extends ConsumerStatefulWidget {
+  final TaskData task;
+
+  const _UpdateTaskSheet({required this.task});
+
+  @override
+  ConsumerState<_UpdateTaskSheet> createState() => _UpdateTaskSheetState();
+}
+
+class _UpdateTaskSheetState extends ConsumerState<_UpdateTaskSheet> {
+  late String _selectedStatus;
+  CancelReason? _cancelReason;
+  final _changeReasonCtrl = TextEditingController();
+  final _remarksCtrl = TextEditingController();
+  String? _imagePath;
+  String? _imageKey;
+  UploadStatus _uploadStatus = UploadStatus.idle;
+  double _uploadProgress = 0.0;
+  bool _submitting = false;
+  String? _errorMessage;
+
+  late final ImageUploadService _uploadService;
+
+  static const _statuses = [
+    ('PENDING', 'Pending', Color(0xffF59E0B)),
+    ('IN_PROGRESS', 'In Progress', Color(0xff3B82F6)),
+    ('COMPLETED', 'Completed', Color(0xff22C55E)),
+    ('CANCELLED', 'Cancelled', Color(0xff6B7280)),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedStatus = widget.task.status.toUpperCase();
+    _remarksCtrl.text = widget.task.remarks ?? '';
+    _uploadService = ImageUploadService(DioClient.createDio());
+  }
+
+  @override
+  void dispose() {
+    _changeReasonCtrl.dispose();
+    _remarksCtrl.dispose();
+    super.dispose();
+  }
+
+  void _onStatusTap(String status) {
+    _changeReasonCtrl.clear();
+    setState(() {
+      _selectedStatus = status;
+      _cancelReason = null;
+      _imagePath = null;
+      _imageKey = null;
+      _uploadStatus = UploadStatus.idle;
+      _errorMessage = null;
+    });
+  }
+
+  void _onReasonTap(CancelReason reason) {
+    setState(() {
+      _cancelReason = reason;
+      _imagePath = null;
+      _imageKey = null;
+      _uploadStatus = UploadStatus.idle;
+      _errorMessage = null;
+    });
+  }
+
+  Future<void> _pickImage() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      allowMultiple: false,
+    );
+    if (result == null || result.files.single.path == null) return;
+    final path = result.files.single.path!;
+    setState(() {
+      _imagePath = path;
+      _imageKey = null;
+      _uploadStatus = UploadStatus.uploading;
+      _uploadProgress = 0.0;
+      _errorMessage = null;
+    });
+    try {
+      final res = await _uploadService.upload(
+        filePath: path,
+        category: 'cancel',
+        entityId: widget.task.id,
+        onProgress: (p) => setState(() => _uploadProgress = p),
+      );
+      setState(() {
+        _imageKey = res.imageKey;
+        _uploadStatus = UploadStatus.done;
+      });
+    } catch (_) {
+      setState(() {
+        _uploadStatus = UploadStatus.error;
+        _errorMessage = 'Image upload failed. Tap to retry.';
+      });
+    }
+  }
+
+  Future<void> _submit() async {
+    final isCancelling = _selectedStatus == 'CANCELLED';
+    final isReopening = _selectedStatus == 'PENDING' &&
+        widget.task.status.toUpperCase() == 'IN_PROGRESS';
+
+    if (isCancelling) {
+      final reason = _cancelReason;
+      if (reason == null) {
+        setState(() => _errorMessage = 'Please select a cancel reason.');
+        return;
+      }
+      if (reason.requiresPhoto && _imageKey == null) {
+        setState(() => _errorMessage = 'Please attach a cancel photo.');
+        return;
+      }
+      if (reason.requiresChangeReason &&
+          _changeReasonCtrl.text.trim().isEmpty) {
+        setState(() => _errorMessage = 'Please describe the reason.');
+        return;
+      }
+    }
+
+    if (isReopening && _changeReasonCtrl.text.trim().isEmpty) {
+      setState(() => _errorMessage = 'Please provide a reason for reopening.');
+      return;
+    }
+
+    setState(() {
+      _submitting = true;
+      _errorMessage = null;
+    });
+
+    final reason = _cancelReason;
+
+    final request = UpdateTaskRequest(
+      status: _selectedStatus,
+      remarks: _remarksCtrl.text.trim().isNotEmpty
+          ? _remarksCtrl.text.trim()
+          : null,
+      cancelReason: isCancelling ? reason?.value : null,
+      cancelImage:
+          (isCancelling && reason != null && reason.requiresPhoto)
+              ? _imageKey
+              : null,
+      changeReason: isCancelling && reason != null && reason.requiresChangeReason
+          ? _changeReasonCtrl.text.trim()
+          : isReopening
+              ? _changeReasonCtrl.text.trim()
+              : null,
+    );
+
+    final usecase = ref.read(updateTaskUsecaseProvider);
+    final result = await usecase(widget.task.id, request);
+
+    if (!mounted) return;
+    switch (result) {
+      case Success():
+        Navigator.pop(context, true);
+      case Failure(:final exception):
+        setState(() {
+          _submitting = false;
+          _errorMessage = exception.toString();
+        });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final kb = MediaQuery.of(context).viewInsets.bottom;
+    final isCancelling = _selectedStatus == 'CANCELLED';
+
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: EdgeInsets.fromLTRB(20, 16, 20, 20 + kb),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Drag handle
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: const Color(0xffE0E4EA),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 18),
+            // Header
+            Row(
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: _kBrand.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.edit_rounded,
+                      color: _kBrand, size: 18),
+                ),
+                const SizedBox(width: 12),
+                const Text(
+                  'Update Task',
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xff0D1B2A),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+
+            // ── Status ──────────────────────────────────────────────────────
+            const Text(
+              'Status',
+              style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xff0D1B2A)),
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _statuses.map((s) {
+                final (value, label, color) = s;
+                final selected = _selectedStatus == value;
+                return _Chip(
+                  label: label,
+                  selected: selected,
+                  selectedColor: color,
+                  onTap: () => _onStatusTap(value),
+                );
+              }).toList(),
+            ),
+
+            // ── Cancel Reason ────────────────────────────────────────────────
+            if (isCancelling) ...[
+              const SizedBox(height: 18),
+              const Text(
+                'Cancel Reason *',
+                style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xff0D1B2A)),
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: CancelReason.values.map((r) {
+                  final selected = _cancelReason == r;
+                  return _Chip(
+                    label: r.chipLabel,
+                    selected: selected,
+                    selectedColor: const Color(0xffEF4444),
+                    onTap: () => _onReasonTap(r),
+                  );
+                }).toList(),
+              ),
+
+              // ── Cancel Photo ─────────────────────────────────────────────
+              if (_cancelReason != null &&
+                  _cancelReason!.requiresPhoto) ...[
+                const SizedBox(height: 18),
+                const Text(
+                  'Cancel Photo *',
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xff0D1B2A)),
+                ),
+                const SizedBox(height: 10),
+                _ImagePickerSection(
+                  imagePath: _imagePath,
+                  uploadStatus: _uploadStatus,
+                  uploadProgress: _uploadProgress,
+                  onTap: _uploadStatus == UploadStatus.uploading
+                      ? null
+                      : _pickImage,
+                ),
+              ],
+
+              // ── Change Reason (OTHER) ────────────────────────────────────
+              if (_cancelReason == CancelReason.other) ...[
+                const SizedBox(height: 18),
+                const Text(
+                  'Reason *',
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xff0D1B2A)),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: _changeReasonCtrl,
+                  maxLines: 3,
+                  decoration: InputDecoration(
+                    hintText: 'Describe the reason…',
+                    hintStyle: const TextStyle(
+                        fontSize: 13.5, color: Color(0xffB0B7C3)),
+                    filled: true,
+                    fillColor: const Color(0xffF2F4F7),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 12),
+                  ),
+                ),
+              ],
+            ],
+
+            // ── Reopen Reason ─────────────────────────────────────────────────
+            if (_selectedStatus == 'PENDING' &&
+                widget.task.status.toUpperCase() == 'IN_PROGRESS') ...[
+              const SizedBox(height: 18),
+              const Text(
+                'Reason for Reopening *',
+                style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xff0D1B2A)),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: _changeReasonCtrl,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  hintText: 'Why is this task being reopened?',
+                  hintStyle: const TextStyle(
+                      fontSize: 13.5, color: Color(0xffB0B7C3)),
+                  filled: true,
+                  fillColor: const Color(0xffF2F4F7),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 14, vertical: 12),
+                ),
+              ),
+            ],
+
+            // ── Remarks ──────────────────────────────────────────────────────
+            const SizedBox(height: 18),
+            const Text(
+              'Remarks (optional)',
+              style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xff0D1B2A)),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: _remarksCtrl,
+              maxLines: 3,
+              decoration: InputDecoration(
+                hintText: 'Add any remarks…',
+                hintStyle: const TextStyle(
+                    fontSize: 13.5, color: Color(0xffB0B7C3)),
+                filled: true,
+                fillColor: const Color(0xffF2F4F7),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 14, vertical: 12),
+              ),
+            ),
+
+            if (_errorMessage != null) ...[
+              const SizedBox(height: 10),
+              Text(
+                _errorMessage!,
+                style: const TextStyle(
+                    fontSize: 12.5, color: Color(0xffEF4444)),
+              ),
+            ],
+
+            const SizedBox(height: 24),
+            // ── Action buttons ────────────────────────────────────────────────
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed:
+                        _submitting ? null : () => Navigator.pop(context),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      side: const BorderSide(color: Color(0xffE0E4EA)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14)),
+                    ),
+                    child: const Text(
+                      'Cancel',
+                      style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xff6B7280)),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 2,
+                  child: ElevatedButton(
+                    onPressed: _submitting ? null : _submit,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _kBrand,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14)),
+                    ),
+                    child: _submitting
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2, color: Colors.white),
+                          )
+                        : const Text(
+                            'Save Changes',
+                            style: TextStyle(
+                                fontSize: 14, fontWeight: FontWeight.w700),
+                          ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Chip ─────────────────────────────────────────────────────────────────────
+
+class _Chip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final Color selectedColor;
+  final VoidCallback onTap;
+
+  const _Chip({
+    required this.label,
+    required this.selected,
+    required this.selectedColor,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          color: selected
+              ? selectedColor
+              : const Color(0xffF2F4F7),
+          border: Border.all(
+            color: selected ? selectedColor : const Color(0xffE0E4EA),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (selected) ...[
+              const Icon(Icons.check_rounded,
+                  color: Colors.white, size: 14),
+              const SizedBox(width: 5),
+            ],
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color:
+                    selected ? Colors.white : const Color(0xff6B7280),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ImagePickerSection extends StatelessWidget {
+  final String? imagePath;
+  final UploadStatus uploadStatus;
+  final double uploadProgress;
+  final VoidCallback? onTap;
+
+  const _ImagePickerSection({
+    required this.imagePath,
+    required this.uploadStatus,
+    required this.uploadProgress,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final hasImage = imagePath != null;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        height: hasImage ? 160 : 90,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          color: const Color(0xffF2F4F7),
+          border: Border.all(
+            color: const Color(0xffE0E4EA),
+            width: 1.5,
+          ),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: hasImage
+            ? Stack(
+                fit: StackFit.expand,
+                children: [
+                  Image.file(File(imagePath!), fit: BoxFit.cover),
+                  if (uploadStatus == UploadStatus.uploading)
+                    Container(
+                      color: Colors.black54,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          CircularProgressIndicator(
+                            value: uploadProgress,
+                            color: Colors.white,
+                            strokeWidth: 3,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            '${(uploadProgress * 100).toInt()}%',
+                            style: const TextStyle(
+                                color: Colors.white, fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    ),
+                  if (uploadStatus == UploadStatus.done)
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Color(0xff22C55E),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.check,
+                            color: Colors.white, size: 14),
+                      ),
+                    ),
+                ],
+              )
+            : Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  Icon(Icons.add_a_photo_rounded,
+                      size: 26, color: Color(0xffB0B7C3)),
+                  SizedBox(height: 6),
+                  Text(
+                    'Attach cancel photo (required)',
+                    style: TextStyle(
+                        fontSize: 12.5, color: Color(0xff8A94A6)),
+                  ),
+                ],
+              ),
+      ),
+    );
+  }
+}
+

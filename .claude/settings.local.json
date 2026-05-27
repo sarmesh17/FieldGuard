@@ -4,7 +4,9 @@
       "Bash(git push *)",
       "Bash(xargs grep -l \"ProfileScreen\\\\|profile_screen\")",
       "Bash(xargs head -20)",
-      "Bash(xargs grep -l \"SharedPreferences\\\\|save.*user\\\\|cache.*user\")"
+      "Bash(xargs grep -l \"SharedPreferences\\\\|save.*user\\\\|cache.*user\")",
+      "Bash(cd d:/FieldGuard/field_guard_re && find lib -type d 2>/dev/null | grep -iE \"geofenc|auto_geo\" ; echo \"=== ALL geofence files ===\"; find lib -type f \\\\\\( -iname \"*geofenc*\" -o -iname \"*geo_fence*\" \\\\\\) 2>/dev/null)",
+      "Read(//d/FieldGuard/field_guard_re/**)"
     ]
   }
 }

@@ -1,8 +1,10 @@
 import 'package:fieldguard/core/responsive/responsive.dart';
 import 'package:fieldguard/core/router/app_routes.dart';
+import 'package:fieldguard/core/services/session.dart';
 import 'package:fieldguard/features/shops/domain/models/shop_with_creator.dart';
 import 'package:fieldguard/features/shops/presentation/providers/shops_provider.dart';
 import 'package:fieldguard/features/shops/presentation/providers/shops_state.dart';
+import 'package:fieldguard/features/shops/presentation/screens/create_shop_map_screen.dart';
 import 'package:fieldguard/features/shops/presentation/screens/shop_detail_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,15 +18,55 @@ class ShopsScreen extends ConsumerStatefulWidget {
 }
 
 class _ShopsScreenState extends ConsumerState<ShopsScreen> {
-  List<ShopWithCreator> _filteredShops = [];
-  String _selectedFilter = 'All';
+  String _selectedSource = '';
+  String _searchQuery = '';
+  List<String> _availableSources = [];
   final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    // Load shops when screen initializes
-    Future.microtask(() => ref.read(shopsNotifierProvider.notifier).loadShops());
+    _initializeRole();
+  }
+
+  Future<void> _initializeRole() async {
+    final role = await Session.role();
+    if (!mounted) return;
+
+    final normalized = role?.toLowerCase() ?? '';
+    final sources = _getAvailableSourcesForRole(normalized);
+    final firstSource = sources.isNotEmpty ? sources.first : '';
+
+    setState(() {
+      _availableSources = sources;
+      _selectedSource = firstSource;
+    });
+
+    await _loadShopsForSource(firstSource);
+  }
+
+  List<String> _getAvailableSourcesForRole(String role) {
+    switch (role) {
+      case 'admin':
+        return ['', 'manager', 'employee'];
+      case 'manager':
+        return ['admin', 'employee'];
+      case 'employee':
+        return ['admin', 'manager'];
+      default:
+        return [];
+    }
+  }
+
+  String _getSourceLabel(String source) {
+    if (source.isEmpty) return 'All';
+    return source[0].toUpperCase() + source.substring(1);
+  }
+
+  Future<void> _loadShopsForSource(String source) async {
+    await ref
+        .read(shopsNotifierProvider.notifier)
+        .loadShops(source: source.isEmpty ? null : source);
   }
 
   @override
@@ -33,55 +75,38 @@ class _ShopsScreenState extends ConsumerState<ShopsScreen> {
     super.dispose();
   }
 
-  void _applyFilter(List<ShopWithCreator> allShops, String filter) {
-    setState(() {
-      _selectedFilter = filter;
-      if (filter == 'All') {
-        _filteredShops = allShops;
-      } else {
-        _filteredShops = allShops
-            .where((shop) => shop.creatorRole == filter)
-            .toList();
-      }
-      _applySearch(_searchController.text);
-    });
+  Future<void> _openCreateShop() async {
+    final created = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => const CreateShopMapScreen()),
+    );
+    if (created == true && mounted) {
+      _loadShopsForSource(_selectedSource);
+    }
   }
 
   void _applySearch(String query) {
-    final shopsState = ref.read(shopsNotifierProvider);
-    if (shopsState is! ShopsSuccess) return;
+    setState(() => _searchQuery = query);
+  }
 
-    final allShops = shopsState.shops;
-
-    if (query.isEmpty) {
-      setState(() {
-        if (_selectedFilter == 'All') {
-          _filteredShops = allShops;
-        } else {
-          _filteredShops = allShops
-              .where((shop) => shop.creatorRole == _selectedFilter)
-              .toList();
-        }
-      });
-    } else {
-      setState(() {
-        final baseList = _selectedFilter == 'All'
-            ? allShops
-            : allShops.where((shop) => shop.creatorRole == _selectedFilter).toList();
-        
-        _filteredShops = baseList
-            .where((shop) =>
-                shop.shop.name.toLowerCase().contains(query.toLowerCase()) ||
-                shop.shop.address.toLowerCase().contains(query.toLowerCase()) ||
-                shop.creatorName.toLowerCase().contains(query.toLowerCase()))
-            .toList();
-      });
-    }
+  List<ShopWithCreator> _filterShops(List<ShopWithCreator> shops) {
+    if (_searchQuery.isEmpty) return shops;
+    final q = _searchQuery.toLowerCase();
+    return shops
+        .where((shop) =>
+            shop.shop.name.toLowerCase().contains(q) ||
+            shop.shop.address.toLowerCase().contains(q) ||
+            shop.creatorName.toLowerCase().contains(q))
+        .toList();
   }
 
   @override
   Widget build(BuildContext context) {
     final shopsState = ref.watch(shopsNotifierProvider);
+
+    // Compute total count from current state (not cached).
+    final totalCount = shopsState is ShopsSuccess
+        ? _filterShops(shopsState.shops).length
+        : 0;
 
     return ResponsiveBuilder(
       builder: (context, screenType, orientation, constraints) {
@@ -102,7 +127,7 @@ class _ShopsScreenState extends ConsumerState<ShopsScreen> {
                   ),
                 ),
                 Text(
-                  '${_filteredShops.length} Total',
+                  '$totalCount Total',
                   style: TextStyle(
                     fontSize: SizeConfig.scaledFontSize(12),
                     color: const Color(0xff667085),
@@ -118,6 +143,19 @@ class _ShopsScreenState extends ConsumerState<ShopsScreen> {
             ShopsFailure(:final message) => _buildErrorView(message),
             ShopsSuccess(:final shops) => _buildContent(shops),
           },
+          floatingActionButton: FloatingActionButton.extended(
+            onPressed: _openCreateShop,
+            backgroundColor: const Color(0xff0E5A3B),
+            foregroundColor: Colors.white,
+            icon: const Icon(Icons.add_location_alt),
+            label: Text(
+              'Create Shop',
+              style: TextStyle(
+                fontSize: SizeConfig.scaledFontSize(14),
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
         );
       },
     );
@@ -143,7 +181,7 @@ class _ShopsScreenState extends ConsumerState<ShopsScreen> {
           ),
           SizedBox(height: SizeConfig.heightPercent(3)),
           ElevatedButton(
-            onPressed: () => ref.read(shopsNotifierProvider.notifier).loadShops(),
+            onPressed: () => _loadShopsForSource(_selectedSource),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xff0E5A3B),
               padding: EdgeInsets.symmetric(
@@ -159,10 +197,7 @@ class _ShopsScreenState extends ConsumerState<ShopsScreen> {
   }
 
   Widget _buildContent(List<ShopWithCreator> shops) {
-    // Initialize filtered shops if empty
-    if (_filteredShops.isEmpty && shops.isNotEmpty) {
-      _filteredShops = shops;
-    }
+    final filteredShops = _filterShops(shops);
 
     return Column(
       children: [
@@ -193,71 +228,78 @@ class _ShopsScreenState extends ConsumerState<ShopsScreen> {
           ),
         ),
 
-        // Filter Chips
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          padding: EdgeInsets.symmetric(horizontal: SizeConfig.scale(16)),
-          child: Row(
-            children: [
-              _buildFilterChip('All', shops),
-              SizedBox(width: SizeConfig.scale(8)),
-              _buildFilterChip('Admin', shops),
-              SizedBox(width: SizeConfig.scale(8)),
-              _buildFilterChip('Manager', shops),
-              SizedBox(width: SizeConfig.scale(8)),
-              _buildFilterChip('Employee', shops),
-            ],
+        // Source Chips
+        if (_availableSources.isNotEmpty)
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: EdgeInsets.symmetric(horizontal: SizeConfig.scale(16)),
+            child: Row(
+              children: _availableSources.map((source) {
+                final label = _getSourceLabel(source);
+                final isSelected = _selectedSource == source;
+                return GestureDetector(
+                  onTap: () {
+                    setState(() => _selectedSource = source);
+                    _loadShopsForSource(source);
+                  },
+                  child: Padding(
+                    padding: EdgeInsets.only(right: SizeConfig.scale(8)),
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: SizeConfig.scale(16),
+                        vertical: SizeConfig.scale(8),
+                      ),
+                      decoration: BoxDecoration(
+                        color: isSelected ? const Color(0xff0E5A3B) : Colors.white,
+                        borderRadius: BorderRadius.circular(SizeConfig.scale(20)),
+                        border: Border.all(
+                          color: isSelected
+                              ? const Color(0xff0E5A3B)
+                              : const Color(0xffE8E3DD),
+                        ),
+                      ),
+                      child: Text(
+                        label,
+                        style: TextStyle(
+                          fontSize: SizeConfig.scaledFontSize(14),
+                          fontWeight: FontWeight.w600,
+                          color: isSelected ? Colors.white : const Color(0xff667085),
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
           ),
-        ),
 
         SizedBox(height: SizeConfig.scale(16)),
 
         // Shops List
         Expanded(
-          child: _filteredShops.isEmpty
-              ? _buildEmptyState()
+          child: filteredShops.isEmpty
+              ? RefreshIndicator(
+                  onRefresh: () => _loadShopsForSource(_selectedSource),
+                  child: ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    children: [
+                      SizedBox(height: SizeConfig.heightPercent(20)),
+                      _buildEmptyState(),
+                    ],
+                  ),
+                )
               : RefreshIndicator(
-                  onRefresh: () async {
-                    await ref.read(shopsNotifierProvider.notifier).loadShops();
-                  },
+                  onRefresh: () => _loadShopsForSource(_selectedSource),
                   child: ListView.builder(
                     padding: EdgeInsets.symmetric(horizontal: SizeConfig.scale(16)),
-                    itemCount: _filteredShops.length,
+                    itemCount: filteredShops.length,
                     itemBuilder: (context, index) {
-                      return _buildShopCard(_filteredShops[index]);
+                      return _buildShopCard(filteredShops[index]);
                     },
                   ),
                 ),
         ),
       ],
-    );
-  }
-
-  Widget _buildFilterChip(String label, List<ShopWithCreator> shops) {
-    final isSelected = _selectedFilter == label;
-    return GestureDetector(
-      onTap: () => _applyFilter(shops, label),
-      child: Container(
-        padding: EdgeInsets.symmetric(
-          horizontal: SizeConfig.scale(16),
-          vertical: SizeConfig.scale(8),
-        ),
-        decoration: BoxDecoration(
-          color: isSelected ? const Color(0xff0E5A3B) : Colors.white,
-          borderRadius: BorderRadius.circular(SizeConfig.scale(20)),
-          border: Border.all(
-            color: isSelected ? const Color(0xff0E5A3B) : const Color(0xffE8E3DD),
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: SizeConfig.scaledFontSize(14),
-            fontWeight: FontWeight.w600,
-            color: isSelected ? Colors.white : const Color(0xff667085),
-          ),
-        ),
-      ),
     );
   }
 
@@ -349,7 +391,7 @@ class _ShopsScreenState extends ConsumerState<ShopsScreen> {
                     extra: shopData.shop,
                   );
                   if (updated == true && mounted) {
-                    ref.read(shopsNotifierProvider.notifier).loadShops();
+                    _loadShopsForSource(_selectedSource);
                   }
                 },
                 child: Container(

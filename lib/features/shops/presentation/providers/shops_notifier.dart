@@ -10,10 +10,10 @@ class ShopsNotifier extends StateNotifier<ShopsState> {
 
   ShopsNotifier(this._getShopsUsecase) : super(const ShopsInitial());
 
-  Future<void> loadShops() async {
+  Future<void> loadShops({String? source}) async {
     state = const ShopsLoading();
 
-    final result = await _getShopsUsecase();
+    final result = await _getShopsUsecase(source: source);
 
     state = switch (result) {
       Success(:final data) => ShopsSuccess(data),

@@ -6,7 +6,12 @@ import 'package:fieldguard/features/tasks/data/repository/tasks_repository_impl.
 import 'package:fieldguard/features/tasks/data/dto/task_detail_response.dart';
 import 'package:fieldguard/features/tasks/domain/repository/tasks_repository.dart';
 import 'package:fieldguard/features/tasks/domain/usecase/get_task_detail_usecase.dart';
+import 'package:fieldguard/features/tasks/domain/usecase/get_task_history_usecase.dart';
+import 'package:fieldguard/features/tasks/domain/usecase/get_task_live_tracking_usecase.dart';
 import 'package:fieldguard/features/tasks/domain/usecase/get_tasks_usecase.dart';
+import 'package:fieldguard/features/tasks/domain/usecase/update_task_usecase.dart';
+import 'package:fieldguard/features/tasks/presentation/providers/task_history_notifier.dart';
+import 'package:fieldguard/features/tasks/presentation/providers/task_history_state.dart';
 import 'package:fieldguard/features/tasks/presentation/providers/tasks_notifier.dart';
 import 'package:fieldguard/features/tasks/presentation/providers/tasks_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -32,6 +37,25 @@ final tasksNotifierProvider = StateNotifierProvider<TasksNotifier, TasksState>(
 
 final getTaskDetailUsecaseProvider = Provider<GetTaskDetailUsecase>(
   (ref) => GetTaskDetailUsecase(ref.watch(tasksRepositoryProvider)),
+);
+
+final updateTaskUsecaseProvider = Provider<UpdateTaskUsecase>(
+  (ref) => UpdateTaskUsecase(ref.watch(tasksRepositoryProvider)),
+);
+
+final getTaskHistoryUsecaseProvider = Provider<GetTaskHistoryUsecase>(
+  (ref) => GetTaskHistoryUsecase(ref.watch(tasksRepositoryProvider)),
+);
+
+final getTaskLiveTrackingUsecaseProvider =
+    Provider<GetTaskLiveTrackingUsecase>(
+  (ref) => GetTaskLiveTrackingUsecase(ref.watch(tasksRepositoryProvider)),
+);
+
+/// Auto-disposed so each time the history screen opens it starts fresh.
+final taskHistoryNotifierProvider = StateNotifierProvider.autoDispose<
+    TaskHistoryNotifier, TaskHistoryState>(
+  (ref) => TaskHistoryNotifier(ref.watch(getTaskHistoryUsecaseProvider)),
 );
 
 /// Fetches full task data for the detail screen, keyed by task id.

@@ -48,8 +48,13 @@ dependencies:
   # Secure storage
   flutter_secure_storage: ^9.2.2
 
+  # Local notifications (geofence arrival/departure heads-up alerts +
+  # foreground-service notification for background location tracking)
+  flutter_local_notifications: ^18.0.1
+
   # Image compression
   flutter_image_compress: ^2.4.0
+  socket_io_client: ^3.1.4
 
 dev_dependencies:
   flutter_test:

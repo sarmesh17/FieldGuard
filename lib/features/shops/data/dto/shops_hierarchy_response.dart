@@ -1,15 +1,43 @@
 class ShopsHierarchyResponse {
+  // Admin shape: the full company hierarchy.
   final List<ManagerWithShops> managers;
   final List<EmployeeWithShops> directEmployees;
   final List<Shop> unassignedShops;
+
+  // Manager shape: the manager's own shops + their team's shops. The API
+  // returns a completely different envelope for a MANAGER token.
+  final List<Shop> myShops;
+  final List<EmployeeWithShops> team;
 
   ShopsHierarchyResponse({
     required this.managers,
     required this.directEmployees,
     required this.unassignedShops,
+    required this.myShops,
+    required this.team,
   });
 
   factory ShopsHierarchyResponse.fromJson(Map<String, dynamic> json) {
+    // New flat shape with source filter: { "source": "manager", "shops": [...] }
+    // Old grouped shape: { "managers": [...], "directEmployees": [...], "unassignedShops": [...], "myShops": [...], "team": [...] }
+
+    // When source is present, all shops are flat with creator info.
+    // Reconstruct the grouped shape for backward compatibility with ShopsRepositoryImpl.
+    if (json['source'] != null && json['shops'] is List<dynamic>) {
+      final shopsList = (json['shops'] as List<dynamic>)
+          .map((e) => Shop.fromJson(e as Map<String, dynamic>))
+          .toList();
+      // All shops go into myShops so the repository picks them up
+      return ShopsHierarchyResponse(
+        managers: const [],
+        directEmployees: const [],
+        unassignedShops: const [],
+        myShops: shopsList,
+        team: const [],
+      );
+    }
+
+    // Old grouped shape (no source param)
     return ShopsHierarchyResponse(
       managers: (json['managers'] as List<dynamic>?)
               ?.map((e) => ManagerWithShops.fromJson(e as Map<String, dynamic>))
@@ -21,6 +49,14 @@ class ShopsHierarchyResponse {
           [],
       unassignedShops: (json['unassignedShops'] as List<dynamic>?)
               ?.map((e) => Shop.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
+      myShops: (json['myShops'] as List<dynamic>?)
+              ?.map((e) => Shop.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
+      team: (json['team'] as List<dynamic>?)
+              ?.map((e) => EmployeeWithShops.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
     );
@@ -130,6 +166,7 @@ class Shop {
   final bool isActive;
   final String createdAt;
   final String? shopImage;
+  final ShopCreator? creator;
 
   Shop({
     required this.id,
@@ -142,6 +179,7 @@ class Shop {
     required this.isActive,
     required this.createdAt,
     this.shopImage,
+    this.creator,
   });
 
   factory Shop.fromJson(Map<String, dynamic> json) {
@@ -156,6 +194,40 @@ class Shop {
       isActive: json['is_active'] as bool? ?? true,
       createdAt: json['created_at'] as String,
       shopImage: json['shop_image'] as String?,
+      creator: json['creator'] != null
+          ? ShopCreator.fromJson(json['creator'] as Map<String, dynamic>)
+          : null,
+    );
+  }
+}
+
+class ShopCreator {
+  final int id;
+  final String fullName;
+  final String role;
+  final String code;
+  final String? profileImage;
+
+  ShopCreator({
+    required this.id,
+    required this.fullName,
+    required this.role,
+    required this.code,
+    this.profileImage,
+  });
+
+  factory ShopCreator.fromJson(Map<String, dynamic> json) {
+    return ShopCreator(
+      id: json['id'] is int
+          ? json['id'] as int
+          : int.tryParse(json['id']?.toString() ?? '') ?? 0,
+      fullName: json['full_name'] ?? json['fullName'] ?? '',
+      role: json['role'] ?? '',
+      code: json['employee_code'] ??
+          json['manager_code'] ??
+          json['code'] ??
+          '',
+      profileImage: json['profile_image'] ?? json['profileImage'] as String?,
     );
   }
 }

@@ -1,9 +1,15 @@
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:fieldguard/core/errors/app_exception.dart';
 import 'package:fieldguard/core/networks/dio_client.dart';
+import 'package:fieldguard/core/services/session.dart';
+import 'package:fieldguard/core/utils/network_exception_mapper.dart';
 import 'package:fieldguard/features/shops/data/datasource/shop_datasource_impl.dart';
 import 'package:fieldguard/features/shops/data/dto/create_shop_request.dart';
+import 'package:fieldguard/features/team/data/datasource/team_datasource_impl.dart';
+import 'package:fieldguard/features/team/data/dto/employees_list_response.dart';
+import 'package:fieldguard/features/team/data/dto/managers_list_response.dart';
 import 'package:fieldguard/features/uploads/image_upload_service.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:geocoding/geocoding.dart';
@@ -39,6 +45,19 @@ class _CreateGeofenceFormState extends State<CreateGeofenceForm> {
   bool _isLoading = false;
   bool _isFetchingAddress = false;
 
+  // Server-side contactPhone error (400 invalid format / 409 already in use),
+  // shown inline on the phone field via its validator; cleared on edit.
+  String? _phoneServerError;
+
+  // Role-aware visibility picker. Employees never see this section since the
+  // API ignores `visibleTo` for them. Managers can grant visibility only to
+  // their direct employees; admins can grant it to any manager or employee.
+  String? _role;
+  bool _isLoadingTeam = false;
+  List<ManagerItem> _managers = const [];
+  List<EmployeeItem> _employees = const [];
+  final Set<int> _selectedVisibleTo = <int>{};
+
   late final ShopDataSourceImpl _shopDataSource;
   late final ImageUploadService _uploadService;
   final ImagePicker _imagePicker = ImagePicker();
@@ -49,6 +68,63 @@ class _CreateGeofenceFormState extends State<CreateGeofenceForm> {
     _shopDataSource = ShopDataSourceImpl(DioClient.createDio());
     _uploadService = ImageUploadService(DioClient.createDio());
     _fetchAddressFromCoordinates();
+    _loadTeam();
+  }
+
+  Future<void> _loadTeam() async {
+    final role = await Session.role();
+    final normalized = role?.toLowerCase();
+    if (!mounted) return;
+
+    // Employees can't grant visibility — skip the network call entirely.
+    if (normalized == 'employee') {
+      setState(() => _role = role);
+      return;
+    }
+
+    setState(() {
+      _role = role;
+      _isLoadingTeam = true;
+    });
+
+    try {
+      final dataSource = TeamDataSourceImpl(DioClient.createDio());
+      final employees = await dataSource.getEmployees();
+      // Only admins can grant visibility to managers.
+      final managers = normalized == 'admin'
+          ? await dataSource.getManagers()
+          : null;
+
+      if (!mounted) return;
+      setState(() {
+        _employees = employees.employees;
+        _managers = managers?.managers ?? const [];
+        _isLoadingTeam = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _isLoadingTeam = false);
+    }
+  }
+
+  Future<void> _openVisibilityPicker() async {
+    final updated = await showModalBottomSheet<Set<int>>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _VisibilityPicker(
+        managers: _managers,
+        employees: _employees,
+        initial: Set.of(_selectedVisibleTo),
+      ),
+    );
+    if (updated != null && mounted) {
+      setState(() {
+        _selectedVisibleTo
+          ..clear()
+          ..addAll(updated);
+      });
+    }
   }
 
   @override
@@ -183,6 +259,8 @@ class _CreateGeofenceFormState extends State<CreateGeofenceForm> {
     setState(() => _isLoading = true);
 
     try {
+      final canSetVisibility =
+          _role != null && _role!.toLowerCase() != 'employee';
       await _shopDataSource.createShop(
         CreateShopRequest(
           name: _shopNameController.text.trim(),
@@ -195,6 +273,9 @@ class _CreateGeofenceFormState extends State<CreateGeofenceForm> {
           contactName: _contactNameController.text.trim(),
           contactPhone: _contactPhoneController.text.trim(),
           imageKey: _imageKey,
+          visibleTo: canSetVisibility && _selectedVisibleTo.isNotEmpty
+              ? _selectedVisibleTo.toList()
+              : null,
         ),
       );
       if (mounted) {
@@ -208,11 +289,25 @@ class _CreateGeofenceFormState extends State<CreateGeofenceForm> {
       }
     } on DioException catch (e) {
       if (!mounted) return;
-      final message = e.response?.data?['message']?.toString() ??
-          'Failed to create geofence. Please try again.';
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message), backgroundColor: Colors.red),
-      );
+      // Prefer the specific field error (e.g. "Invalid PAN number format")
+      // over the generic top-level "Validation failed" message.
+      final mapped = NetworkExceptionMapper.map(e);
+      final phoneError = mapped is ValidationException
+          ? mapped.errorFor('contactPhone')
+          : null;
+      final isPhoneConflict = e.response?.statusCode == 409 &&
+          mapped.message.toLowerCase().contains('phone');
+
+      if (phoneError != null || isPhoneConflict) {
+        // Surface phone clashes/format errors inline on the field; the 409
+        // message is shown verbatim (it names which record holds the number).
+        setState(() => _phoneServerError = phoneError ?? mapped.message);
+        _formKey.currentState?.validate();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(mapped.message), backgroundColor: Colors.red),
+        );
+      }
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -362,6 +457,11 @@ class _CreateGeofenceFormState extends State<CreateGeofenceForm> {
                   icon: Icons.phone_outlined,
                   keyboardType: TextInputType.phone,
                   maxLength: 10,
+                  onChanged: (_) {
+                    if (_phoneServerError != null) {
+                      setState(() => _phoneServerError = null);
+                    }
+                  },
                   validator: (v) {
                     if (v == null || v.trim().isEmpty) {
                       return 'Contact phone is required';
@@ -372,7 +472,7 @@ class _CreateGeofenceFormState extends State<CreateGeofenceForm> {
                     if (!RegExp(r'^[0-9]+$').hasMatch(v.trim())) {
                       return 'Phone number must contain only digits';
                     }
-                    return null;
+                    return _phoneServerError;
                   },
                 ),
                 const SizedBox(height: 16),
@@ -383,6 +483,12 @@ class _CreateGeofenceFormState extends State<CreateGeofenceForm> {
                   hint: 'e.g. ABCDE1234F',
                   icon: Icons.credit_card_outlined,
                 ),
+                if (_role != null && _role!.toLowerCase() != 'employee') ...[
+                  const SizedBox(height: 16),
+                  _FieldLabel('Shared With (Optional)'),
+                  const SizedBox(height: 6),
+                  _buildVisibilitySelector(),
+                ],
                 const SizedBox(height: 28),
                 SizedBox(
                   width: double.infinity,
@@ -581,6 +687,67 @@ class _CreateGeofenceFormState extends State<CreateGeofenceForm> {
     );
   }
 
+  Widget _buildVisibilitySelector() {
+    final total = _managers.length + _employees.length;
+    final selected = _selectedVisibleTo.length;
+
+    String summary;
+    if (_isLoadingTeam) {
+      summary = 'Loading team…';
+    } else if (total == 0) {
+      summary = 'No teammates available';
+    } else if (selected == 0) {
+      summary = 'Only the default hierarchy can see this shop';
+    } else {
+      summary = '$selected selected';
+    }
+
+    return InkWell(
+      onTap: _isLoadingTeam || total == 0 ? null : _openVisibilityPicker,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF9FAFB),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFE5E7EB)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.visibility_outlined,
+                color: Color(0xFF9CA3AF), size: 20),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                summary,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: selected > 0
+                      ? const Color(0xFF111827)
+                      : const Color(0xFF6B7280),
+                  fontWeight:
+                      selected > 0 ? FontWeight.w600 : FontWeight.w400,
+                ),
+              ),
+            ),
+            if (_isLoadingTeam)
+              const SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Color(0xff0E5A3B),
+                ),
+              )
+            else
+              const Icon(Icons.chevron_right,
+                  color: Color(0xFF9CA3AF), size: 22),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildField({
     required TextEditingController controller,
     required String hint,
@@ -588,12 +755,14 @@ class _CreateGeofenceFormState extends State<CreateGeofenceForm> {
     TextInputType keyboardType = TextInputType.text,
     int? maxLength,
     String? Function(String?)? validator,
+    void Function(String)? onChanged,
   }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
       maxLength: maxLength,
       validator: validator,
+      onChanged: onChanged,
       decoration: InputDecoration(
         hintText: hint,
         hintStyle:
@@ -644,6 +813,357 @@ class _FieldLabel extends StatelessWidget {
         fontSize: 13,
         fontWeight: FontWeight.w600,
         color: Color(0xFF374151),
+      ),
+    );
+  }
+}
+
+class _VisibilityPicker extends StatefulWidget {
+  final List<ManagerItem> managers;
+  final List<EmployeeItem> employees;
+  final Set<int> initial;
+
+  const _VisibilityPicker({
+    required this.managers,
+    required this.employees,
+    required this.initial,
+  });
+
+  @override
+  State<_VisibilityPicker> createState() => _VisibilityPickerState();
+}
+
+class _VisibilityPickerState extends State<_VisibilityPicker> {
+  late final Set<int> _selected;
+  String _query = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _selected = Set.of(widget.initial);
+  }
+
+  bool _matches(String name, String code) {
+    if (_query.isEmpty) return true;
+    final q = _query.toLowerCase();
+    return name.toLowerCase().contains(q) || code.toLowerCase().contains(q);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final managers = widget.managers
+        .where((m) => _matches(m.fullName, m.managerCode))
+        .toList();
+    final employees = widget.employees
+        .where((e) => _matches(e.fullName, e.employeeCode))
+        .toList();
+
+    return DraggableScrollableSheet(
+      initialChildSize: 0.75,
+      minChildSize: 0.5,
+      maxChildSize: 0.95,
+      expand: false,
+      builder: (context, scrollController) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            children: [
+              const SizedBox(height: 12),
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE5E7EB),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+                child: Row(
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        'Share Visibility',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF111827),
+                        ),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: _selected.isEmpty
+                          ? null
+                          : () => setState(_selected.clear),
+                      child: const Text(
+                        'Clear',
+                        style: TextStyle(
+                          color: Color(0xff0E5A3B),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
+                child: Text(
+                  '${_selected.length} selected',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF6B7280),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 4, 24, 12),
+                child: TextField(
+                  onChanged: (v) => setState(() => _query = v.trim()),
+                  decoration: InputDecoration(
+                    isDense: true,
+                    hintText: 'Search by name or code',
+                    hintStyle: const TextStyle(
+                      color: Color(0xFF9CA3AF),
+                      fontSize: 14,
+                    ),
+                    prefixIcon: const Icon(Icons.search,
+                        color: Color(0xFF9CA3AF), size: 20),
+                    filled: true,
+                    fillColor: const Color(0xFFF9FAFB),
+                    contentPadding:
+                        const EdgeInsets.symmetric(vertical: 12),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide:
+                          const BorderSide(color: Color(0xFFE5E7EB)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide:
+                          const BorderSide(color: Color(0xFFE5E7EB)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                          color: Color(0xff0E5A3B), width: 1.5),
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: managers.isEmpty && employees.isEmpty
+                    ? const Center(
+                        child: Text(
+                          'No matches found',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Color(0xFF6B7280),
+                          ),
+                        ),
+                      )
+                    : ListView(
+                        controller: scrollController,
+                        padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+                        children: [
+                          if (managers.isNotEmpty) ...[
+                            const _PickerSectionHeader(label: 'Managers'),
+                            ...managers.map((m) => _PickerTile(
+                                  name: m.fullName,
+                                  code: m.managerCode,
+                                  selected:
+                                      _selected.contains(int.tryParse(m.id)),
+                                  onTap: () =>
+                                      _toggle(int.tryParse(m.id)),
+                                  gradient: const [
+                                    Color(0xff6558FF),
+                                    Color(0xff8B3DFF),
+                                  ],
+                                )),
+                          ],
+                          if (employees.isNotEmpty) ...[
+                            const _PickerSectionHeader(label: 'Employees'),
+                            ...employees.map((e) => _PickerTile(
+                                  name: e.fullName,
+                                  code: e.employeeCode,
+                                  selected:
+                                      _selected.contains(int.tryParse(e.id)),
+                                  onTap: () =>
+                                      _toggle(int.tryParse(e.id)),
+                                  gradient: const [
+                                    Color(0xff0E5A3B),
+                                    Color(0xff2E6F4F),
+                                  ],
+                                )),
+                          ],
+                        ],
+                      ),
+              ),
+              SafeArea(
+                top: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xff0E5A3B),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14)),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        elevation: 0,
+                      ),
+                      onPressed: () => Navigator.of(context).pop(_selected),
+                      child: const Text(
+                        'Done',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _toggle(int? id) {
+    if (id == null) return;
+    setState(() {
+      if (!_selected.add(id)) _selected.remove(id);
+    });
+  }
+}
+
+class _PickerSectionHeader extends StatelessWidget {
+  final String label;
+  const _PickerSectionHeader({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+      child: Text(
+        label.toUpperCase(),
+        style: const TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          color: Color(0xFF9CA3AF),
+          letterSpacing: 0.6,
+        ),
+      ),
+    );
+  }
+}
+
+class _PickerTile extends StatelessWidget {
+  final String name;
+  final String code;
+  final bool selected;
+  final VoidCallback onTap;
+  final List<Color> gradient;
+
+  const _PickerTile({
+    required this.name,
+    required this.code,
+    required this.selected,
+    required this.onTap,
+    required this.gradient,
+  });
+
+  String get _initials {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) return '?';
+    final parts = trimmed.split(RegExp(r'\s+'));
+    if (parts.length == 1) return parts.first[0].toUpperCase();
+    return (parts.first[0] + parts.last[0]).toUpperCase();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+        padding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: selected
+              ? const Color(0xffF0FDF4)
+              : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: selected
+                ? const Color(0xff0E5A3B)
+                : const Color(0xFFE5E7EB),
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(colors: gradient),
+              ),
+              child: Text(
+                _initials,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF111827),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    code,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF6B7280),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              selected
+                  ? Icons.check_circle
+                  : Icons.radio_button_unchecked,
+              color: selected
+                  ? const Color(0xff0E5A3B)
+                  : const Color(0xFFD1D5DB),
+              size: 22,
+            ),
+          ],
+        ),
       ),
     );
   }

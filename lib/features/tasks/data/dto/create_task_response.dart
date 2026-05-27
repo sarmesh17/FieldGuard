@@ -21,8 +21,12 @@ class TaskData {
   final List<String> items;
   final String status;
   final String priority;
+  // Legacy fields: tasks created before the shopId-only migration may still
+  // carry raw coordinates without a linked shop. Newer tasks resolve them
+  // server-side from [shop].
   final String? shopLatitude;
   final String? shopLongitude;
+  final TaskShop? shop;
   final String dueDate;
   final String? completedAt;
   final String? remarks;
@@ -31,6 +35,12 @@ class TaskData {
   final Assignee assignee;
   final Creator creator;
   final Manager? manager;
+  // Cancellation fields (null when not cancelled or when reason is OTHER)
+  final String? cancelReason;
+  final String? cancelImage; // full CDN URL returned by the server
+  // Geofence visit timeline, enter-time ascending. Always present (never
+  // null): an empty list means no visits were recorded yet.
+  final List<TaskGeofenceVisit> geofenceVisits;
 
   const TaskData({
     required this.id,
@@ -45,6 +55,7 @@ class TaskData {
     required this.priority,
     this.shopLatitude,
     this.shopLongitude,
+    this.shop,
     required this.dueDate,
     this.completedAt,
     this.remarks,
@@ -53,6 +64,9 @@ class TaskData {
     required this.assignee,
     required this.creator,
     this.manager,
+    this.cancelReason,
+    this.cancelImage,
+    this.geofenceVisits = const [],
   });
 
   factory TaskData.fromJson(Map<String, dynamic> json) {
@@ -69,6 +83,9 @@ class TaskData {
       priority: json['priority'] as String,
       shopLatitude: json['shop_latitude'] as String?,
       shopLongitude: json['shop_longitude'] as String?,
+      shop: json['shop'] != null
+          ? TaskShop.fromJson(json['shop'] as Map<String, dynamic>)
+          : null,
       dueDate: json['due_date'] as String,
       completedAt: json['completed_at'] as String?,
       remarks: json['remarks'] as String?,
@@ -76,9 +93,98 @@ class TaskData {
       updatedAt: json['updated_at'] as String,
       assignee: Assignee.fromJson(json['assignee'] as Map<String, dynamic>),
       creator: Creator.fromJson(json['creator'] as Map<String, dynamic>),
-      manager: json['manager'] != null 
+      manager: json['manager'] != null
           ? Manager.fromJson(json['manager'] as Map<String, dynamic>)
           : null,
+      cancelReason: json['cancel_reason'] as String?,
+      cancelImage: json['cancel_image'] as String?,
+      geofenceVisits: (json['geofence_visits'] as List<dynamic>? ?? const [])
+          .map((e) => TaskGeofenceVisit.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+}
+
+/// A single geofence visit from `GET /api/v1/tasks/:id`'s `geofence_visits`
+/// array (enter-time ascending). Coordinates arrive as DB-decimal strings and
+/// timestamps as ISO 8601; we parse them eagerly here so the UI gets typed
+/// values. Distinct from `auto_geofence`'s [GeofenceVisit], which models the
+/// camelCase *upload* request body — this is the server's read shape.
+class TaskGeofenceVisit {
+  final String id; // server UUID
+  final String visitId; // client idempotency key
+  final int? shopId;
+  final DateTime enteredAt;
+  final DateTime exitedAt;
+  final int stayDurationSeconds;
+  final double enterLatitude;
+  final double enterLongitude;
+  final double exitLatitude;
+  final double exitLongitude;
+
+  /// True when the exit was estimated (app killed / location permission lost)
+  /// rather than observed as a clean crossing.
+  final bool exitEstimated;
+
+  const TaskGeofenceVisit({
+    required this.id,
+    required this.visitId,
+    this.shopId,
+    required this.enteredAt,
+    required this.exitedAt,
+    required this.stayDurationSeconds,
+    required this.enterLatitude,
+    required this.enterLongitude,
+    required this.exitLatitude,
+    required this.exitLongitude,
+    required this.exitEstimated,
+  });
+
+  factory TaskGeofenceVisit.fromJson(Map<String, dynamic> json) {
+    double parseCoord(dynamic v) => double.tryParse('${v ?? ''}') ?? 0.0;
+    return TaskGeofenceVisit(
+      id: json['id']?.toString() ?? '',
+      visitId: json['visit_id']?.toString() ?? '',
+      shopId: (json['shop_id'] as num?)?.toInt(),
+      enteredAt: DateTime.parse(json['entered_at'] as String),
+      exitedAt: DateTime.parse(json['exited_at'] as String),
+      stayDurationSeconds: (json['stay_duration_seconds'] as num?)?.toInt() ?? 0,
+      enterLatitude: parseCoord(json['enter_latitude']),
+      enterLongitude: parseCoord(json['enter_longitude']),
+      exitLatitude: parseCoord(json['exit_latitude']),
+      exitLongitude: parseCoord(json['exit_longitude']),
+      exitEstimated: json['exit_estimated'] as bool? ?? false,
+    );
+  }
+}
+
+/// Minimal shop payload embedded in task responses — enough to render a
+/// thumbnail + name. Full shop data is fetched separately when needed.
+class TaskShop {
+  final int id;
+  final String name;
+  final String? shopImage;
+  final String? address;
+  final String? latitude;
+  final String? longitude;
+
+  const TaskShop({
+    required this.id,
+    required this.name,
+    this.shopImage,
+    this.address,
+    this.latitude,
+    this.longitude,
+  });
+
+  factory TaskShop.fromJson(Map<String, dynamic> json) {
+    return TaskShop(
+      id: json['id'] as int,
+      name: json['name'] as String? ?? '',
+      shopImage: json['shop_image'] as String?,
+      address: json['address'] as String?,
+      latitude: json['latitude']?.toString(),
+      longitude: json['longitude']?.toString(),
     );
   }
 }
