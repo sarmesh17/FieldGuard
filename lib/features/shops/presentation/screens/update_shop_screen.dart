@@ -50,6 +50,10 @@ class _UpdateShopScreenState extends ConsumerState<UpdateShopScreen> {
   late double _lng;
   bool _coordsUpdated = false;
 
+  // Server-side contactPhone error (400 invalid format / 409 already in use),
+  // shown inline on the phone field via its validator; cleared on edit.
+  String? _phoneServerError;
+
   @override
   void initState() {
     super.initState();
@@ -248,9 +252,15 @@ class _UpdateShopScreenState extends ConsumerState<UpdateShopScreen> {
         );
         Navigator.of(context).pop(true);
       } else if (next is UpdateShopFailure) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(next.message), backgroundColor: Colors.red),
-        );
+        if (next.phoneError != null) {
+          // Surface phone clashes/format errors inline on the field.
+          setState(() => _phoneServerError = next.phoneError);
+          _formKey.currentState?.validate();
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(next.message), backgroundColor: Colors.red),
+          );
+        }
       }
     });
 
@@ -348,6 +358,11 @@ class _UpdateShopScreenState extends ConsumerState<UpdateShopScreen> {
                       icon: Icons.phone_outlined,
                       keyboardType: TextInputType.phone,
                       maxLength: 10,
+                      onChanged: (_) {
+                        if (_phoneServerError != null) {
+                          setState(() => _phoneServerError = null);
+                        }
+                      },
                       validator: (v) {
                         if (v == null || v.trim().isEmpty) {
                           return 'Contact phone is required';
@@ -358,7 +373,7 @@ class _UpdateShopScreenState extends ConsumerState<UpdateShopScreen> {
                         if (!RegExp(r'^[0-9]+$').hasMatch(v.trim())) {
                           return 'Phone number must contain only digits';
                         }
-                        return null;
+                        return _phoneServerError;
                       },
                     ),
                     const SizedBox(height: 16),
@@ -834,12 +849,14 @@ class _UpdateShopScreenState extends ConsumerState<UpdateShopScreen> {
     TextInputType keyboardType = TextInputType.text,
     int? maxLength,
     String? Function(String?)? validator,
+    void Function(String)? onChanged,
   }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
       maxLength: maxLength,
       validator: validator,
+      onChanged: onChanged,
       decoration: InputDecoration(
         hintText: hint,
         hintStyle:

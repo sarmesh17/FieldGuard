@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fieldguard/core/utils/phone_format.dart';
 import 'edit_profile_screen.dart';
 import '../providers/profile_provider.dart';
 import '../providers/profile_state.dart';
@@ -224,7 +225,7 @@ class _PersonalInformationScreenState
                                   w,
                                   Icons.phone_outlined,
                                   'Phone Number',
-                                  profileState.profile.phoneNumber,
+                                  formatNepaliPhone(profileState.profile.phoneNumber),
                                 ),
                                 _buildDivider(w),
                                 _buildInfoRow(
@@ -291,7 +292,10 @@ class _PersonalInformationScreenState
                                     w,
                                     Icons.phone_in_talk_rounded,
                                     'Company Phone',
-                                    profileState.profile.company!.phoneNumber ?? 'N/A',
+                                    profileState.profile.company!.phoneNumber == null
+                                        ? 'N/A'
+                                        : formatNepaliPhone(
+                                            profileState.profile.company!.phoneNumber),
                                   ),
                                   _buildDivider(w),
                                   _buildInfoRow(

@@ -1,6 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:fieldguard/core/networks/dio_client.dart';
 import 'package:fieldguard/core/responsive/responsive.dart';
+import 'package:fieldguard/core/services/session.dart';
+import 'package:fieldguard/core/utils/phone_format.dart';
 import 'package:fieldguard/features/team/data/datasource/team_datasource_impl.dart';
 import 'package:fieldguard/features/team/data/dto/employees_list_response.dart';
 import 'package:fieldguard/features/live_tracking/presentation/screens/live_map_screen.dart';
@@ -21,6 +23,9 @@ class _TeamManagementScreenState extends State<TeamManagementScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   bool _isLoading = true;
+  // A manager only manages employees — they never see the manager list, and
+  // we must not hit the list-managers API for them (it's admin-only).
+  bool _isManagerUser = false;
   List<EmployeeItem> _employees = [];
   List<ManagerItem> _managers = [];
   String? _errorMessage;
@@ -61,15 +66,21 @@ class _TeamManagementScreenState extends State<TeamManagementScreen>
     });
 
     try {
+      final isManager = await Session.isManager();
+
       final dio = DioClient.createDio();
       final dataSource = TeamDataSourceImpl(dio);
 
       final employeesResponse = await dataSource.getEmployees();
-      final managersResponse = await dataSource.getManagers();
+      // Managers don't manage other managers — skip the admin-only
+      // list-managers API entirely for them.
+      final managersResponse =
+          isManager ? null : await dataSource.getManagers();
 
       setState(() {
+        _isManagerUser = isManager;
         _employees = employeesResponse.employees;
-        _managers = managersResponse.managers;
+        _managers = managersResponse?.managers ?? const [];
         _isLoading = false;
       });
       _loadOnlineEmployees();
@@ -389,8 +400,11 @@ class _TeamManagementScreenState extends State<TeamManagementScreen>
         children: [
           _filterChip('All', 'all', selected, onSelect),
           SizedBox(width: SizeConfig.scale(8)),
-          _filterChip('Managers', 'managers', selected, onSelect),
-          SizedBox(width: SizeConfig.scale(8)),
+          // No "Managers" chip for a manager user — they only see employees.
+          if (!_isManagerUser) ...[
+            _filterChip('Managers', 'managers', selected, onSelect),
+            SizedBox(width: SizeConfig.scale(8)),
+          ],
           _filterChip('Employees', 'employees', selected, onSelect),
         ],
       ),
@@ -855,7 +869,7 @@ class _TeamManagementScreenState extends State<TeamManagementScreen>
                     ),
                     SizedBox(height: SizeConfig.scale(4)),
                     Text(
-                      manager.phoneNumber,
+                      formatNepaliPhone(manager.phoneNumber),
                       style: TextStyle(
                         fontSize: SizeConfig.scaledFontSize(13),
                         color: const Color(0xff667085),
@@ -1002,7 +1016,7 @@ class _TeamManagementScreenState extends State<TeamManagementScreen>
                     ),
                     SizedBox(height: SizeConfig.scale(4)),
                     Text(
-                      employee.phoneNumber,
+                      formatNepaliPhone(employee.phoneNumber),
                       style: TextStyle(
                         fontSize: SizeConfig.scaledFontSize(13),
                         color: const Color(0xff667085),

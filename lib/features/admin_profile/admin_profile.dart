@@ -183,6 +183,9 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen>
       );
     }
 
+    // Only an admin can create managers — that endpoint is admin-only.
+    final isManager = profile.role.toUpperCase() == 'MANAGER';
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6FA),
       body: SingleChildScrollView(
@@ -259,22 +262,23 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen>
                           );
                         },
                       ),
-                      SectionTile(
-                        icon: Icons.supervisor_account_rounded,
-                        title: 'Create New Manager',
-                        iconColor: const Color(0xff6558FF),
-                        iconBg: const Color(0xffEEE9FF),
-                        isAction: true,
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const CreateManagerScreen(),
-                            ),
-                          );
-                        },
-                      ),
+                      if (!isManager)
+                        SectionTile(
+                          icon: Icons.supervisor_account_rounded,
+                          title: 'Create New Manager',
+                          iconColor: const Color(0xff6558FF),
+                          iconBg: const Color(0xffEEE9FF),
+                          isAction: true,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const CreateManagerScreen(),
+                              ),
+                            );
+                          },
+                        ),
                       const SectionTile(
                         icon: Icons.settings_outlined,
                         title: 'System Settings',

@@ -9,9 +9,13 @@ class ShopsDataSourceImpl implements ShopsDataSource {
   ShopsDataSourceImpl(this._dio);
 
   @override
-  Future<ShopsHierarchyResponse> getShopsHierarchy() async {
+  Future<ShopsHierarchyResponse> getShopsHierarchy({String? source}) async {
     try {
-      final response = await _dio.get(ApiConstant.getShopsEndpoint);
+      final params = source != null ? {'source': source} : null;
+      final response = await _dio.get(
+        ApiConstant.getShopsEndpoint,
+        queryParameters: params,
+      );
       return ShopsHierarchyResponse.fromJson(
         response.data as Map<String, dynamic>,
       );

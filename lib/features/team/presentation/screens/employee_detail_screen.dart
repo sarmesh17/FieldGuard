@@ -1,8 +1,11 @@
 import 'package:dio/dio.dart';
 import 'package:fieldguard/core/networks/dio_client.dart';
 import 'package:fieldguard/core/responsive/responsive.dart';
+import 'package:fieldguard/core/utils/phone_format.dart';
 import 'package:fieldguard/features/employee/data/datasource/employee_datasource_impl.dart';
 import 'package:fieldguard/features/employee/presentation/screens/edit_employee_screen.dart';
+import 'package:fieldguard/features/live_tracking/presentation/screens/live_map_screen.dart';
+import 'package:fieldguard/features/live_tracking/presentation/screens/tracking_history_screen.dart';
 import 'package:fieldguard/features/team/data/datasource/team_datasource_impl.dart';
 import 'package:fieldguard/features/team/data/dto/employee_detail_response.dart';
 import 'package:flutter/material.dart';
@@ -418,7 +421,7 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen>
                     _buildInfoCard(
                       icon: Icons.phone,
                       label: 'Phone Number',
-                      value: _employee!.phoneNumber,
+                      value: formatNepaliPhone(_employee!.phoneNumber),
                       iconColor: const Color(0xff0E5A3B),
                     ),
                     if (_employee!.email != null) ...[
@@ -463,6 +466,50 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen>
                       label: 'Joined Date',
                       value: _formatDate(_employee!.createdAt),
                       iconColor: const Color(0xff6558FF),
+                    ),
+                    SizedBox(height: SizeConfig.heightPercent(3)),
+
+                    // ── Quick Actions ──────────────────────────
+                    _buildSectionTitle('Quick Actions'),
+                    SizedBox(height: SizeConfig.scale(12)),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildActionCard(
+                            icon: Icons.timeline_rounded,
+                            label: 'Tracking\nHistory',
+                            color: const Color(0xff0E5A3B),
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => TrackingHistoryScreen(
+                                  employeeId:
+                                      int.parse(widget.employeeId),
+                                  employeeName:
+                                      _employee!.fullName,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: SizeConfig.scale(12)),
+                        Expanded(
+                          child: _buildActionCard(
+                            icon: Icons.location_on_rounded,
+                            label: 'Live\nLocation',
+                            color: const Color(0xff2980B9),
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => LiveMapScreen(
+                                  focusEmployeeId: widget.employeeId,
+                                  title: _employee!.fullName,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     SizedBox(height: SizeConfig.heightPercent(3)),
                   ],
@@ -547,6 +594,62 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen>
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildActionCard({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.all(SizeConfig.scale(16)),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(SizeConfig.scale(14)),
+          border: Border.all(color: const Color(0xffE8E3DD)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Container(
+              width: SizeConfig.scale(48),
+              height: SizeConfig.scale(48),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(SizeConfig.scale(12)),
+              ),
+              child: Icon(icon, color: color, size: SizeConfig.scale(24)),
+            ),
+            SizedBox(height: SizeConfig.scale(10)),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: SizeConfig.scaledFontSize(12.5),
+                fontWeight: FontWeight.w700,
+                color: const Color(0xff111111),
+                height: 1.3,
+              ),
+            ),
+            SizedBox(height: SizeConfig.scale(6)),
+            Icon(
+              Icons.arrow_forward_rounded,
+              size: SizeConfig.scale(16),
+              color: color,
+            ),
+          ],
+        ),
       ),
     );
   }

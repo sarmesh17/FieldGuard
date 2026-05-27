@@ -7,6 +7,7 @@ class CreateShopRequest {
   final String contactName;
   final String contactPhone;
   final String? imageKey;
+  final List<int>? visibleTo;
 
   const CreateShopRequest({
     required this.name,
@@ -17,6 +18,7 @@ class CreateShopRequest {
     required this.contactName,
     required this.contactPhone,
     this.imageKey,
+    this.visibleTo,
   });
 
   Map<String, dynamic> toJson() {
@@ -33,6 +35,9 @@ class CreateShopRequest {
     }
     if (imageKey != null) {
       map['imageKey'] = imageKey;
+    }
+    if (visibleTo != null && visibleTo!.isNotEmpty) {
+      map['visibleTo'] = visibleTo;
     }
     return map;
   }

@@ -1,7 +1,10 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:flutter/services.dart';
+import 'package:fieldguard/core/errors/app_exception.dart';
 import 'package:fieldguard/core/networks/dio_client.dart';
 import 'package:fieldguard/core/responsive/responsive.dart';
+import 'package:fieldguard/core/utils/network_exception_mapper.dart';
 import 'package:fieldguard/features/employee/data/datasource/employee_datasource_impl.dart';
 import 'package:fieldguard/features/employee/data/dto/update_employee_request.dart';
 import 'package:fieldguard/features/uploads/image_upload_service.dart';
@@ -37,6 +40,10 @@ class _EditEmployeeScreenState extends State<EditEmployeeScreen> {
   late TextEditingController _emailController;
   late bool _isActive;
   bool _isLoading = false;
+
+  // Server-side phone error (400 invalid format / 409 already in use), shown
+  // inline on the phone field via its validator; cleared on edit.
+  String? _phoneServerError;
   File? _selectedImage;
   String? _uploadedImageKey;
   bool _isUploadingImage = false;
@@ -152,14 +159,7 @@ class _EditEmployeeScreenState extends State<EditEmployeeScreen> {
         Navigator.pop(context, true); // Return true to indicate success
       }
     } on DioException catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_extractErrorMessage(e)),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      if (mounted) _handlePhoneAwareError(e);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -176,24 +176,29 @@ class _EditEmployeeScreenState extends State<EditEmployeeScreen> {
     }
   }
 
-  String _extractErrorMessage(DioException e) {
-    if (e.response?.data is Map<String, dynamic>) {
-      final data = e.response!.data as Map<String, dynamic>;
-      
-      // Check for errors array
-      if (data['errors'] is List && (data['errors'] as List).isNotEmpty) {
-        final firstError = (data['errors'] as List).first;
-        if (firstError is Map<String, dynamic> && firstError['message'] is String) {
-          return firstError['message'] as String;
-        }
-      }
-      
-      // Check for message field
-      if (data['message'] is String) {
-        return data['message'] as String;
-      }
+  /// Surfaces a phone clash/format error (400 or 409) inline on the phone
+  /// field; anything else goes to a snackbar. The 409 message is shown
+  /// verbatim — it already names which record holds the number.
+  void _handlePhoneAwareError(DioException e) {
+    final mapped = NetworkExceptionMapper.map(e);
+    final phoneError = mapped is ValidationException
+        ? mapped.errorFor('phoneNumber')
+        : null;
+    final isPhoneConflict = e.response?.statusCode == 409 &&
+        mapped.message.toLowerCase().contains('phone');
+
+    if (phoneError != null || isPhoneConflict) {
+      setState(() => _phoneServerError = phoneError ?? mapped.message);
+      _formKey.currentState?.validate();
+      return;
     }
-    return 'Failed to update employee';
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(mapped.message),
+        backgroundColor: Colors.red,
+      ),
+    );
   }
 
   @override
@@ -345,14 +350,23 @@ class _EditEmployeeScreenState extends State<EditEmployeeScreen> {
                     label: 'Phone Number',
                     icon: Icons.phone,
                     keyboardType: TextInputType.phone,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(10),
+                    ],
+                    onChanged: (_) {
+                      if (_phoneServerError != null) {
+                        setState(() => _phoneServerError = null);
+                      }
+                    },
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
                         return 'Please enter phone number';
                       }
-                      if (value.trim().length < 10) {
-                        return 'Phone number must be at least 10 digits';
+                      if (value.trim().length != 10) {
+                        return 'Phone number must be exactly 10 digits';
                       }
-                      return null;
+                      return _phoneServerError;
                     },
                   ),
                   SizedBox(height: SizeConfig.scale(16)),
@@ -480,11 +494,15 @@ class _EditEmployeeScreenState extends State<EditEmployeeScreen> {
     required IconData icon,
     TextInputType? keyboardType,
     String? Function(String?)? validator,
+    List<TextInputFormatter>? inputFormatters,
+    void Function(String)? onChanged,
   }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
       validator: validator,
+      inputFormatters: inputFormatters,
+      onChanged: onChanged,
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: Icon(icon, color: const Color(0xff0E5A3B)),

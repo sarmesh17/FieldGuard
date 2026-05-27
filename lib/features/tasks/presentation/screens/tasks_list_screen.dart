@@ -2,6 +2,7 @@ import 'package:fieldguard/core/constant/api_constant.dart';
 import 'package:fieldguard/core/networks/dio_client.dart';
 import 'package:fieldguard/features/auth/login/presentation/providers/login_provider.dart';
 import 'package:fieldguard/features/auth/login/presentation/providers/login_state.dart';
+import 'package:fieldguard/features/tasks/data/dto/create_task_response.dart';
 import 'package:fieldguard/features/tasks/data/dto/tasks_list_response.dart';
 import 'package:fieldguard/features/tasks/presentation/providers/tasks_provider.dart';
 import 'package:fieldguard/features/tasks/presentation/providers/tasks_state.dart';
@@ -10,6 +11,27 @@ import 'package:fieldguard/features/tasks/presentation/screens/task_detail_scree
 import 'package:fieldguard/features/team/data/dto/managers_list_response.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+/// The kind of bucket a tab shows. Each maps to a fixed slice of the
+/// `GET /api/v1/tasks` query — see [_TaskTabViewState._applyFilters].
+///
+/// ADMIN sees [managerTasks] + [employeeTasks] (split by assignee role).
+/// MANAGER sees [myTasks] + [teamTasks] (`view=my` / `view=team`).
+/// EMPLOYEE sees only [myTasks].
+enum _TaskTab { managerTasks, employeeTasks, myTasks, teamTasks }
+
+List<_TaskTab> _tabsForRole(String role) => switch (role) {
+      'ADMIN' => const [_TaskTab.managerTasks, _TaskTab.employeeTasks],
+      'MANAGER' => const [_TaskTab.myTasks, _TaskTab.teamTasks],
+      _ => const [_TaskTab.myTasks],
+    };
+
+String _tabLabel(_TaskTab tab) => switch (tab) {
+      _TaskTab.managerTasks => 'Manager Tasks',
+      _TaskTab.employeeTasks => 'Employee Tasks',
+      _TaskTab.myTasks => 'My Tasks',
+      _TaskTab.teamTasks => 'Team Tasks',
+    };
 
 class TasksListScreen extends ConsumerStatefulWidget {
   const TasksListScreen({super.key});
@@ -20,52 +42,53 @@ class TasksListScreen extends ConsumerStatefulWidget {
 
 class _TasksListScreenState extends ConsumerState<TasksListScreen>
     with TickerProviderStateMixin {
-  late TabController _tabController;
+  TabController? _tabController;
   int _currentTabIndex = 0;
+
+  String _role = 'EMPLOYEE';
+  int _userId = 0;
+  List<_TaskTab> _tabs = const [_TaskTab.myTasks];
+
+  // One key per tab so the parent can ask the active tab to reload its own
+  // (filtered) query on tab switch — the tabs share a single notifier, so
+  // without this a switched-to tab would show the previous tab's data.
+  List<GlobalKey<_TaskTabViewState>> _tabKeys = const [];
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-    _tabController.addListener(() {
-      setState(() => _currentTabIndex = _tabController.index);
-    });
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadTasksForCurrentTab();
-    });
+    final loginState = ref.read(loginNotifierProvider);
+    if (loginState is LoginSuccess) {
+      _role = loginState.response.user.role.toUpperCase();
+      _userId = loginState.response.user.id;
+    }
+
+    _tabs = _tabsForRole(_role);
+    _tabKeys = List.generate(_tabs.length, (_) => GlobalKey<_TaskTabViewState>());
+    _tabController = TabController(length: _tabs.length, vsync: this);
+    _tabController!.addListener(_onTabChanged);
+
+    // First-page load for the initial tab.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _reloadActiveTab());
   }
 
   @override
   void dispose() {
-    _tabController.dispose();
+    _tabController?.dispose();
     super.dispose();
   }
 
-  void _loadTasksForCurrentTab() {
-    final loginState = ref.read(loginNotifierProvider);
-    if (loginState is! LoginSuccess) return;
+  void _onTabChanged() {
+    final controller = _tabController!;
+    if (controller.indexIsChanging) return;
+    if (_currentTabIndex == controller.index) return;
+    setState(() => _currentTabIndex = controller.index);
+    _reloadActiveTab();
+  }
 
-    final userId = loginState.response.user.id;
-    final role = loginState.response.user.role.toUpperCase();
-
-    if (_currentTabIndex == 0) {
-      // EMPLOYEE: filter by assigned-to. MANAGER: filter by managerId. ADMIN: no filter (sees all).
-      if (role == 'EMPLOYEE') {
-        ref.read(tasksNotifierProvider.notifier).loadTasks(userId: userId);
-      } else if (role == 'MANAGER') {
-        ref.read(tasksNotifierProvider.notifier).loadTasks(managerId: userId);
-      } else {
-        ref.read(tasksNotifierProvider.notifier).loadTasks();
-      }
-    } else {
-      // Team Tasks: MANAGER filters by own managerId. ADMIN sees only manager-assigned tasks.
-      if (role == 'MANAGER') {
-        ref.read(tasksNotifierProvider.notifier).loadTasks(managerId: userId);
-      } else {
-        ref.read(tasksNotifierProvider.notifier).loadTasks(hasManager: true);
-      }
-    }
+  void _reloadActiveTab() {
+    _tabKeys[_currentTabIndex].currentState?.reload();
   }
 
   void _openCreateTask() async {
@@ -73,7 +96,7 @@ class _TasksListScreenState extends ConsumerState<TasksListScreen>
       context,
       MaterialPageRoute(builder: (_) => const CreateTaskScreen()),
     );
-    if (created == true) _loadTasksForCurrentTab();
+    if (created == true) _reloadActiveTab();
   }
 
   @override
@@ -83,6 +106,13 @@ class _TasksListScreenState extends ConsumerState<TasksListScreen>
     final taskCount =
         tasksState is TasksSuccess ? tasksState.pagination.total : null;
 
+    if (loginState is! LoginSuccess || _tabController == null) {
+      return const Scaffold(
+        backgroundColor: Color(0xffF2F4F7),
+        body: Center(child: CircularProgressIndicator(color: Color(0xff005C33))),
+      );
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xffF2F4F7),
       floatingActionButton: _CreateFAB(onPressed: _openCreateTask),
@@ -91,157 +121,74 @@ class _TasksListScreenState extends ConsumerState<TasksListScreen>
           _TasksAppBar(
             taskCount: taskCount,
             onBack: () => Navigator.pop(context),
-            tabController: _tabController,
+            tabController: _tabController!,
+            tabLabels: [for (final t in _tabs) _tabLabel(t)],
           ),
         ],
-        body: loginState is! LoginSuccess
-            ? const Center(child: CircularProgressIndicator())
-            : TabBarView(
-                controller: _tabController,
-                children: [
-                  _EmployeeTasksView(
-                    userId: loginState.response.user.id,
-                    role: loginState.response.user.role.toUpperCase(),
-                    onTabChanged: _loadTasksForCurrentTab,
-                  ),
-                  _ManagerTasksView(
-                    managerId: loginState.response.user.id,
-                    role: loginState.response.user.role.toUpperCase(),
-                    onTabChanged: _loadTasksForCurrentTab,
-                  ),
-                ],
+        body: TabBarView(
+          controller: _tabController!,
+          children: [
+            for (var i = 0; i < _tabs.length; i++)
+              _TaskTabView(
+                key: _tabKeys[i],
+                tab: _tabs[i],
+                role: _role,
+                userId: _userId,
               ),
+          ],
+        ),
       ),
     );
   }
 }
 
-// ─── Employee Tasks View ──────────────────────────────────────────────────────
+// ─── Task Tab View ────────────────────────────────────────────────────────────
 
-class _EmployeeTasksView extends ConsumerStatefulWidget {
+/// One tab's content: filter bars + the paginated list. The bucket is fixed by
+/// [tab]; the user can narrow it with the filter bars. [reload] re-runs the
+/// first-page fetch with the current filters (used on tab switch / refresh).
+class _TaskTabView extends ConsumerStatefulWidget {
+  final _TaskTab tab;
+  final String role;
   final int userId;
-  final String role;
-  final VoidCallback onTabChanged;
 
-  const _EmployeeTasksView({
+  const _TaskTabView({
+    super.key,
+    required this.tab,
+    required this.role,
     required this.userId,
-    required this.role,
-    required this.onTabChanged,
   });
 
   @override
-  ConsumerState<_EmployeeTasksView> createState() => _EmployeeTasksViewState();
+  ConsumerState<_TaskTabView> createState() => _TaskTabViewState();
 }
 
-class _EmployeeTasksViewState extends ConsumerState<_EmployeeTasksView> {
+class _TaskTabViewState extends ConsumerState<_TaskTabView> {
   String? _selectedStatus;
   String? _selectedPriority;
 
-  static const _statuses = ['PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'];
-  static const _priorities = ['LOW', 'MEDIUM', 'HIGH'];
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _applyFilters();
-    });
-  }
-
-  void _applyFilters() {
-    ref.read(tasksNotifierProvider.notifier).loadTasks(
-          userId: widget.role == 'EMPLOYEE' ? widget.userId : null,
-          managerId: widget.role == 'MANAGER' ? widget.userId : null,
-          status: _selectedStatus,
-          priority: _selectedPriority,
-        );
-  }
-
-  Future<void> _refresh() async {
-    await ref.read(tasksNotifierProvider.notifier).loadTasks(
-          userId: widget.role == 'EMPLOYEE' ? widget.userId : null,
-          managerId: widget.role == 'MANAGER' ? widget.userId : null,
-          status: _selectedStatus,
-          priority: _selectedPriority,
-        );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final tasksState = ref.watch(tasksNotifierProvider);
-
-    return Column(
-      children: [
-        _SimpleFilterBar(
-          selectedStatus: _selectedStatus,
-          selectedPriority: _selectedPriority,
-          statuses: _statuses,
-          priorities: _priorities,
-          onStatusChanged: (v) {
-            setState(() => _selectedStatus = v);
-            _applyFilters();
-          },
-          onPriorityChanged: (v) {
-            setState(() => _selectedPriority = v);
-            _applyFilters();
-          },
-        ),
-        Expanded(
-          child: switch (tasksState) {
-            TasksInitial() || TasksLoading() => const _LoadingView(),
-            TasksFailure(:final message) => _ErrorView(
-                message: message,
-                onRetry: _applyFilters,
-              ),
-            final TasksSuccess s => _PaginatedTaskList(
-                state: s,
-                onRefresh: _refresh,
-                onLoadMore: () =>
-                    ref.read(tasksNotifierProvider.notifier).loadMore(),
-                emptyTitle: 'No tasks assigned',
-                emptyMessage: 'You have no tasks assigned to you.',
-              ),
-          },
-        ),
-      ],
-    );
-  }
-}
-
-// ─── Manager Tasks View ───────────────────────────────────────────────────────
-
-class _ManagerTasksView extends ConsumerStatefulWidget {
-  final int managerId;
-  final String role;
-  final VoidCallback onTabChanged;
-
-  const _ManagerTasksView({
-    required this.managerId,
-    required this.role,
-    required this.onTabChanged,
-  });
-
-  @override
-  ConsumerState<_ManagerTasksView> createState() => _ManagerTasksViewState();
-}
-
-class _ManagerTasksViewState extends ConsumerState<_ManagerTasksView> {
-  String? _selectedStatus;
-  String? _selectedPriority;
+  // ADMIN "Created by" picker (manager / employee tabs).
   List<ManagerItem> _managers = [];
-  ManagerItem? _selectedManager;
+  ManagerItem? _selectedCreator;
   bool _loadingManagers = false;
 
+  // MANAGER "Team Tasks" extra filters.
+  bool _onlyMine = false; // Created by me.
+  String? _selectedAssigneeRole; // MANAGER / EMPLOYEE.
+
   static const _statuses = ['PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'];
   static const _priorities = ['LOW', 'MEDIUM', 'HIGH'];
+
+  bool get _isAdminTab =>
+      widget.tab == _TaskTab.managerTasks ||
+      widget.tab == _TaskTab.employeeTasks;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (widget.role == 'ADMIN') _fetchManagers();
-      _applyFilters();
-    });
+    if (_isAdminTab) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _fetchManagers());
+    }
   }
 
   Future<void> _fetchManagers() async {
@@ -249,57 +196,114 @@ class _ManagerTasksViewState extends ConsumerState<_ManagerTasksView> {
     try {
       final dio = DioClient.createDio();
       final response = await dio.get(ApiConstant.getManagersEndpoint);
-      final result = ManagersListResponse.fromJson(response.data as Map<String, dynamic>);
+      final result =
+          ManagersListResponse.fromJson(response.data as Map<String, dynamic>);
       if (mounted) setState(() => _managers = result.managers);
     } catch (_) {
+      // Picker just stays empty ("All" still works) — non-fatal.
     } finally {
       if (mounted) setState(() => _loadingManagers = false);
     }
   }
 
-  int? get _effectiveManagerId {
-    if (widget.role == 'MANAGER') return widget.managerId;
-    if (_selectedManager != null) return int.tryParse(_selectedManager!.id);
-    return null;
-  }
-
-  // ADMIN with "All" selected → ask backend for tasks that have a manager.
-  bool? get _hasManager =>
-      (widget.role == 'ADMIN' && _selectedManager == null) ? true : null;
+  /// Re-runs the first-page fetch for this tab with its current filters.
+  void reload() => _applyFilters();
 
   void _applyFilters() {
-    ref.read(tasksNotifierProvider.notifier).loadTasks(
-          managerId: _effectiveManagerId,
-          hasManager: _hasManager,
+    final notifier = ref.read(tasksNotifierProvider.notifier);
+    final selectedManagerId =
+        _selectedCreator != null ? int.tryParse(_selectedCreator!.id) : null;
+
+    switch (widget.tab) {
+      case _TaskTab.managerTasks:
+        // "Assigned to" filter — userId narrows to a specific manager-assignee.
+        notifier.loadTasks(
+          assigneeRole: 'MANAGER',
+          userId: selectedManagerId,
           status: _selectedStatus,
           priority: _selectedPriority,
         );
+      case _TaskTab.employeeTasks:
+        // "Created by" filter — createdBy narrows to tasks a manager delegated.
+        notifier.loadTasks(
+          assigneeRole: 'EMPLOYEE',
+          createdBy: selectedManagerId,
+          status: _selectedStatus,
+          priority: _selectedPriority,
+        );
+      case _TaskTab.myTasks:
+        notifier.loadTasks(
+          view: 'my',
+          status: _selectedStatus,
+          priority: _selectedPriority,
+        );
+      case _TaskTab.teamTasks:
+        notifier.loadTasks(
+          view: 'team',
+          createdBy: _onlyMine ? widget.userId : null,
+          assigneeRole: _selectedAssigneeRole,
+          status: _selectedStatus,
+          priority: _selectedPriority,
+        );
+    }
   }
 
-  Future<void> _refresh() async {
-    await ref.read(tasksNotifierProvider.notifier).loadTasks(
-          managerId: _effectiveManagerId,
-          hasManager: _hasManager,
-          status: _selectedStatus,
-          priority: _selectedPriority,
-        );
-  }
+  Future<void> _refresh() async => _applyFilters();
+
+  ({String title, String message}) get _emptyText => switch (widget.tab) {
+        _TaskTab.managerTasks => (
+            title: 'No manager tasks',
+            message: 'No tasks have been assigned to managers yet.',
+          ),
+        _TaskTab.employeeTasks => (
+            title: 'No employee tasks',
+            message: 'No tasks have been assigned to employees yet.',
+          ),
+        _TaskTab.myTasks => (
+            title: 'No tasks assigned',
+            message: 'You have no tasks assigned to you.',
+          ),
+        _TaskTab.teamTasks => (
+            title: 'No team tasks',
+            message: 'No tasks for your team yet.',
+          ),
+      };
 
   @override
   Widget build(BuildContext context) {
     final tasksState = ref.watch(tasksNotifierProvider);
+    final empty = _emptyText;
 
     return Column(
       children: [
-        if (widget.role == 'ADMIN') _ManagerPickerBar(
-          managers: _managers,
-          selected: _selectedManager,
-          loading: _loadingManagers,
-          onChanged: (m) {
-            setState(() => _selectedManager = m);
-            _applyFilters();
-          },
-        ),
+        if (_isAdminTab)
+          _AdminManagerPickerBar(
+            managers: _managers,
+            selected: _selectedCreator,
+            loading: _loadingManagers,
+            // Manager Tasks: filter by assignee ("Assigned to Ravi").
+            // Employee Tasks: filter by creator ("Created by Ravi").
+            filterLabel: widget.tab == _TaskTab.managerTasks
+                ? 'Assigned to'
+                : 'Created by',
+            onChanged: (m) {
+              setState(() => _selectedCreator = m);
+              _applyFilters();
+            },
+          ),
+        if (widget.tab == _TaskTab.teamTasks)
+          _TeamFilterBar(
+            onlyMine: _onlyMine,
+            assigneeRole: _selectedAssigneeRole,
+            onOnlyMineChanged: (v) {
+              setState(() => _onlyMine = v);
+              _applyFilters();
+            },
+            onAssigneeRoleChanged: (v) {
+              setState(() => _selectedAssigneeRole = v);
+              _applyFilters();
+            },
+          ),
         _SimpleFilterBar(
           selectedStatus: _selectedStatus,
           selectedPriority: _selectedPriority,
@@ -326,8 +330,8 @@ class _ManagerTasksViewState extends ConsumerState<_ManagerTasksView> {
                 onRefresh: _refresh,
                 onLoadMore: () =>
                     ref.read(tasksNotifierProvider.notifier).loadMore(),
-                emptyTitle: 'No team tasks',
-                emptyMessage: 'No tasks found for this manager.',
+                emptyTitle: empty.title,
+                emptyMessage: empty.message,
               ),
           },
         ),
@@ -342,11 +346,13 @@ class _TasksAppBar extends StatelessWidget {
   final int? taskCount;
   final VoidCallback onBack;
   final TabController tabController;
+  final List<String> tabLabels;
 
   const _TasksAppBar({
     required this.taskCount,
     required this.onBack,
     required this.tabController,
+    required this.tabLabels,
   });
 
   @override
@@ -443,6 +449,7 @@ class _TasksAppBar extends StatelessWidget {
                           ),
                         ),
                       ),
+                    const Spacer(),
                   ],
                 ),
               ),
@@ -456,10 +463,7 @@ class _TasksAppBar extends StatelessWidget {
                   unselectedLabelColor: Colors.white70,
                   indicatorColor: Colors.white,
                   indicatorWeight: 3,
-                  tabs: const [
-                    Tab(text: 'My Tasks'),
-                    Tab(text: 'Team Tasks'),
-                  ],
+                  tabs: [for (final label in tabLabels) Tab(text: label)],
                 ),
               ),
             ],
@@ -470,18 +474,26 @@ class _TasksAppBar extends StatelessWidget {
   }
 }
 
-// ─── Manager Picker Bar ───────────────────────────────────────────────────────
+// ─── Created-by Picker Bar (ADMIN) ────────────────────────────────────────────
 
-class _ManagerPickerBar extends StatelessWidget {
+/// Admin manager picker bar — reused on both admin tabs but with different
+/// semantics:
+/// - Manager Tasks: "Assigned to" → the manager is the task's assignee.
+/// - Employee Tasks: "Created by" → the manager is the task's creator.
+class _AdminManagerPickerBar extends StatelessWidget {
   final List<ManagerItem> managers;
   final ManagerItem? selected;
   final bool loading;
+
+  /// Label shown before the chips ("Assigned to:" or "Created by:").
+  final String filterLabel;
   final ValueChanged<ManagerItem?> onChanged;
 
-  const _ManagerPickerBar({
+  const _AdminManagerPickerBar({
     required this.managers,
     required this.selected,
     required this.loading,
+    required this.filterLabel,
     required this.onChanged,
   });
 
@@ -509,11 +521,12 @@ class _ManagerPickerBar extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 children: [
-                  const Icon(Icons.people_outline_rounded, size: 15, color: Color(0xff687184)),
+                  const Icon(Icons.person_pin_circle_outlined,
+                      size: 15, color: Color(0xff687184)),
                   const SizedBox(width: 6),
-                  const Text(
-                    'Manager:',
-                    style: TextStyle(
+                  Text(
+                    '$filterLabel:',
+                    style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: Color(0xff687184),
@@ -534,12 +547,67 @@ class _ManagerPickerBar extends StatelessWidget {
                           selected: selected?.id == m.id,
                           color: const Color(0xff005C33),
                           icon: null,
-                          onTap: () => onChanged(selected?.id == m.id ? null : m),
+                          onTap: () =>
+                              onChanged(selected?.id == m.id ? null : m),
                         ),
                       )),
                 ],
               ),
             ),
+    );
+  }
+}
+
+// ─── Team Filter Bar (MANAGER → Team Tasks) ───────────────────────────────────
+
+/// Extra filters for a manager's Team Tasks: "Created by me" toggle and an
+/// assignee-role filter (so manager→manager delegations can be isolated).
+class _TeamFilterBar extends StatelessWidget {
+  final bool onlyMine;
+  final String? assigneeRole;
+  final ValueChanged<bool> onOnlyMineChanged;
+  final ValueChanged<String?> onAssigneeRoleChanged;
+
+  const _TeamFilterBar({
+    required this.onlyMine,
+    required this.assigneeRole,
+    required this.onOnlyMineChanged,
+    required this.onAssigneeRoleChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(bottom: BorderSide(color: Color(0xffF0F2F5))),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _ChipRow(
+            icon: Icons.person_pin_circle_outlined,
+            label: 'Created by',
+            options: const ['MINE'],
+            selected: onlyMine ? 'MINE' : null,
+            colorOf: (_) => const Color(0xff005C33),
+            labelOf: (_) => 'Me',
+            iconOf: (_) => null,
+            onChanged: (v) => onOnlyMineChanged(v == 'MINE'),
+          ),
+          const Divider(height: 1, indent: 16, endIndent: 16),
+          _ChipRow(
+            icon: Icons.badge_outlined,
+            label: 'Assignee',
+            options: const ['MANAGER', 'EMPLOYEE'],
+            selected: assigneeRole,
+            colorOf: (_) => const Color(0xff005C33),
+            labelOf: _capitalise,
+            iconOf: (_) => null,
+            onChanged: onAssigneeRoleChanged,
+          ),
+        ],
+      ),
     );
   }
 }
@@ -711,7 +779,9 @@ class _FilterChip extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (icon != null) ...[
-              Icon(icon, size: 12, color: selected ? Colors.white : const Color(0xff687184)),
+              Icon(icon,
+                  size: 12,
+                  color: selected ? Colors.white : const Color(0xff687184)),
               const SizedBox(width: 4),
             ],
             Text(
@@ -928,6 +998,12 @@ class _TaskCard extends StatelessWidget {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
+                      const SizedBox(height: 8),
+                      _ShopRow(shop: task.shop),
+                      if (task.creator != null) ...[
+                        const SizedBox(height: 8),
+                        _CreatorChip(creator: task.creator!),
+                      ],
                       const SizedBox(height: 12),
                       Container(
                         height: 1,
@@ -1006,6 +1082,109 @@ class _TaskCard extends StatelessWidget {
         ),
         ),
       ),
+    );
+  }
+}
+
+/// Shows who assigned the task — `By Admin` or `By Mgr: <name>` — so the
+/// creator is visible on the card and never hidden behind a tab.
+class _CreatorChip extends StatelessWidget {
+  final TaskPerson creator;
+
+  const _CreatorChip({required this.creator});
+
+  @override
+  Widget build(BuildContext context) {
+    final isAdmin = (creator.role ?? '').toUpperCase() == 'ADMIN';
+    final label = isAdmin ? 'By Admin' : 'By Mgr: ${creator.fullName}';
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xffF0F2F5),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isAdmin
+                ? Icons.shield_outlined
+                : Icons.supervisor_account_outlined,
+            size: 12,
+            color: const Color(0xff687184),
+          ),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: Color(0xff687184),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ShopRow extends StatelessWidget {
+  final TaskShop? shop;
+
+  const _ShopRow({required this.shop});
+
+  @override
+  Widget build(BuildContext context) {
+    final hasImage = shop?.shopImage != null && shop!.shopImage!.isNotEmpty;
+    return Row(
+      children: [
+        Container(
+          width: 22,
+          height: 22,
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            color: const Color(0xffF0F2F5),
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: hasImage
+              ? Image.network(
+                  shop!.shopImage!,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, _, _) => const Icon(
+                    Icons.store_rounded,
+                    size: 14,
+                    color: Color(0xff8A94A6),
+                  ),
+                )
+              : const Icon(
+                  Icons.store_rounded,
+                  size: 14,
+                  color: Color(0xff8A94A6),
+                ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            shop?.name.isNotEmpty == true
+                ? shop!.name
+                : 'Legacy task — no shop linked',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: shop == null
+                  ? const Color(0xff8A94A6)
+                  : const Color(0xff5A6472),
+              fontStyle: shop == null ? FontStyle.italic : FontStyle.normal,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
