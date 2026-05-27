@@ -1,8 +1,12 @@
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/services.dart';
+import 'package:fieldguard/core/errors/app_exception.dart';
 import 'package:fieldguard/core/networks/dio_client.dart';
 import 'package:fieldguard/core/responsive/responsive.dart';
+import 'package:fieldguard/core/utils/network_exception_mapper.dart';
+import 'package:fieldguard/core/services/session.dart';
 import 'package:fieldguard/features/employee/data/datasource/employee_datasource_impl.dart';
 import 'package:fieldguard/features/employee/data/dto/create_employee_request.dart';
 import 'package:fieldguard/features/uploads/image_upload_service.dart';
@@ -25,8 +29,16 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen>
   final _passwordController = TextEditingController();
   final _managerIdController = TextEditingController();
 
+  // Server-side phone error from a 400 (e.g. invalid format) or 409 (already
+  // in use), surfaced via the phone field's validator. Cleared when the user
+  // edits the field so the stale error doesn't linger.
+  String? _phoneServerError;
+
   bool _hidePassword = true;
   bool _isLoading = false;
+  // The Manager ID field is admin-only — a manager can't assign an employee
+  // to another manager, so hide it for them.
+  bool _isManagerUser = false;
   File? _selectedImage;
   String? _uploadedImageKey;
   bool _isUploadingImage = false;
@@ -55,6 +67,12 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen>
     );
 
     _animController.forward();
+    _checkRole();
+  }
+
+  Future<void> _checkRole() async {
+    final isManager = await Session.isManager();
+    if (mounted) setState(() => _isManagerUser = isManager);
   }
 
   @override
@@ -184,16 +202,7 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen>
         }
       }
     } on DioException catch (e) {
-      if (mounted) {
-        final errorMessage = _extractErrorMessage(e);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(errorMessage),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 4),
-          ),
-        );
-      }
+      if (mounted) _handlePhoneAwareError(e);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -210,30 +219,34 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen>
     }
   }
 
-  String _extractErrorMessage(DioException e) {
-    // Try to extract error message from response
-    if (e.response?.data is Map<String, dynamic>) {
-      final data = e.response!.data as Map<String, dynamic>;
-      
-      // Check for errors array (validation errors)
-      if (data['errors'] is List && (data['errors'] as List).isNotEmpty) {
-        final errors = data['errors'] as List;
-        final errorMessages = errors
-            .map((error) => error['message'] as String?)
-            .where((msg) => msg != null)
-            .join('\n');
-        if (errorMessages.isNotEmpty) return errorMessages;
-      }
-      
-      // Check for message field
-      if (data['message'] is String && (data['message'] as String).isNotEmpty) {
-        return data['message'] as String;
-      }
+  /// Surfaces a phone clash/format error (400 or 409) inline on the phone
+  /// field; anything else goes to a snackbar. The 409 message is shown
+  /// verbatim — it already names which record holds the number.
+  void _handlePhoneAwareError(DioException e) {
+    final mapped = NetworkExceptionMapper.map(e);
+    final phoneError = mapped is ValidationException
+        ? mapped.errorFor('phoneNumber')
+        : null;
+    final isPhoneConflict =
+        e.response?.statusCode == 409 && _looksLikePhoneMessage(mapped.message);
+
+    if (phoneError != null || isPhoneConflict) {
+      setState(() => _phoneServerError = phoneError ?? mapped.message);
+      _formKey.currentState?.validate();
+      return;
     }
-    
-    // Fallback to generic error message
-    return 'Failed to create employee. Please try again.';
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(mapped.message),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 4),
+      ),
+    );
   }
+
+  bool _looksLikePhoneMessage(String message) =>
+      message.toLowerCase().contains('phone');
 
   @override
   Widget build(BuildContext context) {
@@ -395,14 +408,26 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen>
                       _buildLabel('Phone Number *'),
                       _buildTextField(
                         controller: _phoneController,
-                        hint: '+91 98000 00000',
+                        hint: '+977 9800000000',
                         icon: Icons.phone_android_rounded,
                         keyboardType: TextInputType.phone,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(10),
+                        ],
+                        onChanged: (_) {
+                          if (_phoneServerError != null) {
+                            setState(() => _phoneServerError = null);
+                          }
+                        },
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
                             return 'Phone number is required';
                           }
-                          return null;
+                          if (value.trim().length != 10) {
+                            return 'Phone number must be exactly 10 digits';
+                          }
+                          return _phoneServerError;
                         },
                       ),
                       SizedBox(height: SizeConfig.heightPercent(2)),
@@ -446,23 +471,27 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen>
                       ),
                       SizedBox(height: SizeConfig.heightPercent(2)),
 
-                      // Manager ID Field
-                      _buildLabel('Manager ID (Optional)'),
-                      _buildTextField(
-                        controller: _managerIdController,
-                        hint: 'Leave blank to create employee without manager',
-                        icon: Icons.supervisor_account_outlined,
-                      ),
-                      SizedBox(height: SizeConfig.heightPercent(1)),
-                      Text(
-                        'Leave blank to create employee without a manager (ADMIN only)',
-                        style: TextStyle(
-                          color: const Color(0xff667085),
-                          fontSize: SizeConfig.scaledFontSize(11),
-                          fontStyle: FontStyle.italic,
+                      // Manager ID Field — ADMIN only.
+                      if (!_isManagerUser) ...[
+                        _buildLabel('Manager ID (Optional)'),
+                        _buildTextField(
+                          controller: _managerIdController,
+                          hint:
+                              'Leave blank to create employee without manager',
+                          icon: Icons.supervisor_account_outlined,
                         ),
-                      ),
-                      SizedBox(height: SizeConfig.heightPercent(4)),
+                        SizedBox(height: SizeConfig.heightPercent(1)),
+                        Text(
+                          'Leave blank to create employee without a manager (ADMIN only)',
+                          style: TextStyle(
+                            color: const Color(0xff667085),
+                            fontSize: SizeConfig.scaledFontSize(11),
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                        SizedBox(height: SizeConfig.heightPercent(4)),
+                      ] else
+                        SizedBox(height: SizeConfig.heightPercent(2)),
 
                       // Submit Button
                       _buildSubmitButton(),
@@ -500,6 +529,8 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen>
     bool obscureText = false,
     Widget? suffixIcon,
     String? Function(String?)? validator,
+    List<TextInputFormatter>? inputFormatters,
+    void Function(String)? onChanged,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -519,6 +550,8 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen>
         keyboardType: keyboardType,
         obscureText: obscureText,
         validator: validator,
+        inputFormatters: inputFormatters,
+        onChanged: onChanged,
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: TextStyle(

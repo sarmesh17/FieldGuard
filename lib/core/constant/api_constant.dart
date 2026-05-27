@@ -10,6 +10,9 @@ class ApiConstant {
   // The endpoint for company registration
   static const String companyRegistration = "$baseUrl/api/v1/company/register";
 
+  // The endpoint for confirming company documents (PATCH)
+  static const String companyEndpoint = "$baseUrl/api/v1/company";
+
   // The endpoint for creating employees
   static const String createEmployeeEndpoint = "$baseUrl/api/v1/employees";
 
@@ -44,6 +47,13 @@ class ApiConstant {
 
   // The endpoint for listing / creating tasks
   static const String tasksEndpoint = "/api/v1/tasks";
+
+  // The endpoint for reporting automatic geofence visits
+  static const String geofenceVisitsEndpoint =
+      "$baseUrl/api/v1/geofence-visits";
+
+  // The endpoint for recording a cash/cheque collection (EMPLOYEE/MANAGER only)
+  static const String collectionsEndpoint = "$baseUrl/api/v1/collections";
 
   // Timeouts (Good to keep centralized)
   static const int connectTimeout = 30;

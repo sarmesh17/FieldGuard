@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:fieldguard/core/networks/dio_client.dart';
 import 'package:fieldguard/core/responsive/responsive.dart';
+import 'package:fieldguard/core/utils/phone_format.dart';
 import 'package:fieldguard/features/manager/data/datasource/manager_datasource_impl.dart';
 import 'package:fieldguard/features/manager/presentation/screens/edit_manager_screen.dart';
 import 'package:fieldguard/features/team/data/datasource/team_datasource_impl.dart';
@@ -442,7 +443,7 @@ class _ManagerDetailScreenState extends State<ManagerDetailScreen>
                     _buildInfoCard(
                       icon: Icons.phone,
                       label: 'Phone Number',
-                      value: _manager!.phoneNumber,
+                      value: formatNepaliPhone(_manager!.phoneNumber),
                       iconColor: const Color(0xff6558FF),
                     ),
                     if (_manager!.email != null) ...[

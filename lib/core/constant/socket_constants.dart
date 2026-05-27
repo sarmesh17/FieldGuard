@@ -23,6 +23,11 @@ class SocketConstants {
   /// Periodic location ping from this device.
   static const String locationUpdate = 'location:update';
 
+  /// Admin/Manager starts / stops watching one task's assignee live.
+  /// Payload: `{ taskId }`. Joins / leaves the `task:<id>:viewers` room.
+  static const String taskWatch = 'task:watch';
+  static const String taskUnwatch = 'task:unwatch';
+
   // ─── Incoming (server → client) ───────────────────────────────────────────
   /// A team employee moved — `{ employeeId, latitude, longitude, ... }`.
   static const String employeeLocation = 'employee:location';
@@ -30,6 +35,14 @@ class SocketConstants {
   /// A team employee came online / went offline.
   static const String employeeOnline = 'employee:online';
   static const String employeeOffline = 'employee:offline';
+
+  /// The watched task's assignee moved — `{ taskId, employeeId,
+  /// employee, latitude, longitude, accuracy, speed, bearing, recordedAt }`.
+  static const String taskLocation = 'task:location';
+
+  /// The watched task's status changed — `{ taskId, status,
+  /// previousStatus, at }`. Emitted on IN_PROGRESS / COMPLETED / etc.
+  static const String taskStatusChanged = 'task:status_changed';
 
   /// Socket.IO lifecycle events.
   static const String connect = 'connect';

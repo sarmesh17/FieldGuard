@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/networks/dio_client.dart';
 import '../../../../core/responsive/responsive.dart';
@@ -445,6 +446,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   controller: _phoneNumberController,
                   keyboardType: TextInputType.phone,
                   maxLength: 10,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(10),
+                  ],
                   decoration: InputDecoration(
                     hintText: 'Enter phone number',
                     prefixIcon: const Icon(
@@ -652,6 +657,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   controller: _companyPhoneController,
                   keyboardType: TextInputType.phone,
                   maxLength: 10,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(10),
+                  ],
                   decoration: InputDecoration(
                     hintText: 'Enter company phone',
                     prefixIcon: const Icon(

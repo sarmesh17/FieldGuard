@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:fieldguard/core/networks/dio_client.dart';
+import 'package:fieldguard/features/auth/approval/presentation/providers/company_approval_provider.dart';
 import 'package:fieldguard/features/auth/login/data/datasource/login_datasource.dart';
 import 'package:fieldguard/features/auth/login/data/datasource/login_datasource_impl.dart';
 import 'package:fieldguard/features/auth/login/data/repository/login_repository_impl.dart';
@@ -25,5 +26,8 @@ final loginUsecaseProvider = Provider<LoginUsecase>(
 );
 
 final loginNotifierProvider = StateNotifierProvider<LoginNotifier, LoginState>(
-  (ref) => LoginNotifier(ref.watch(loginUsecaseProvider)),
+  (ref) => LoginNotifier(
+    ref.watch(loginUsecaseProvider),
+    ref.watch(companyApprovalDataSourceProvider),
+  ),
 );

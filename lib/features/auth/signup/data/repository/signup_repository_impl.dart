@@ -11,4 +11,26 @@ class SignupRepositoryImpl extends SignupRepository {
   @override
   Future<Result<SignupResponse>> register(SignupRequest request) =>
       _dataSource.register(request);
+
+  @override
+  Future<Result<String>> uploadDocument({
+    required String filePath,
+    required int companyId,
+    required String accessToken,
+  }) => _dataSource.uploadDocument(
+    filePath: filePath,
+    companyId: companyId,
+    accessToken: accessToken,
+  );
+
+  @override
+  Future<Result<void>> confirmDocuments({
+    required String citizenshipImageKey,
+    required String legalDocumentImageKey,
+    required String accessToken,
+  }) => _dataSource.confirmDocuments(
+    citizenshipImageKey: citizenshipImageKey,
+    legalDocumentImageKey: legalDocumentImageKey,
+    accessToken: accessToken,
+  );
 }

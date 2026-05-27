@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:fieldguard/core/networks/dio_client.dart';
 import 'package:fieldguard/core/services/live_tracking_socket.dart';
-import 'package:fieldguard/core/services/location_tracker.dart';
 import 'package:fieldguard/features/live_tracking/data/models/live_location.dart';
 import 'package:fieldguard/features/team/data/datasource/team_datasource_impl.dart';
 import 'package:flutter/material.dart';
@@ -15,9 +14,9 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 ///   whose location is known.
 /// - Subscribes to the socket: `employee:location` moves markers,
 ///   `employee:offline` removes them.
-/// - "Field mode" makes this device a tracked field user — it emits
-///   `tracking:start` then streams `location:update` (foreground +
-///   background via the foreground-service notification).
+///
+/// Pure viewer — this screen never emits its own location. A manager's own
+/// field tracking lives on the Routes screen (slide-to-track control).
 class LiveMapScreen extends StatefulWidget {
   /// If set, the camera flies to this employee once their position is known.
   final String? focusEmployeeId;
@@ -36,7 +35,6 @@ class _LiveMapScreenState extends State<LiveMapScreen> {
   CircleAnnotationManager? _circles;
 
   final _socket = LiveTrackingSocket.instance;
-  final _tracker = LocationTracker.instance;
 
   // employeeId -> annotation / display name
   final Map<String, CircleAnnotation> _markers = {};
@@ -50,8 +48,6 @@ class _LiveMapScreenState extends State<LiveMapScreen> {
   String? _snapshotError;
   SocketStatus _socketStatus = SocketStatus.idle;
 
-  bool _fieldMode = false;
-  bool _fieldBusy = false;
   bool _focused = false;
 
   @override
@@ -70,10 +66,6 @@ class _LiveMapScreenState extends State<LiveMapScreen> {
     _locSub?.cancel();
     _presSub?.cancel();
     _statusSub?.cancel();
-    if (_fieldMode) {
-      _socket.emitTrackingStop();
-      _tracker.stop();
-    }
     super.dispose();
   }
 
@@ -186,71 +178,6 @@ class _LiveMapScreenState extends State<LiveMapScreen> {
     if (!e.online) _removeMarker(e.employeeId);
   }
 
-  // ── Field mode (this device becomes a tracked field user) ─────────────────
-
-  Future<void> _toggleFieldMode() async {
-    if (_fieldBusy) return;
-    setState(() => _fieldBusy = true);
-
-    try {
-      if (!_fieldMode) {
-        await _socket.connect();
-        final started = await _tracker.start(
-          onPosition: _onMyPosition,
-          distanceFilterMeters: 10,
-        );
-        if (!started) {
-          _snack('Location permission / service unavailable');
-          return;
-        }
-        _socket.emitTrackingStart();
-        await _map?.location.updateSettings(
-          LocationComponentSettings(enabled: true, pulsingEnabled: true),
-        );
-        if (mounted) setState(() => _fieldMode = true);
-        _snack('Field tracking started');
-      } else {
-        _socket.emitTrackingStop();
-        await _tracker.stop();
-        await _map?.location
-            .updateSettings(LocationComponentSettings(enabled: false));
-        if (mounted) setState(() => _fieldMode = false);
-        _snack('Field tracking stopped');
-      }
-    } finally {
-      if (mounted) setState(() => _fieldBusy = false);
-    }
-  }
-
-  bool _myCameraDone = false;
-
-  void _onMyPosition(geo.Position p) {
-    _socket.emitLocationUpdate(
-      latitude: p.latitude,
-      longitude: p.longitude,
-      speed: p.speed,
-      heading: p.heading,
-      accuracy: p.accuracy,
-    );
-    if (!_myCameraDone) {
-      _myCameraDone = true;
-      _map?.flyTo(
-        CameraOptions(
-          center: Point(coordinates: Position(p.longitude, p.latitude)),
-          zoom: 15.0,
-        ),
-        MapAnimationOptions(duration: 800),
-      );
-    }
-  }
-
-  void _snack(String msg) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg), duration: const Duration(seconds: 2)),
-    );
-  }
-
   // ── UI ────────────────────────────────────────────────────────────────────
 
   @override
@@ -361,39 +288,6 @@ class _LiveMapScreenState extends State<LiveMapScreen> {
               ),
             ),
 
-          // Field-mode toggle
-          Positioned(
-            bottom: 32,
-            left: 16,
-            right: 16,
-            child: ElevatedButton.icon(
-              onPressed: _fieldBusy ? null : _toggleFieldMode,
-              icon: _fieldBusy
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white),
-                    )
-                  : Icon(_fieldMode
-                      ? Icons.location_off
-                      : Icons.my_location),
-              label: Text(
-                _fieldMode
-                    ? 'Stop field tracking'
-                    : "I'm in the field — start tracking",
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _fieldMode ? Colors.red.shade600 : _green,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                elevation: 0,
-              ),
-            ),
-          ),
         ],
       ),
     );

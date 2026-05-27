@@ -1,0 +1,297 @@
+import 'package:fieldguard/features/routes/presentation/screens/components/create_geofence_form.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:geolocator/geolocator.dart' as geo;
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
+import 'package:permission_handler/permission_handler.dart';
+
+/// Fullscreen map for creating a new shop.
+///
+/// Mirrors the geofence-creation flow: the user inspects the map, taps
+/// "Create Shop Here", and the [CreateGeofenceForm] bottom sheet runs the
+/// actual API call. Pops `true` once a shop was created so the caller can
+/// refresh its list.
+class CreateShopMapScreen extends StatefulWidget {
+  const CreateShopMapScreen({super.key});
+
+  @override
+  State<CreateShopMapScreen> createState() => _CreateShopMapScreenState();
+}
+
+class _CreateShopMapScreenState extends State<CreateShopMapScreen> {
+  static const _brand = Color(0xff0E5A3B);
+
+  MapboxMap? _mapboxMap;
+  bool _isLocating = false;
+  bool _mapLoading = true;
+  bool _creating = false;
+
+  @override
+  void initState() {
+    super.initState();
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+  }
+
+  @override
+  void dispose() {
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    super.dispose();
+  }
+
+  void _onMapCreated(MapboxMap mapboxMap) {
+    _mapboxMap = mapboxMap;
+    _initMap();
+  }
+
+  Future<void> _initMap() async {
+    final status = await Permission.locationWhenInUse.request();
+    if (!status.isGranted) {
+      if (mounted) setState(() => _mapLoading = false);
+      return;
+    }
+    await _mapboxMap?.location.updateSettings(
+      LocationComponentSettings(enabled: true, pulsingEnabled: true),
+    );
+    await _goToMyLocation();
+    if (mounted) setState(() => _mapLoading = false);
+  }
+
+  Future<void> _goToMyLocation() async {
+    final status = await Permission.locationWhenInUse.status;
+    if (!status.isGranted) {
+      final newStatus = await Permission.locationWhenInUse.request();
+      if (!newStatus.isGranted) return;
+      await _mapboxMap?.location.updateSettings(
+        LocationComponentSettings(enabled: true, pulsingEnabled: true),
+      );
+    }
+
+    if (!mounted) return;
+    setState(() => _isLocating = true);
+    try {
+      final pos = await geo.Geolocator.getCurrentPosition(
+        locationSettings: const geo.LocationSettings(
+          accuracy: geo.LocationAccuracy.high,
+        ),
+      );
+      await _mapboxMap?.flyTo(
+        CameraOptions(
+          center: Point(coordinates: Position(pos.longitude, pos.latitude)),
+          zoom: 16.0,
+        ),
+        MapAnimationOptions(duration: 1200),
+      );
+    } catch (_) {
+      // Keep the map as-is; user can still create at their location.
+    } finally {
+      if (mounted) setState(() => _isLocating = false);
+    }
+  }
+
+  Future<void> _createShopHere() async {
+    if (_creating) return;
+
+    final status = await Permission.locationWhenInUse.status;
+    if (!status.isGranted) {
+      final newStatus = await Permission.locationWhenInUse.request();
+      if (!newStatus.isGranted) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Location permission is required to create a shop'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+    }
+
+    setState(() => _creating = true);
+    try {
+      final pos = await geo.Geolocator.getCurrentPosition(
+        locationSettings: const geo.LocationSettings(
+          accuracy: geo.LocationAccuracy.high,
+        ),
+      );
+      if (!mounted) return;
+
+      final created = await showModalBottomSheet<bool>(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (_) => CreateGeofenceForm(
+          latitude: pos.latitude,
+          longitude: pos.longitude,
+        ),
+      );
+
+      if (created == true && mounted) {
+        Navigator.of(context).pop(true);
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not get your location. Please try again.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _creating = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Stack(
+        children: [
+          MapWidget(
+            key: const ValueKey('createShopMap'),
+            styleUri: MapboxStyles.STANDARD,
+            textureView: true,
+            onMapCreated: _onMapCreated,
+          ),
+
+          if (_isLocating && !_mapLoading)
+            const Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: LinearProgressIndicator(
+                minHeight: 3,
+                color: _brand,
+                backgroundColor: Color(0xffDDF5E0),
+              ),
+            ),
+
+          if (_mapLoading)
+            const ColoredBox(
+              color: Color(0xFFF5F6FA),
+              child: Center(
+                child: CircularProgressIndicator(color: _brand),
+              ),
+            ),
+
+          // Back
+          Positioned(
+            top: 48,
+            left: 16,
+            child: _CircleIconButton(
+              icon: Icons.arrow_back,
+              onTap: () => Navigator.of(context).pop(),
+            ),
+          ),
+
+          // My location
+          Positioned(
+            bottom: 110,
+            right: 16,
+            child: _CircleIconButton(
+              icon: Icons.my_location,
+              onTap: _goToMyLocation,
+            ),
+          ),
+
+          // Helper hint
+          Positioned(
+            top: 52,
+            left: 72,
+            right: 16,
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.12),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: const Text(
+                'Stand at the shop, then tap Create Shop Here',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xff111111),
+                ),
+              ),
+            ),
+          ),
+
+          // Create shop action
+          Positioned(
+            bottom: 40,
+            left: 16,
+            right: 16,
+            child: SizedBox(
+              height: 54,
+              child: ElevatedButton.icon(
+                onPressed: _creating ? null : _createShopHere,
+                icon: _creating
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Icon(Icons.add_location_alt, size: 22),
+                label: Text(_creating ? 'Please wait…' : 'Create Shop Here'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _brand,
+                  foregroundColor: Colors.white,
+                  textStyle: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  elevation: 2,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CircleIconButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _CircleIconButton({required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.12),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Icon(icon, color: const Color(0xff0E5A3B), size: 20),
+      ),
+    );
+  }
+}

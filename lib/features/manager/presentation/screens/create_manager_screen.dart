@@ -1,8 +1,11 @@
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/services.dart';
+import 'package:fieldguard/core/errors/app_exception.dart';
 import 'package:fieldguard/core/networks/dio_client.dart';
 import 'package:fieldguard/core/responsive/responsive.dart';
+import 'package:fieldguard/core/utils/network_exception_mapper.dart';
 import 'package:fieldguard/features/manager/data/datasource/manager_datasource_impl.dart';
 import 'package:fieldguard/features/manager/data/dto/create_manager_request.dart';
 import 'package:fieldguard/features/uploads/image_upload_service.dart';
@@ -23,6 +26,10 @@ class _CreateManagerScreenState extends State<CreateManagerScreen>
   final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+
+  // Server-side phone error (400 invalid format / 409 already in use), shown
+  // inline on the phone field via its validator; cleared on edit.
+  String? _phoneServerError;
 
   bool _hidePassword = true;
   bool _isLoading = false;
@@ -179,16 +186,7 @@ class _CreateManagerScreenState extends State<CreateManagerScreen>
         }
       }
     } on DioException catch (e) {
-      if (mounted) {
-        final errorMessage = _extractErrorMessage(e);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(errorMessage),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 4),
-          ),
-        );
-      }
+      if (mounted) _handlePhoneAwareError(e);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -205,29 +203,30 @@ class _CreateManagerScreenState extends State<CreateManagerScreen>
     }
   }
 
-  String _extractErrorMessage(DioException e) {
-    // Try to extract error message from response
-    if (e.response?.data is Map<String, dynamic>) {
-      final data = e.response!.data as Map<String, dynamic>;
-      
-      // Check for errors array (validation errors)
-      if (data['errors'] is List && (data['errors'] as List).isNotEmpty) {
-        final errors = data['errors'] as List;
-        final errorMessages = errors
-            .map((error) => error['message'] as String?)
-            .where((msg) => msg != null)
-            .join('\n');
-        if (errorMessages.isNotEmpty) return errorMessages;
-      }
-      
-      // Check for message field
-      if (data['message'] is String && (data['message'] as String).isNotEmpty) {
-        return data['message'] as String;
-      }
+  /// Surfaces a phone clash/format error (400 or 409) inline on the phone
+  /// field; anything else goes to a snackbar. The 409 message is shown
+  /// verbatim — it already names which record holds the number.
+  void _handlePhoneAwareError(DioException e) {
+    final mapped = NetworkExceptionMapper.map(e);
+    final phoneError = mapped is ValidationException
+        ? mapped.errorFor('phoneNumber')
+        : null;
+    final isPhoneConflict = e.response?.statusCode == 409 &&
+        mapped.message.toLowerCase().contains('phone');
+
+    if (phoneError != null || isPhoneConflict) {
+      setState(() => _phoneServerError = phoneError ?? mapped.message);
+      _formKey.currentState?.validate();
+      return;
     }
-    
-    // Fallback to generic error message
-    return 'Failed to create manager. Please try again.';
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(mapped.message),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 4),
+      ),
+    );
   }
 
   @override
@@ -390,14 +389,26 @@ class _CreateManagerScreenState extends State<CreateManagerScreen>
                       _buildLabel('Phone Number *'),
                       _buildTextField(
                         controller: _phoneController,
-                        hint: '+91 98000 00000',
+                        hint: '+977 9800000000',
                         icon: Icons.phone_android_rounded,
                         keyboardType: TextInputType.phone,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(10),
+                        ],
+                        onChanged: (_) {
+                          if (_phoneServerError != null) {
+                            setState(() => _phoneServerError = null);
+                          }
+                        },
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
                             return 'Phone number is required';
                           }
-                          return null;
+                          if (value.trim().length != 10) {
+                            return 'Phone number must be exactly 10 digits';
+                          }
+                          return _phoneServerError;
                         },
                       ),
                       SizedBox(height: SizeConfig.heightPercent(2)),
@@ -477,6 +488,8 @@ class _CreateManagerScreenState extends State<CreateManagerScreen>
     bool obscureText = false,
     Widget? suffixIcon,
     String? Function(String?)? validator,
+    List<TextInputFormatter>? inputFormatters,
+    void Function(String)? onChanged,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -496,6 +509,8 @@ class _CreateManagerScreenState extends State<CreateManagerScreen>
         keyboardType: keyboardType,
         obscureText: obscureText,
         validator: validator,
+        inputFormatters: inputFormatters,
+        onChanged: onChanged,
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: TextStyle(

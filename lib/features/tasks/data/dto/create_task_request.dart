@@ -1,9 +1,9 @@
 class CreateTaskRequest {
-  // Required by the API.
+  // Required by the API. The server now resolves the shop's coordinates
+  // from `shopId`, so they no longer need to be sent from the client.
   final int assignedTo;
+  final int shopId;
   final String title;
-  final double shopLatitude;
-  final double shopLongitude;
 
   // Optional.
   final int? managerId;
@@ -14,9 +14,8 @@ class CreateTaskRequest {
 
   const CreateTaskRequest({
     required this.assignedTo,
+    required this.shopId,
     required this.title,
-    required this.shopLatitude,
-    required this.shopLongitude,
     this.managerId,
     required this.description,
     required this.items,
@@ -27,9 +26,8 @@ class CreateTaskRequest {
   Map<String, dynamic> toJson() {
     final map = <String, dynamic>{
       'assignedTo': assignedTo,
+      'shopId': shopId,
       'title': title,
-      'shopLatitude': shopLatitude,
-      'shopLongitude': shopLongitude,
       'description': description,
       'items': items,
       'priority': priority,

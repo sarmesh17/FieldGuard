@@ -1,6 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:fieldguard/core/networks/dio_client.dart';
 import 'package:fieldguard/core/responsive/responsive.dart';
+import 'package:fieldguard/core/utils/phone_format.dart';
+import 'package:fieldguard/features/collections/presentation/screens/components/shop_collections_section.dart';
 import 'package:fieldguard/features/shops/data/datasource/shop_detail_datasource_impl.dart';
 import 'package:fieldguard/features/shops/data/dto/shop_detail_response.dart';
 import 'package:fieldguard/features/tasks/presentation/screens/create_task_screen.dart';
@@ -236,7 +238,7 @@ class _ShopDetailScreenState extends State<ShopDetailScreen> {
                 _buildInfoCard(
                   icon: Icons.phone,
                   label: 'Contact Phone',
-                  value: _shopDetail!.contactPhone,
+                  value: formatNepaliPhone(_shopDetail!.contactPhone),
                 ),
                 SizedBox(height: SizeConfig.heightPercent(3)),
 
@@ -272,8 +274,6 @@ class _ShopDetailScreenState extends State<ShopDetailScreen> {
                         MaterialPageRoute(
                           builder: (context) => CreateTaskScreen(
                             shopId: _shopDetail!.id,
-                            shopLatitude: double.tryParse(_shopDetail!.latitude),
-                            shopLongitude: double.tryParse(_shopDetail!.longitude),
                           ),
                         ),
                       );
@@ -310,6 +310,10 @@ class _ShopDetailScreenState extends State<ShopDetailScreen> {
                     ),
                   ),
                 ),
+                SizedBox(height: SizeConfig.heightPercent(4)),
+
+                // Collections for this shop (role-scoped server-side).
+                ShopCollectionsSection(shopId: _shopDetail!.id),
                 SizedBox(height: SizeConfig.heightPercent(2)),
               ],
             ),

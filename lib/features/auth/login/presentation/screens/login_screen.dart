@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../../core/responsive/responsive.dart';
@@ -593,8 +594,12 @@ class _FormCard extends StatelessWidget {
                 _ModernField(
                   controller: phoneController,
                   icon: Icons.phone_android_rounded,
-                  hint: '+91  98000 00000',
+                  hint: '+977  9800000000',
                   keyboardType: TextInputType.phone,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(10),
+                  ],
                 ),
 
                 SizedBox(height: SizeConfig.scale(14)),
@@ -680,12 +685,14 @@ class _ModernField extends StatefulWidget {
   final IconData icon;
   final String hint;
   final TextInputType keyboardType;
+  final List<TextInputFormatter>? inputFormatters;
 
   const _ModernField({
     required this.controller,
     required this.icon,
     required this.hint,
     this.keyboardType = TextInputType.text,
+    this.inputFormatters,
   });
 
   @override
@@ -764,6 +771,7 @@ class _ModernFieldState extends State<_ModernField> {
                 child: TextField(
                   controller: widget.controller,
                   keyboardType: widget.keyboardType,
+                  inputFormatters: widget.inputFormatters,
                   decoration: InputDecoration(
                     border: InputBorder.none,
                     hintText: widget.hint,

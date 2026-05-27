@@ -1,5 +1,6 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:fieldguard/core/responsive/responsive.dart';
+import 'package:fieldguard/core/router/app_routes.dart';
 import 'package:fieldguard/features/auth/signup/presentation/providers/signup_provider.dart';
 import 'package:fieldguard/features/auth/signup/presentation/providers/signup_state.dart';
 import 'package:flutter/material.dart';
@@ -25,6 +26,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
     with SingleTickerProviderStateMixin {
   // ── Form controllers ───────────────────────────────────────────────────────
   final _companyNameController = TextEditingController();
+  final _companyEmailController = TextEditingController();
+  final _companyPhoneController = TextEditingController();
   final _panCardController = TextEditingController();
   final _adminNameController = TextEditingController();
   final _phoneNoController = TextEditingController();
@@ -108,6 +111,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
   void dispose() {
     _ctrl.dispose();
     _companyNameController.dispose();
+    _companyEmailController.dispose();
+    _companyPhoneController.dispose();
     _panCardController.dispose();
     _adminNameController.dispose();
     _phoneNoController.dispose();
@@ -118,17 +123,25 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
   // ── Validation & submit ────────────────────────────────────────────────────
   void _onSignUp() {
     final companyName = _companyNameController.text.trim();
+    final companyEmail = _companyEmailController.text.trim();
+    final companyPhone = _companyPhoneController.text.trim();
     final panCard = _panCardController.text.trim();
     final adminName = _adminNameController.text.trim();
     final phone = _phoneNoController.text.trim();
     final password = _passwordController.text;
 
     if (companyName.isEmpty ||
+        companyEmail.isEmpty ||
+        companyPhone.isEmpty ||
         panCard.isEmpty ||
         adminName.isEmpty ||
         phone.isEmpty ||
         password.isEmpty) {
       _snack('Please fill in all required fields');
+      return;
+    }
+    if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(companyEmail)) {
+      _snack('Please enter a valid company email');
       return;
     }
     if (_citizenshipImagePath == null || _registrationDocPath == null) {
@@ -140,6 +153,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
         .read(signupNotifierProvider.notifier)
         .register(
           companyName: companyName,
+          companyEmail: companyEmail,
+          companyPhone: companyPhone,
           panNumber: panCard,
           adminName: adminName,
           phoneNumber: phone,
@@ -162,9 +177,12 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
   @override
   Widget build(BuildContext context) {
     ref.listen<SignupState>(signupNotifierProvider, (prev, next) {
-      if (next.isSuccess) {
-        _snack('Registration successful! Please sign in.', bg: _kPrimary);
-        context.go('/login');
+      // Navigate ONLY on the false→true transition. Without the prev check
+      // this fires on every state change (e.g. toggling password visibility)
+      // and re-routes a user who has already seen the success screen.
+      final justSucceeded = next.isSuccess && !(prev?.isSuccess ?? false);
+      if (justSucceeded) {
+        context.go(AppRoutes.registrationSuccess);
       } else if (next.errorMessage != null &&
           next.errorMessage != prev?.errorMessage) {
         _snack(next.errorMessage!, bg: Colors.red.shade700);
@@ -368,6 +386,60 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
                                         _item(
                                           1,
                                           const _FieldLabel(
+                                            'Company Email',
+                                            required: true,
+                                          ),
+                                        ),
+                                        SizedBox(
+                                          height: SizeConfig.heightPercent(0.7),
+                                        ),
+                                        _item(
+                                          1,
+                                          _InputField(
+                                            controller: _companyEmailController,
+                                            icon: Icons.alternate_email_rounded,
+                                            hint: 'contact@acme.com',
+                                            keyboardType:
+                                                TextInputType.emailAddress,
+                                          ),
+                                        ),
+
+                                        SizedBox(
+                                          height: SizeConfig.heightPercent(2),
+                                        ),
+                                        _item(
+                                          1,
+                                          const _FieldLabel(
+                                            'Company Phone',
+                                            required: true,
+                                          ),
+                                        ),
+                                        SizedBox(
+                                          height: SizeConfig.heightPercent(0.7),
+                                        ),
+                                        _item(
+                                          1,
+                                          _InputField(
+                                            controller: _companyPhoneController,
+                                            icon: Icons.call_outlined,
+                                            hint: '9800000000',
+                                            keyboardType: TextInputType.phone,
+                                            inputFormatters: [
+                                              FilteringTextInputFormatter
+                                                  .digitsOnly,
+                                              LengthLimitingTextInputFormatter(
+                                                10,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+
+                                        SizedBox(
+                                          height: SizeConfig.heightPercent(2),
+                                        ),
+                                        _item(
+                                          1,
+                                          const _FieldLabel(
                                             'PAN Card Number',
                                             required: true,
                                           ),
@@ -381,7 +453,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
                                             controller: _panCardController,
                                             icon: Icons.contact_page_outlined,
                                             hint: 'ABCDE1234N',
-                                            buttonText: 'verify',
                                           ),
                                         ),
 
@@ -515,6 +586,12 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
                                         _item(
                                           5,
                                           _DocField(
+                                            allowedExtensions: const [
+                                              'jpg',
+                                              'jpeg',
+                                              'png',
+                                            ],
+                                            formatHint: 'JPG or PNG image',
                                             onFileSelected: (path) => setState(
                                               () =>
                                                   _citizenshipImagePath = path,
@@ -538,6 +615,13 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
                                         _item(
                                           6,
                                           _DocField(
+                                            allowedExtensions: const [
+                                              'pdf',
+                                              'jpg',
+                                              'jpeg',
+                                              'png',
+                                            ],
+                                            formatHint: 'PDF, JPG or PNG',
                                             onFileSelected: (path) => setState(
                                               () => _registrationDocPath = path,
                                             ),
@@ -549,10 +633,31 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
                                         ),
 
                                         // ── Submit ─────────────────────────────
+                                        if ((signupState.progress?.isStarted ??
+                                                false) &&
+                                            !signupState.isLoading) ...[
+                                          _item(
+                                            7,
+                                            const _ResumeNotice(),
+                                          ),
+                                          SizedBox(
+                                            height:
+                                                SizeConfig.heightPercent(1.5),
+                                          ),
+                                        ],
                                         _item(
                                           7,
                                           _SubmitButton(
                                             isLoading: signupState.isLoading,
+                                            statusMessage:
+                                                signupState.statusMessage,
+                                            label:
+                                                (signupState
+                                                            .progress
+                                                            ?.isStarted ??
+                                                        false)
+                                                    ? 'Complete Registration'
+                                                    : 'Register Company',
                                             onPressed: _onSignUp,
                                           ),
                                         ),
@@ -987,26 +1092,9 @@ class _FieldShellState extends State<_FieldShell> {
       decoration: BoxDecoration(
         color: _focused ? _kFieldFocus : Colors.white,
         borderRadius: BorderRadius.circular(SizeConfig.scale(14)),
-        border: Border(
-          left: BorderSide(
-            color: _focused ? _kMid : Colors.grey.shade300,
-            width: _focused ? 3.0 : 1.0,
-          ),
-          top: BorderSide(
-            color: _focused
-                ? _kMid.withValues(alpha: 0.5)
-                : Colors.grey.shade300,
-          ),
-          right: BorderSide(
-            color: _focused
-                ? _kMid.withValues(alpha: 0.5)
-                : Colors.grey.shade300,
-          ),
-          bottom: BorderSide(
-            color: _focused
-                ? _kMid.withValues(alpha: 0.5)
-                : Colors.grey.shade300,
-          ),
+        border: Border.all(
+          color: _focused ? _kMid : Colors.grey.shade300,
+          width: _focused ? 2.0 : 1.0,
         ),
         boxShadow: [
           BoxShadow(
@@ -1033,13 +1121,15 @@ class _InputField extends ConsumerStatefulWidget {
   final TextEditingController controller;
   final IconData icon;
   final String hint;
-  final String? buttonText;
+  final TextInputType? keyboardType;
+  final List<TextInputFormatter>? inputFormatters;
 
   const _InputField({
     required this.controller,
     required this.icon,
     required this.hint,
-    this.buttonText,
+    this.keyboardType,
+    this.inputFormatters,
   });
 
   @override
@@ -1063,11 +1153,6 @@ class _InputFieldState extends ConsumerState<_InputField> {
 
   @override
   Widget build(BuildContext context) {
-    final isVerifying = ref.watch(
-      signupNotifierProvider.select((s) => s.isVerifying),
-    );
-    final notifier = ref.read(signupNotifierProvider.notifier);
-
     return _FieldShell(
       focusNode: _focusNode,
       child: Row(
@@ -1082,6 +1167,8 @@ class _InputFieldState extends ConsumerState<_InputField> {
             child: TextField(
               controller: widget.controller,
               focusNode: _focusNode,
+              keyboardType: widget.keyboardType,
+              inputFormatters: widget.inputFormatters,
               decoration: InputDecoration(
                 border: InputBorder.none,
                 hintText: widget.hint,
@@ -1092,49 +1179,6 @@ class _InputFieldState extends ConsumerState<_InputField> {
                 contentPadding: EdgeInsets.symmetric(
                   vertical: SizeConfig.scale(15),
                 ),
-                suffixIcon: widget.buttonText != 'verify'
-                    ? null
-                    : isVerifying
-                    ? Padding(
-                        padding: EdgeInsets.all(SizeConfig.scale(12)),
-                        child: SizedBox(
-                          height: SizeConfig.scale(16),
-                          width: SizeConfig.scale(16),
-                          child: const CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: _kPrimary,
-                          ),
-                        ),
-                      )
-                    : Padding(
-                        padding: EdgeInsets.symmetric(
-                          vertical: SizeConfig.scale(10),
-                          horizontal: SizeConfig.scale(8),
-                        ),
-                        child: GestureDetector(
-                          onTap: () => notifier.setVerificationLoading(true),
-                          child: Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: SizeConfig.scale(10),
-                              vertical: SizeConfig.scale(4),
-                            ),
-                            decoration: BoxDecoration(
-                              color: _kPrimary,
-                              borderRadius: BorderRadius.circular(
-                                SizeConfig.scale(20),
-                              ),
-                            ),
-                            child: Text(
-                              'Verify',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w700,
-                                fontSize: SizeConfig.scaledFontSize(11),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
               ),
               style: TextStyle(
                 fontSize: SizeConfig.scaledFontSize(14),
@@ -1433,10 +1477,13 @@ class _PhoneFieldState extends ConsumerState<_PhoneField> {
                     controller: widget.controller,
                     focusNode: _focusNode,
                     keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(10),
+                    ],
                     decoration: InputDecoration(
                       border: InputBorder.none,
-                      hintText: '0000000000',
+                      hintText: '9800000000',
                       hintStyle: TextStyle(
                         color: Colors.grey.shade400,
                         fontSize: SizeConfig.scaledFontSize(14),
@@ -1465,7 +1512,13 @@ class _PhoneFieldState extends ConsumerState<_PhoneField> {
 // ─────────────────────────────────────────────────────────────────────────────
 class _DocField extends StatefulWidget {
   final void Function(String? path) onFileSelected;
-  const _DocField({required this.onFileSelected});
+  final List<String> allowedExtensions;
+  final String formatHint;
+  const _DocField({
+    required this.onFileSelected,
+    required this.allowedExtensions,
+    required this.formatHint,
+  });
 
   @override
   State<_DocField> createState() => _DocFieldState();
@@ -1477,7 +1530,7 @@ class _DocFieldState extends State<_DocField> {
   Future<void> _pick() async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
-      allowedExtensions: ['pdf', 'doc', 'docx', 'jpg', 'png'],
+      allowedExtensions: widget.allowedExtensions,
     );
     if (result != null) {
       setState(() => _fileName = result.files.single.name);
@@ -1556,9 +1609,7 @@ class _DocFieldState extends State<_DocField> {
                   ),
                   SizedBox(height: SizeConfig.scale(3)),
                   Text(
-                    uploaded
-                        ? 'Tap to replace document'
-                        : 'PDF, DOC, JPG or PNG · Max 10MB',
+                    uploaded ? 'Tap to replace document' : widget.formatHint,
                     style: TextStyle(
                       fontSize: SizeConfig.scaledFontSize(10),
                       color: uploaded ? _kMid : Colors.grey.shade400,
@@ -1586,8 +1637,15 @@ class _DocFieldState extends State<_DocField> {
 // ─────────────────────────────────────────────────────────────────────────────
 class _SubmitButton extends StatefulWidget {
   final bool isLoading;
+  final String? statusMessage;
+  final String label;
   final VoidCallback onPressed;
-  const _SubmitButton({required this.isLoading, required this.onPressed});
+  const _SubmitButton({
+    required this.isLoading,
+    required this.onPressed,
+    required this.label,
+    this.statusMessage,
+  });
 
   @override
   State<_SubmitButton> createState() => _SubmitButtonState();
@@ -1646,19 +1704,43 @@ class _SubmitButtonState extends State<_SubmitButton>
           ),
           child: Center(
             child: widget.isLoading
-                ? SizedBox(
-                    height: SizeConfig.scale(22),
-                    width: SizeConfig.scale(22),
-                    child: const CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 2.2,
+                ? Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: SizeConfig.scale(16),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(
+                          height: SizeConfig.scale(20),
+                          width: SizeConfig.scale(20),
+                          child: const CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2.2,
+                          ),
+                        ),
+                        if (widget.statusMessage != null) ...[
+                          SizedBox(width: SizeConfig.scale(12)),
+                          Flexible(
+                            child: Text(
+                              widget.statusMessage!,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: SizeConfig.scaledFontSize(13),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   )
                 : Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        'Register Company',
+                        widget.label,
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: SizeConfig.scaledFontSize(16),
@@ -1676,6 +1758,64 @@ class _SubmitButtonState extends State<_SubmitButton>
                   ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Resume notice — shown after a registration attempt that created the company
+// but failed before finishing. The company can't be re-registered, so the
+// retry only completes the document upload.
+// ─────────────────────────────────────────────────────────────────────────────
+class _ResumeNotice extends StatelessWidget {
+  const _ResumeNotice();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(SizeConfig.scale(12)),
+      decoration: BoxDecoration(
+        color: _kFieldFocus,
+        borderRadius: BorderRadius.circular(SizeConfig.scale(12)),
+        border: Border.all(color: _kMid.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.check_circle_outline_rounded,
+            color: _kPrimary,
+            size: SizeConfig.scale(20),
+          ),
+          SizedBox(width: SizeConfig.scale(10)),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Company already registered',
+                  style: TextStyle(
+                    fontSize: SizeConfig.scaledFontSize(12),
+                    fontWeight: FontWeight.w700,
+                    color: _kPrimary,
+                  ),
+                ),
+                SizedBox(height: SizeConfig.scale(2)),
+                Text(
+                  'We just need to finish uploading your documents. '
+                  'Edits to the details above no longer apply.',
+                  style: TextStyle(
+                    fontSize: SizeConfig.scaledFontSize(11),
+                    color: Colors.grey.shade600,
+                    height: 1.3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
