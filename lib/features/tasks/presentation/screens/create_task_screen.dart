@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:fieldguard/core/networks/dio_client.dart';
 import 'package:fieldguard/core/responsive/responsive.dart';
+import 'package:fieldguard/core/services/session.dart';
 import 'package:fieldguard/features/shops/data/datasource/shops_datasource_impl.dart';
 import 'package:fieldguard/features/shops/data/dto/shops_hierarchy_response.dart';
 import 'package:fieldguard/features/tasks/data/datasource/task_datasource_impl.dart';
@@ -13,14 +14,10 @@ import 'package:go_router/go_router.dart';
 
 class CreateTaskScreen extends StatefulWidget {
   final int? shopId;
-  final double? shopLatitude;
-  final double? shopLongitude;
 
   const CreateTaskScreen({
     super.key,
     this.shopId,
-    this.shopLatitude,
-    this.shopLongitude,
   });
 
   @override
@@ -34,6 +31,11 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
   final _itemController = TextEditingController();
 
   String _selectedRole = 'EMPLOYEE';
+  // Gates the ADMIN-only "Under Manager (optional)" picker. A MANAGER's
+  // task is always pinned under themselves server-side, so that field is
+  // meaningless for them. null = role not resolved yet (so the section
+  // doesn't flash in before we know it's an admin).
+  bool? _isManagerUser;
   int? _selectedPersonId;
   String? _selectedPersonName;
   int? _selectedManagerId;
@@ -57,15 +59,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
   late final TeamDataSourceImpl _teamDataSource;
   late final ShopsDataSourceImpl _shopsDataSource;
 
-  /// Shop coordinates are required by the API. They come either from the
-  /// caller or from the chosen shop (its lat/lng arrive as strings).
-  double? get _effectiveShopLat =>
-      widget.shopLatitude ??
-      (_selectedShop != null ? double.tryParse(_selectedShop!.latitude) : null);
-
-  double? get _effectiveShopLng =>
-      widget.shopLongitude ??
-      (_selectedShop != null ? double.tryParse(_selectedShop!.longitude) : null);
+  int? get _effectiveShopId => widget.shopId ?? _selectedShop?.id;
 
   @override
   void initState() {
@@ -89,14 +83,27 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
   Future<void> _loadPeople() async {
     setState(() => _isLoadingPeople = true);
 
+    // Role only gates the ADMIN-only "Under Manager" picker now. It's a
+    // fast local token read, so resolve it up front (before the network)
+    // to avoid that section flashing in late.
+    final isManager = await Session.isManager();
+    final currentUserId = await Session.userId();
+    if (mounted) setState(() => _isManagerUser = isManager);
+
     try {
+      // Both ADMIN and MANAGER can now list managers (company-scoped) and
+      // assign a task to another manager.
       final employeesResponse = await _teamDataSource.getEmployees();
       final managersResponse = await _teamDataSource.getManagers();
 
       if (mounted) {
         setState(() {
           _employees = employeesResponse.employees;
-          _managers = managersResponse.managers;
+          // Drop your own entry — the backend rejects assigning a task to
+          // yourself, so it should never be selectable.
+          _managers = managersResponse.managers
+              .where((m) => int.tryParse(m.id) != currentUserId)
+              .toList();
           _isLoadingPeople = false;
         });
       }
@@ -127,6 +134,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
         }
       }
 
+      // Admin shape.
       add(hierarchy.unassignedShops);
       for (final m in hierarchy.managers) {
         add(m.shops);
@@ -135,6 +143,11 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
         }
       }
       for (final e in hierarchy.directEmployees) {
+        add(e.shops);
+      }
+      // Manager shape: the manager's own shops + their team's shops.
+      add(hierarchy.myShops);
+      for (final e in hierarchy.team) {
         add(e.shops);
       }
 
@@ -426,8 +439,8 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
       return;
     }
 
-    // Shop location is required by the API — block submission without it.
-    if (_effectiveShopLat == null || _effectiveShopLng == null) {
+    // Shop is required by the API — block submission without it.
+    if (_effectiveShopId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please select a shop'),
@@ -445,15 +458,13 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
       await _taskDataSource.createTask(
         CreateTaskRequest(
           assignedTo: _selectedPersonId!,
+          shopId: _effectiveShopId!,
           managerId: _selectedRole == 'EMPLOYEE' ? _selectedManagerId : null,
           title: _titleController.text.trim(),
           description: _descriptionController.text.trim(),
           items: _items,
           priority: _priority,
           dueDate: dueDateStr,
-          // Guaranteed non-null by the shop-location check above.
-          shopLatitude: _effectiveShopLat!,
-          shopLongitude: _effectiveShopLng!,
         ),
       );
 
@@ -537,6 +548,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                       Expanded(
                         child: _buildRoleChip('EMPLOYEE'),
                       ),
+                      // Both ADMIN and MANAGER can assign to a manager now.
                       SizedBox(width: SizeConfig.scale(12)),
                       Expanded(
                         child: _buildRoleChip('MANAGER'),
@@ -602,8 +614,9 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                   ),
                   SizedBox(height: SizeConfig.scale(16)),
 
-                  // Optional manager selector (only when assigning to an employee)
-                  if (_selectedRole == 'EMPLOYEE') ...[
+                  // Optional manager selector (only when an admin assigns to
+                  // an employee — a manager user can't list managers).
+                  if (_selectedRole == 'EMPLOYEE' && _isManagerUser == false) ...[
                     _buildSectionTitle('Under Manager (optional)'),
                     SizedBox(height: SizeConfig.scale(8)),
                     GestureDetector(

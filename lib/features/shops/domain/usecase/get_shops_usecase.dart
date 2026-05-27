@@ -7,7 +7,7 @@ class GetShopsUsecase {
 
   GetShopsUsecase(this._repository);
 
-  Future<Result<List<ShopWithCreator>>> call() async {
-    return await _repository.getShopsWithCreators();
+  Future<Result<List<ShopWithCreator>>> call({String? source}) async {
+    return await _repository.getShopsWithCreators(source: source);
   }
 }

@@ -7,6 +7,9 @@ class AppRoutes {
   static const String splash = '/';
   static const String login = '/login';
   static const String signup = '/signup';
+  static const String registrationSuccess = '/registration-success';
+  static const String pendingApproval = '/pending-approval';
+  static const String accountRejected = '/account-rejected';
   static const String home = '/home';
   static const String dashboard = '/dashboard';
   static const String shops = '/shops';

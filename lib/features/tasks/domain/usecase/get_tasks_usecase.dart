@@ -16,6 +16,9 @@ class GetTasksUsecase {
     int? userId,
     int? managerId,
     bool? hasManager,
+    String? assigneeRole,
+    int? createdBy,
+    String? view,
     String? sortBy,
     String? sortOrder,
   }) {
@@ -28,6 +31,9 @@ class GetTasksUsecase {
       userId: userId,
       managerId: managerId,
       hasManager: hasManager,
+      assigneeRole: assigneeRole,
+      createdBy: createdBy,
+      view: view,
       sortBy: sortBy,
       sortOrder: sortOrder,
     );

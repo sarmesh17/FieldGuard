@@ -11,6 +11,9 @@ class _TasksQuery {
   final int? userId;
   final int? managerId;
   final bool? hasManager;
+  final String? assigneeRole;
+  final int? createdBy;
+  final String? view;
 
   const _TasksQuery({
     this.search,
@@ -19,6 +22,9 @@ class _TasksQuery {
     this.userId,
     this.managerId,
     this.hasManager,
+    this.assigneeRole,
+    this.createdBy,
+    this.view,
   });
 }
 
@@ -40,6 +46,9 @@ class TasksNotifier extends StateNotifier<TasksState> {
     int? userId,
     int? managerId,
     bool? hasManager,
+    String? assigneeRole,
+    int? createdBy,
+    String? view,
   }) async {
     _query = _TasksQuery(
       search: search,
@@ -48,6 +57,9 @@ class TasksNotifier extends StateNotifier<TasksState> {
       userId: userId,
       managerId: managerId,
       hasManager: hasManager,
+      assigneeRole: assigneeRole,
+      createdBy: createdBy,
+      view: view,
     );
 
     state = const TasksLoading();
@@ -61,6 +73,9 @@ class TasksNotifier extends StateNotifier<TasksState> {
       userId: _query.userId,
       managerId: _query.managerId,
       hasManager: _query.hasManager,
+      assigneeRole: _query.assigneeRole,
+      createdBy: _query.createdBy,
+      view: _query.view,
     );
 
     state = switch (result) {
@@ -88,6 +103,9 @@ class TasksNotifier extends StateNotifier<TasksState> {
       userId: _query.userId,
       managerId: _query.managerId,
       hasManager: _query.hasManager,
+      assigneeRole: _query.assigneeRole,
+      createdBy: _query.createdBy,
+      view: _query.view,
     );
 
     switch (result) {

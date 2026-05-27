@@ -1,9 +1,13 @@
 import 'package:fieldguard/core/router/app_routes.dart';
+import 'package:fieldguard/features/auth/approval/data/dto/company_approval_response.dart';
+import 'package:fieldguard/features/auth/approval/presentation/screens/account_rejected_screen.dart';
+import 'package:fieldguard/features/auth/approval/presentation/screens/pending_approval_screen.dart';
 import 'package:fieldguard/features/admin_profile/admin_profile.dart';
 import 'package:fieldguard/features/tasks/presentation/screens/tasks_list_screen.dart';
 import 'package:fieldguard/features/auth/login/presentation/providers/login_provider.dart';
 import 'package:fieldguard/features/auth/login/presentation/providers/login_state.dart';
 import 'package:fieldguard/features/auth/login/presentation/screens/login_screen.dart';
+import 'package:fieldguard/features/auth/signup/presentation/screens/registration_success_screen.dart';
 import 'package:fieldguard/features/auth/signup/presentation/screens/signup_screen.dart';
 import 'package:fieldguard/features/dashboard/dashboard_screen.dart';
 import 'package:fieldguard/features/routes/presentation/screens/routes_screen.dart';
@@ -21,44 +25,67 @@ import 'package:go_router/go_router.dart';
 
 /// Riverpod provider for the [GoRouter] instance.
 ///
-/// Declared as a [Provider] so the router is created once and shared.
-/// The router listens to [loginNotifierProvider] to redirect authenticated
-/// users away from auth screens.
+/// The router is built **once** and shared. Auth-state changes drive
+/// redirect re-evaluation through [refreshListenable] — they must not
+/// recreate the router, or every intermediate state during a login attempt
+/// (`LoginLoading`, `LoginFailure`, …) would reset navigation back to
+/// [AppRoutes.splash].
 final goRouterProvider = Provider<GoRouter>((ref) {
-  // Listen to auth state so the router refreshes when the user signs in/out.
-  final isAuthenticated = ref.watch(
-    loginNotifierProvider.select((state) => state is LoginSuccess),
-  );
+  final authListenable = _RiverpodGoRouterRefresh(ref);
+  ref.onDispose(authListenable.dispose);
 
   return GoRouter(
     initialLocation: AppRoutes.splash,
     debugLogDiagnostics: false,
+    refreshListenable: authListenable,
 
     // ── Redirect logic ──────────────────────────────────────────────────────
     redirect: (context, state) {
       final authState = ref.read(loginNotifierProvider);
       final isOnAuthRoute =
           state.matchedLocation == AppRoutes.login ||
-          state.matchedLocation == AppRoutes.signup;
-      
+          state.matchedLocation == AppRoutes.signup ||
+          state.matchedLocation == AppRoutes.registrationSuccess;
+
       final isOnSplash = state.matchedLocation == AppRoutes.splash;
 
-      // If still checking auth state, stay on splash
+      // While the session/approval check is in flight, stay on splash.
       if (authState is LoginChecking) {
         return AppRoutes.splash;
       }
 
-      // If authenticated and trying to visit auth screens or splash
-      if (isAuthenticated && (isOnAuthRoute || isOnSplash)) {
-        return AppRoutes.dashboard;
+      // Not signed in → only auth/splash screens are reachable.
+      if (authState is! LoginSuccess) {
+        if (!isOnAuthRoute && !isOnSplash) return AppRoutes.login;
+        return null;
       }
 
-      // If not authenticated and not on an auth/splash screen, go to login
-      if (!isAuthenticated && !isOnAuthRoute && !isOnSplash) {
-        return AppRoutes.login;
-      }
+      // Signed in: gate on the company approval status. Pending/rejected (and
+      // any unrecognised status) users are confined to their gate screen and
+      // cannot reach the app shell; approved users are sent into the app.
+      final isOnGateScreen =
+          state.matchedLocation == AppRoutes.pendingApproval ||
+          state.matchedLocation == AppRoutes.accountRejected;
 
-      return null;
+      switch (authState.approvalStatus) {
+        case ApprovalStatus.rejected:
+          return state.matchedLocation == AppRoutes.accountRejected
+              ? null
+              : AppRoutes.accountRejected;
+
+        case ApprovalStatus.pendingApproval:
+        case ApprovalStatus.unknown:
+          return state.matchedLocation == AppRoutes.pendingApproval
+              ? null
+              : AppRoutes.pendingApproval;
+
+        case ApprovalStatus.approved:
+          // Approved users shouldn't sit on auth/splash/gate screens.
+          if (isOnAuthRoute || isOnSplash || isOnGateScreen) {
+            return AppRoutes.dashboard;
+          }
+          return null;
+      }
     },
     // ── Routes ──────────────────────────────────────────────────────────────
     routes: [
@@ -76,6 +103,27 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.signup,
         pageBuilder: (context, state) =>
             _slidePage(state: state, child: SignupScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.registrationSuccess,
+        pageBuilder: (context, state) => _slidePage(
+          state: state,
+          child: const RegistrationSuccessScreen(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.pendingApproval,
+        pageBuilder: (context, state) => _fadePage(
+          state: state,
+          child: const PendingApprovalScreen(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.accountRejected,
+        pageBuilder: (context, state) => _fadePage(
+          state: state,
+          child: const AccountRejectedScreen(),
+        ),
       ),
       GoRoute(
         path: AppRoutes.tasks,
@@ -223,4 +271,28 @@ CustomTransitionPage<void> _slidePage({
           child: child,
         ),
   );
+}
+
+// ─── Riverpod → GoRouter refresh adapter ──────────────────────────────────────
+
+/// Bridges a Riverpod provider into [GoRouter.refreshListenable].
+///
+/// GoRouter re-evaluates its redirect whenever this `Listenable` notifies, so
+/// the router instance itself never has to be rebuilt — auth-state changes
+/// stay non-disruptive to in-flight navigation.
+class _RiverpodGoRouterRefresh extends ChangeNotifier {
+  _RiverpodGoRouterRefresh(Ref ref) {
+    _removeListener = ref.listen<LoginState>(
+      loginNotifierProvider,
+      (_, _) => notifyListeners(),
+    ).close;
+  }
+
+  late final void Function() _removeListener;
+
+  @override
+  void dispose() {
+    _removeListener();
+    super.dispose();
+  }
 }
