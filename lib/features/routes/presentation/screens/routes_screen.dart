@@ -13,9 +13,9 @@ import 'package:geolocator/geolocator.dart' as geo;
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' hide Size;
 import 'package:permission_handler/permission_handler.dart';
 
-import 'package:fieldguard/core/services/live_tracking_socket.dart';
-import 'package:fieldguard/core/services/location_tracker.dart';
 import 'package:fieldguard/core/services/session.dart';
+import 'package:fieldguard/features/live_tracking/presentation/tracking_controller.dart';
+import 'package:fieldguard/widgets/app_skeletons.dart';
 import 'package:fieldguard/features/routes/data/mapbox_directions_service.dart';
 import 'package:fieldguard/features/routes/presentation/providers/navigate_target_provider.dart';
 import 'package:fieldguard/features/routes/presentation/providers/route_tasks_provider.dart';
@@ -29,6 +29,24 @@ import 'package:fieldguard/features/tasks/presentation/screens/task_detail_scree
 
 const _kBrand = Color(0xFF0E5A3B);
 const _kBrandSoft = Color(0xFFD1FADF);
+// Header gradient stops — consistent with Team / Profile / Login.
+const _kDark = Color(0xff072A1C);
+const _kMid = Color(0xff1D7A51);
+
+// Width-based [SizeConfig.scale] balloons on landscape phones. These helpers
+// scale off the SHORTER screen side so paddings/fonts stay phone-sized in
+// both orientations (matches the helper in Team Management).
+double _s(double v) {
+  final w = SizeConfig.screenWidth;
+  final h = SizeConfig.screenHeight;
+  final shorter = w < h ? w : h;
+  return v * (shorter / 375);
+}
+
+double _sf(double v) {
+  final scaled = _s(v);
+  return scaled * SizeConfig.textScaleFactor.clamp(0.8, 1.3);
+}
 
 /// Lets the embedded Mapbox map win pan/scale gestures against the page's
 /// scroll view — without these, a vertical drag scrolls the page instead of
@@ -74,8 +92,7 @@ class RoutesScreen extends ConsumerStatefulWidget {
   ConsumerState<RoutesScreen> createState() => _RoutesScreenState();
 }
 
-class _RoutesScreenState extends ConsumerState<RoutesScreen>
-    with WidgetsBindingObserver {
+class _RoutesScreenState extends ConsumerState<RoutesScreen> {
   MapboxMap? _mapboxMap;
   bool _isLocating = false;
   bool _mapOverlayVisible = true;
@@ -83,15 +100,12 @@ class _RoutesScreenState extends ConsumerState<RoutesScreen>
 
   // Role — resolved once from the JWT.
   bool _roleResolved = false;
-  bool _isManager = false;
   bool _isAdmin = false;
   bool get _isFieldAgent => !_isAdmin; // employee or manager
 
-  // Field tracking (managers broadcast to the team map).
-  final _trackSocket = LiveTrackingSocket.instance;
-  final _tracker = LocationTracker.instance;
-  bool _tracking = false;
-  bool _trackBusy = false;
+  // Live tracking now lives in [trackingControllerProvider] (shared app-wide,
+  // toggled from the Home screen). This screen only reacts to its on/off state
+  // to drive the map puck + navigation overlay.
 
   // ── Field-agent navigation (employee/manager) ───────────────────────────────
   TaskNavOverlayController? _navOverlay;
@@ -113,7 +127,6 @@ class _RoutesScreenState extends ConsumerState<RoutesScreen>
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
     _checkRole();
   }
 
@@ -121,88 +134,29 @@ class _RoutesScreenState extends ConsumerState<RoutesScreen>
     final role = (await Session.role())?.toUpperCase();
     if (!mounted) return;
     setState(() {
-      _isManager = role == 'MANAGER';
       _isAdmin = role == 'ADMIN';
       _roleResolved = true;
     });
   }
 
   @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed && _tracking) {
-      _trackSocket.ensureConnected().then((_) {
-        if (_tracking) _trackSocket.emitTrackingStart();
-      });
-    }
-  }
-
-  @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
     _rerouteTimer?.cancel();
     _positionStream?.cancel();
     _navOverlay?.dispose();
-    if (_tracking) {
-      _trackSocket.emitTrackingStop();
-      _tracker.stop();
-    }
     super.dispose();
   }
 
-  // ── Tracking toggle ───────────────────────────────────────────────────────
-
-  Future<void> _setTracking(bool start) async {
-    if (_trackBusy) return;
-    setState(() => _trackBusy = true);
-    try {
-      if (start) {
-        final status = await Permission.locationWhenInUse.request();
-        if (!status.isGranted) {
-          _toast('Location permission is required');
-          return;
-        }
-        // Managers broadcast to the team map; employees just track locally.
-        if (_isManager) {
-          await _trackSocket.connect();
-          final ok = await _tracker.start(onPosition: _onBroadcastPosition);
-          if (!ok) {
-            _toast('Location unavailable');
-            return;
-          }
-          _trackSocket.emitTrackingStart();
-        }
-        await _mapboxMap?.location.updateSettings(
-          LocationComponentSettings(
-            enabled: true,
-            pulsingEnabled: true,
-            puckBearingEnabled: true,
-            puckBearing: PuckBearing.HEADING,
-            layerAbove: _navOverlay?.routeLayerId,
-          ),
-        );
-        if (mounted) setState(() => _tracking = true);
-        await _resumeNavigation();
-      } else {
-        if (_isManager) {
-          _trackSocket.emitTrackingStop();
-          await _tracker.stop();
-        }
-        await _suspendNavigation();
-        if (mounted) setState(() => _tracking = false);
-      }
-    } finally {
-      if (mounted) setState(() => _trackBusy = false);
+  /// Drive the map puck + navigation overlay off the shared tracking state.
+  /// Called from a [ref.listen] when the Home-screen toggle flips, and from
+  /// [_initMap] when the screen opens while tracking is already on.
+  Future<void> _applyTracking(bool active) async {
+    if (!_isFieldAgent) return;
+    if (active) {
+      await _resumeNavigation();
+    } else {
+      await _suspendNavigation();
     }
-  }
-
-  void _onBroadcastPosition(geo.Position p) {
-    _trackSocket.emitLocationUpdate(
-      latitude: p.latitude,
-      longitude: p.longitude,
-      speed: p.speed,
-      heading: p.heading,
-      accuracy: p.accuracy,
-    );
   }
 
   void _toast(String message) {
@@ -239,7 +193,9 @@ class _RoutesScreenState extends ConsumerState<RoutesScreen>
       await overlay.init();
       if (!mounted) return;
       _navOverlay = overlay;
-      if (_tracking) await _resumeNavigation();
+      if (ref.read(trackingControllerProvider).active) {
+        await _resumeNavigation();
+      }
       if (mounted) setState(() => _mapOverlayVisible = false);
       return;
     }
@@ -362,7 +318,11 @@ class _RoutesScreenState extends ConsumerState<RoutesScreen>
     final c = task == null ? null : taskShopLatLng(task);
     final dist = c != null
         ? geo.Geolocator.distanceBetween(
-            current.latitude, current.longitude, c.lat, c.lng)
+            current.latitude,
+            current.longitude,
+            c.lat,
+            c.lng,
+          )
         : null;
     if (dist != _straightLineToShop && mounted) {
       setState(() => _straightLineToShop = dist);
@@ -392,13 +352,15 @@ class _RoutesScreenState extends ConsumerState<RoutesScreen>
       _toast('This shop has no saved location');
       return;
     }
-    await _setDestination(_RouteDest(
-      key: 'shop-${picked.shop.id}',
-      name: picked.shop.name,
-      address: picked.shop.address,
-      lat: lat,
-      lng: lng,
-    ));
+    await _setDestination(
+      _RouteDest(
+        key: 'shop-${picked.shop.id}',
+        name: picked.shop.name,
+        address: picked.shop.address,
+        lat: lat,
+        lng: lng,
+      ),
+    );
   }
 
   Future<void> _setDestination(_RouteDest dest) async {
@@ -491,7 +453,9 @@ class _RoutesScreenState extends ConsumerState<RoutesScreen>
       'geometry': {'type': 'LineString', 'coordinates': lngLat},
     });
     await _removeRouteLayer();
-    await map.style.addSource(GeoJsonSource(id: _kRouteSourceId, data: geoJson));
+    await map.style.addSource(
+      GeoJsonSource(id: _kRouteSourceId, data: geoJson),
+    );
     await map.style.addLayer(
       LineLayer(
         id: _kRouteLayerId,
@@ -563,13 +527,15 @@ class _RoutesScreenState extends ConsumerState<RoutesScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       ref.read(navigateTargetProvider.notifier).state = null;
-      _setDestination(_RouteDest(
-        key: 'task-${target.taskId}',
-        name: target.shopName,
-        address: target.address,
-        lat: target.lat,
-        lng: target.lng,
-      ));
+      _setDestination(
+        _RouteDest(
+          key: 'task-${target.taskId}',
+          name: target.shopName,
+          address: target.address,
+          lat: target.lat,
+          lng: target.lng,
+        ),
+      );
     });
   }
 
@@ -595,9 +561,7 @@ class _RoutesScreenState extends ConsumerState<RoutesScreen>
     if (!_roleResolved) {
       return const Scaffold(
         backgroundColor: Color(0xFFF8FAF9),
-        body: Center(
-          child: CircularProgressIndicator(color: _kBrand),
-        ),
+        body: SkeletonList(),
       );
     }
     return _isAdmin ? _buildAdmin(context) : _buildFieldAgent(context);
@@ -631,6 +595,15 @@ class _RoutesScreenState extends ConsumerState<RoutesScreen>
       }
     });
 
+    // Live tracking is toggled from the Home screen now — react to it here to
+    // show/hide the puck + navigation overlay on the route map.
+    ref.listen<TrackingState>(trackingControllerProvider, (prev, next) {
+      if ((prev?.active ?? false) != next.active) {
+        _applyTracking(next.active);
+      }
+    });
+
+    final tracking = ref.watch(trackingControllerProvider).active;
     final activeTask = ref.watch(activeInProgressTaskProvider);
     final todayCount = ref.watch(todayTaskCountProvider);
     final reachedId = ref.watch(reachedDestinationTaskIdProvider);
@@ -638,85 +611,64 @@ class _RoutesScreenState extends ConsumerState<RoutesScreen>
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAF9),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: true,
-        title: Text(
-          "Today's Route",
-          style: TextStyle(
-            color: _kBrand,
-            fontWeight: FontWeight.bold,
-            fontSize: SizeConfig.scaledFontSize(20),
-          ),
-        ),
-        actions: [
-          Container(
-            margin: const EdgeInsets.only(right: 16, top: 10, bottom: 10),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-            decoration: BoxDecoration(
-              color: _kBrandSoft,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Center(
-              child: Text(
-                todayCount == 1 ? '1 Task' : '$todayCount Tasks',
-                style: TextStyle(
-                  color: _kBrand,
-                  fontWeight: FontWeight.bold,
-                  fontSize: SizeConfig.scaledFontSize(14),
-                ),
-              ),
-            ),
-          ),
-        ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(66),
-          child: _TrackingToggleBar(
-            active: _tracking,
-            busy: _trackBusy,
-            onToggle: () => _setTracking(!_tracking),
-          ),
-        ),
-      ),
       body: SingleChildScrollView(
+        physics: const ClampingScrollPhysics(),
         child: Column(
           children: [
-            _buildMap(showMyLocation: _tracking, showFullscreen: _tracking),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-              child: _ActiveNavCard(
-                task: activeTask,
-                route: _activeRoute,
-                routeFetching: _activeRouteFetching,
-                reached: hasReached,
-                straightLineMeters: _straightLineToShop,
-                onOpenTask: activeTask == null
-                    ? null
-                    : () => Navigator.of(context).push(
+            _buildRoutesHeader(
+              title: "Today's Route",
+              chipLabel: todayCount == 1 ? '1 Task' : '$todayCount Tasks',
+              showChip: true,
+            ),
+            _buildMap(
+              showMyLocation: tracking,
+              showFullscreen: tracking,
+              isTracking: tracking,
+            ),
+            _AnimatedEntry(
+              index: 0,
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: _s(16),
+                  vertical: _s(16),
+                ),
+                child: _ActiveNavCard(
+                  task: activeTask,
+                  route: _activeRoute,
+                  routeFetching: _activeRouteFetching,
+                  reached: hasReached,
+                  straightLineMeters: _straightLineToShop,
+                  onOpenTask: activeTask == null
+                      ? null
+                      : () => Navigator.of(context).push(
                           MaterialPageRoute(
                             builder: (_) =>
                                 TaskDetailScreen(taskId: activeTask.id),
                           ),
                         ),
+                ),
               ),
             ),
-            const Padding(
-              padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  "Today's Schedule",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF111827),
+            _AnimatedEntry(
+              index: 1,
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(_s(16), _s(8), _s(16), _s(8)),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    "Today's Schedule",
+                    style: TextStyle(
+                      fontSize: _sf(18),
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF111827),
+                      letterSpacing: -0.2,
+                    ),
                   ),
                 ),
               ),
             ),
             const ScheduleList(),
-            const SizedBox(height: 24),
+            SizedBox(height: _s(24)),
           ],
         ),
       ),
@@ -731,35 +683,130 @@ class _RoutesScreenState extends ConsumerState<RoutesScreen>
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAF9),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        title: Text(
-          'Shop Route',
-          style: TextStyle(
-            color: const Color(0xff111111),
-            fontWeight: FontWeight.w700,
-            fontSize: SizeConfig.scaledFontSize(20),
-          ),
-        ),
-      ),
       body: SingleChildScrollView(
+        physics: const ClampingScrollPhysics(),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            _buildRoutesHeader(title: 'Shop Route', showChip: false),
             _buildMap(showMyLocation: true, showFullscreen: true),
-            if (_isAdmin || _destination != null) _buildAdminDestinationCard(),
+            if (_isAdmin || _destination != null)
+              _AnimatedEntry(index: 0, child: _buildAdminDestinationCard()),
           ],
         ),
       ),
     );
   }
 
+  // ─── Shared gradient header (matches Team Management / Profile) ──────────
+  Widget _buildRoutesHeader({
+    required String title,
+    String? chipLabel,
+    bool showChip = false,
+  }) {
+    final isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [_kDark, _kBrand, _kMid],
+          stops: [0.0, 0.55, 1.0],
+        ),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(26)),
+      ),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          // Decorative orbs for depth.
+          Positioned(
+            top: -30,
+            right: -20,
+            child: _orb(_s(isLandscape ? 90 : 130), 0.07),
+          ),
+          Positioned(
+            bottom: -10,
+            left: -30,
+            child: _orb(_s(isLandscape ? 60 : 80), 0.05),
+          ),
+          SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                _s(16),
+                _s(isLandscape ? 2 : 6),
+                _s(16),
+                _s(isLandscape ? 10 : 16),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: _sf(isLandscape ? 17 : 19),
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.3,
+                        height: 1.1,
+                      ),
+                    ),
+                  ),
+                  if (showChip && chipLabel != null)
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: _s(12),
+                        vertical: _s(5),
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.14),
+                        borderRadius: BorderRadius.circular(_s(20)),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.28),
+                        ),
+                      ),
+                      child: Text(
+                        chipLabel,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: _sf(12),
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _orb(double size, double opacity) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: Colors.white.withValues(alpha: opacity),
+      ),
+    );
+  }
+
   // ── Shared map ──────────────────────────────────────────────────────────────
 
-  Widget _buildMap({required bool showMyLocation, required bool showFullscreen}) {
+  Widget _buildMap({
+    required bool showMyLocation,
+    required bool showFullscreen,
+    bool isTracking = true,
+  }) {
     final mapHeight = SizeConfig.heightPercent(35).clamp(200.0, 300.0);
-    final trackingCurtain = _isFieldAgent && !_tracking;
+    final trackingCurtain = _isFieldAgent && !isTracking;
 
     return SizedBox(
       width: double.infinity,
@@ -815,14 +862,19 @@ class _RoutesScreenState extends ConsumerState<RoutesScreen>
             Positioned(
               top: 24,
               right: 24,
-              child: _MapIconButton(icon: Icons.fullscreen, onTap: _openFullscreen),
+              child: _MapIconButton(
+                icon: Icons.fullscreen,
+                onTap: _openFullscreen,
+              ),
             ),
           if (showMyLocation)
             Positioned(
               bottom: 8,
               right: 24,
               child: _MapIconButton(
-                  icon: Icons.my_location, onTap: _goToMyLocation),
+                icon: Icons.my_location,
+                onTap: _goToMyLocation,
+              ),
             ),
         ],
       ),
@@ -832,8 +884,9 @@ class _RoutesScreenState extends ConsumerState<RoutesScreen>
   void _openFullscreen() {
     // Field agents see the active task's pin + geofence + route in fullscreen
     // too; admins (and agents with no active task) get a plain map.
-    final active =
-        _isFieldAgent ? ref.read(activeInProgressTaskProvider) : null;
+    final active = _isFieldAgent
+        ? ref.read(activeInProgressTaskProvider)
+        : null;
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -872,16 +925,20 @@ class _RoutesScreenState extends ConsumerState<RoutesScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('DESTINATION',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: Color(0xff667085),
-              letterSpacing: 0.5,
-            )),
+        const Text(
+          'DESTINATION',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: Color(0xff667085),
+            letterSpacing: 0.5,
+          ),
+        ),
         const SizedBox(height: 8),
-        const Text('Pick a shop to see the route',
-            style: TextStyle(fontSize: 16, color: Color(0xff667085))),
+        const Text(
+          'Pick a shop to see the route',
+          style: TextStyle(fontSize: 16, color: Color(0xff667085)),
+        ),
         const SizedBox(height: 16),
         SizedBox(
           width: double.infinity,
@@ -894,7 +951,8 @@ class _RoutesScreenState extends ConsumerState<RoutesScreen>
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
+                borderRadius: BorderRadius.circular(12),
+              ),
               elevation: 0,
             ),
           ),
@@ -910,36 +968,49 @@ class _RoutesScreenState extends ConsumerState<RoutesScreen>
       children: [
         Row(
           children: [
-            const Text('DESTINATION',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xff667085),
-                  letterSpacing: 0.5,
-                )),
+            const Text(
+              'DESTINATION',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Color(0xff667085),
+                letterSpacing: 0.5,
+              ),
+            ),
             const Spacer(),
             GestureDetector(
               onTap: _clearDestination,
-              child: const Icon(Icons.close, size: 20, color: Color(0xff667085)),
+              child: const Icon(
+                Icons.close,
+                size: 20,
+                color: Color(0xff667085),
+              ),
             ),
           ],
         ),
         const SizedBox(height: 12),
-        Text(dest.name,
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w700,
-              color: Color(0xff111111),
-            )),
+        Text(
+          dest.name,
+          style: const TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w700,
+            color: Color(0xff111111),
+          ),
+        ),
         const SizedBox(height: 8),
         Row(
           children: [
-            const Icon(Icons.location_on_outlined,
-                size: 16, color: Color(0xff667085)),
+            const Icon(
+              Icons.location_on_outlined,
+              size: 16,
+              color: Color(0xff667085),
+            ),
             const SizedBox(width: 4),
             Expanded(
-              child: Text(dest.address ?? '',
-                  style: const TextStyle(fontSize: 14, color: Color(0xff667085))),
+              child: Text(
+                dest.address ?? '',
+                style: const TextStyle(fontSize: 14, color: Color(0xff667085)),
+              ),
             ),
           ],
         ),
@@ -950,11 +1021,16 @@ class _RoutesScreenState extends ConsumerState<RoutesScreen>
               SizedBox(
                 width: 14,
                 height: 14,
-                child: CircularProgressIndicator(strokeWidth: 2, color: _kBrand),
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: _kBrand,
+                ),
               ),
               SizedBox(width: 8),
-              Text('Calculating route…',
-                  style: TextStyle(fontSize: 14, color: Color(0xff667085))),
+              Text(
+                'Calculating route…',
+                style: TextStyle(fontSize: 14, color: Color(0xff667085)),
+              ),
             ],
           )
         else if (route != null)
@@ -962,20 +1038,26 @@ class _RoutesScreenState extends ConsumerState<RoutesScreen>
             children: [
               const Icon(Icons.directions_car, size: 16, color: _kBrand),
               const SizedBox(width: 4),
-              Text(_formatDistance(route.distanceMeters),
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: _kBrand,
-                  )),
+              Text(
+                _formatDistance(route.distanceMeters),
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: _kBrand,
+                ),
+              ),
               const SizedBox(width: 8),
-              Text(_formatDuration(route.durationSeconds),
-                  style: const TextStyle(fontSize: 14, color: Color(0xff667085))),
+              Text(
+                _formatDuration(route.durationSeconds),
+                style: const TextStyle(fontSize: 14, color: Color(0xff667085)),
+              ),
             ],
           )
         else
-          const Text('Route unavailable — check your connection.',
-              style: TextStyle(fontSize: 13, color: Color(0xffC0392B))),
+          const Text(
+            'Route unavailable — check your connection.',
+            style: TextStyle(fontSize: 13, color: Color(0xffC0392B)),
+          ),
         const SizedBox(height: 20),
         SizedBox(
           width: double.infinity,
@@ -988,7 +1070,8 @@ class _RoutesScreenState extends ConsumerState<RoutesScreen>
               side: const BorderSide(color: _kBrand),
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
           ),
         ),
@@ -1010,79 +1093,6 @@ class _RoutesScreenState extends ConsumerState<RoutesScreen>
   }
 }
 
-// ── Tracking toggle bar ─────────────────────────────────────────────────────────
-
-class _TrackingToggleBar extends StatelessWidget {
-  final bool active;
-  final bool busy;
-  final VoidCallback onToggle;
-
-  const _TrackingToggleBar({
-    required this.active,
-    required this.busy,
-    required this.onToggle,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: active ? _kBrandSoft : const Color(0xFFF3F4F6),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: active ? _kBrand : const Color(0xFFE5E7EB),
-          ),
-        ),
-        child: Row(
-          children: [
-            Icon(
-              active ? Icons.location_on : Icons.location_off,
-              color: active ? _kBrand : const Color(0xFF6B7280),
-              size: 20,
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Live Tracking',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                        color: Color(0xFF111827),
-                      )),
-                  Text(
-                    active ? 'Tracking your location' : 'Tracking is off',
-                    style: const TextStyle(
-                        fontSize: 12, color: Color(0xFF6B7280)),
-                  ),
-                ],
-              ),
-            ),
-            if (busy)
-              const SizedBox(
-                width: 22,
-                height: 22,
-                child: CircularProgressIndicator(strokeWidth: 2.4, color: _kBrand),
-              )
-            else
-              Switch(
-                value: active,
-                activeThumbColor: _kBrand,
-                onChanged: (_) => onToggle(),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _TrackingOffOverlay extends StatelessWidget {
   const _TrackingOffOverlay();
 
@@ -1096,18 +1106,26 @@ class _TrackingOffOverlay extends StatelessWidget {
         child: const Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.location_off_outlined, color: Color(0xFF6B7280), size: 34),
+            Icon(
+              Icons.location_off_outlined,
+              color: Color(0xFF6B7280),
+              size: 34,
+            ),
             SizedBox(height: 8),
-            Text('Live Tracking is off',
-                style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 14,
-                  color: Color(0xFF111827),
-                )),
+            Text(
+              'Live Tracking is off',
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 14,
+                color: Color(0xFF111827),
+              ),
+            ),
             SizedBox(height: 2),
-            Text('Enable it above to see your route.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
+            Text(
+              'Turn it on from the Home screen to see your route.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+            ),
           ],
         ),
       ),
@@ -1172,8 +1190,11 @@ class _ActiveNavCard extends StatelessWidget {
       children: [
         Row(
           children: [
-            Icon(reached ? Icons.check_circle : Icons.circle,
-                size: reached ? 14 : 8, color: _kBrand),
+            Icon(
+              reached ? Icons.check_circle : Icons.circle,
+              size: reached ? 14 : 8,
+              color: _kBrand,
+            ),
             const SizedBox(width: 6),
             Text(
               reached ? 'ARRIVED' : 'NAVIGATING TO',
@@ -1194,11 +1215,15 @@ class _ActiveNavCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(shopName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                          fontSize: 20, fontWeight: FontWeight.bold)),
+                  Text(
+                    shopName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   const SizedBox(height: 4),
                   Text(
                     reached ? 'You reached your destination' : task.title,
@@ -1232,16 +1257,23 @@ class _ActiveNavCard extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _kBrand,
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14)),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
                 onPressed: onOpenTask,
-                icon: const Icon(Icons.assignment_outlined, color: Colors.white),
-                label: const Text('Open Task',
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                        color: Colors.white)),
+                icon: const Icon(
+                  Icons.assignment_outlined,
+                  color: Colors.white,
+                ),
+                label: const Text(
+                  'Open Task',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                    color: Colors.white,
+                  ),
+                ),
               ),
             ),
             const SizedBox(width: 16),
@@ -1250,7 +1282,8 @@ class _ActiveNavCard extends StatelessWidget {
                 style: OutlinedButton.styleFrom(
                   side: const BorderSide(color: _kBrand),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14)),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
                 onPressed: () {
@@ -1263,11 +1296,14 @@ class _ActiveNavCard extends StatelessWidget {
                   );
                 },
                 icon: const Icon(Icons.phone, color: _kBrand),
-                label: const Text('Call Shop',
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                        color: _kBrand)),
+                label: const Text(
+                  'Call Shop',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                    color: _kBrand,
+                  ),
+                ),
               ),
             ),
           ],
@@ -1280,16 +1316,20 @@ class _ActiveNavCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: const [
-        Text('NO ACTIVE TASK',
-            style: TextStyle(
-              color: Color(0xFF6B7280),
-              fontWeight: FontWeight.w700,
-              fontSize: 11,
-              letterSpacing: 0.6,
-            )),
+        Text(
+          'NO ACTIVE TASK',
+          style: TextStyle(
+            color: Color(0xFF6B7280),
+            fontWeight: FontWeight.w700,
+            fontSize: 11,
+            letterSpacing: 0.6,
+          ),
+        ),
         SizedBox(height: 8),
-        Text('Showing your current location',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        Text(
+          'Showing your current location',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
         SizedBox(height: 4),
         Text(
           'Start a task to see the route to its shop here.',
@@ -1316,11 +1356,14 @@ class _ArrivedPill extends StatelessWidget {
         children: [
           Icon(Icons.check_circle, size: 16, color: Colors.white),
           SizedBox(width: 6),
-          Text('Arrived',
-              style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 12)),
+          Text(
+            'Arrived',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+              fontSize: 12,
+            ),
+          ),
         ],
       ),
     );
@@ -1341,8 +1384,9 @@ class _EtaPill extends StatelessWidget {
   String _label() {
     final m = straightLineMeters;
     if (m != null) {
-      final dist =
-          m < 1000 ? '${m.round()} m' : '${(m / 1000).toStringAsFixed(1)} km';
+      final dist = m < 1000
+          ? '${m.round()} m'
+          : '${(m / 1000).toStringAsFixed(1)} km';
       if (route != null && m > 50) {
         return '$dist · ${_dur(route!.durationSeconds)}';
       }
@@ -1385,12 +1429,14 @@ class _EtaPill extends StatelessWidget {
           else
             const Icon(Icons.directions_car, size: 16, color: _kBrand),
           const SizedBox(width: 6),
-          Text(_label(),
-              style: const TextStyle(
-                color: _kBrand,
-                fontWeight: FontWeight.w600,
-                fontSize: 12,
-              )),
+          Text(
+            _label(),
+            style: const TextStyle(
+              color: _kBrand,
+              fontWeight: FontWeight.w600,
+              fontSize: 12,
+            ),
+          ),
         ],
       ),
     );
@@ -1418,10 +1464,12 @@ class _ShopPickerSheetState extends State<_ShopPickerSheet> {
     final filtered = q.isEmpty
         ? widget.shops
         : widget.shops
-            .where((s) =>
-                s.shop.name.toLowerCase().contains(q) ||
-                s.shop.address.toLowerCase().contains(q))
-            .toList();
+              .where(
+                (s) =>
+                    s.shop.name.toLowerCase().contains(q) ||
+                    s.shop.address.toLowerCase().contains(q),
+              )
+              .toList();
 
     return Container(
       constraints: BoxConstraints(
@@ -1447,11 +1495,14 @@ class _ShopPickerSheetState extends State<_ShopPickerSheet> {
             ),
           ),
           const SizedBox(height: 16),
-          const Text('Select a Shop',
-              style: TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xff111111))),
+          const Text(
+            'Select a Shop',
+            style: TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w800,
+              color: Color(0xff111111),
+            ),
+          ),
           const SizedBox(height: 14),
           TextField(
             onChanged: (v) => setState(() => _query = v),
@@ -1460,8 +1511,10 @@ class _ShopPickerSheetState extends State<_ShopPickerSheet> {
               prefixIcon: const Icon(Icons.search, color: Color(0xff9CA3AF)),
               filled: true,
               fillColor: const Color(0xffF2F4F7),
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 12,
+              ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,
@@ -1473,8 +1526,10 @@ class _ShopPickerSheetState extends State<_ShopPickerSheet> {
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 32),
               child: Center(
-                child: Text('No shops found',
-                    style: TextStyle(color: Color(0xff667085))),
+                child: Text(
+                  'No shops found',
+                  style: TextStyle(color: Color(0xff667085)),
+                ),
               ),
             )
           else
@@ -1488,7 +1543,7 @@ class _ShopPickerSheetState extends State<_ShopPickerSheet> {
                   final s = filtered[i];
                   final hasCoords =
                       double.tryParse(s.shop.latitude) != null &&
-                          double.tryParse(s.shop.longitude) != null;
+                      double.tryParse(s.shop.longitude) != null;
                   return ListTile(
                     contentPadding: EdgeInsets.zero,
                     leading: Container(
@@ -1498,26 +1553,42 @@ class _ShopPickerSheetState extends State<_ShopPickerSheet> {
                         color: _kBrandSoft,
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Icon(Icons.storefront_rounded,
-                          color: _kBrand, size: 22),
+                      child: const Icon(
+                        Icons.storefront_rounded,
+                        color: _kBrand,
+                        size: 22,
+                      ),
                     ),
-                    title: Text(s.shop.name,
-                        style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xff111111))),
-                    subtitle: Text(s.shop.address,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(color: Color(0xff667085))),
+                    title: Text(
+                      s.shop.name,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xff111111),
+                      ),
+                    ),
+                    subtitle: Text(
+                      s.shop.address,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: Color(0xff667085)),
+                    ),
                     trailing: hasCoords
-                        ? const Icon(Icons.chevron_right, color: Color(0xff667085))
+                        ? const Icon(
+                            Icons.chevron_right,
+                            color: Color(0xff667085),
+                          )
                         : const Tooltip(
                             message: 'No saved location',
-                            child: Icon(Icons.location_off_outlined,
-                                color: Color(0xffC0392B), size: 18),
+                            child: Icon(
+                              Icons.location_off_outlined,
+                              color: Color(0xffC0392B),
+                              size: 18,
+                            ),
                           ),
                     enabled: hasCoords,
-                    onTap: hasCoords ? () => Navigator.of(context).pop(s) : null,
+                    onTap: hasCoords
+                        ? () => Navigator.of(context).pop(s)
+                        : null,
                   );
                 },
               ),
@@ -1607,8 +1678,11 @@ class _MapLoadingOverlayState extends State<_MapLoadingOverlay>
                         ),
                       ],
                     ),
-                    child: const Icon(Icons.location_on_rounded,
-                        color: Colors.white, size: 26),
+                    child: const Icon(
+                      Icons.location_on_rounded,
+                      color: Colors.white,
+                      size: 26,
+                    ),
                   ),
                 ],
               ),
@@ -1921,6 +1995,59 @@ class _MapIconButton extends StatelessWidget {
         ),
         child: Icon(icon, color: _kBrand, size: 20),
       ),
+    );
+  }
+}
+
+/// Fades + slides its child up on first build, with a small per-index delay so
+/// list items cascade in one after another instead of all at once.
+class _AnimatedEntry extends StatefulWidget {
+  final int index;
+  final Widget child;
+
+  const _AnimatedEntry({required this.index, required this.child});
+
+  @override
+  State<_AnimatedEntry> createState() => _AnimatedEntryState();
+}
+
+class _AnimatedEntryState extends State<_AnimatedEntry>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _fade;
+  late final Animation<Offset> _slide;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 420),
+    );
+    _fade = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
+    _slide = Tween<Offset>(
+      begin: const Offset(0, 0.12),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
+
+    // Cap the stagger so long lists don't take forever to finish appearing.
+    final delayMs = (widget.index.clamp(0, 8)) * 70;
+    Future.delayed(Duration(milliseconds: delayMs), () {
+      if (mounted) _controller.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _fade,
+      child: SlideTransition(position: _slide, child: widget.child),
     );
   }
 }

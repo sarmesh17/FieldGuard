@@ -6,6 +6,7 @@ import 'package:fieldguard/features/collections/presentation/screens/components/
 import 'package:fieldguard/features/shops/data/datasource/shop_detail_datasource_impl.dart';
 import 'package:fieldguard/features/shops/data/dto/shop_detail_response.dart';
 import 'package:fieldguard/features/tasks/presentation/screens/create_task_screen.dart';
+import 'package:fieldguard/widgets/app_skeletons.dart';
 import 'package:flutter/material.dart';
 
 class ShopDetailScreen extends StatefulWidget {
@@ -88,7 +89,7 @@ class _ShopDetailScreenState extends State<ShopDetailScreen> {
             ),
           ),
           body: _isLoading
-              ? const Center(child: CircularProgressIndicator())
+              ? const SkeletonDetail()
               : _errorMessage != null
                   ? _buildErrorView()
                   : _buildContent(),

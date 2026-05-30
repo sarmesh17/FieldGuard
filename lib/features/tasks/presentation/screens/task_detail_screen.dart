@@ -4,6 +4,7 @@ import 'package:fieldguard/core/networks/dio_client.dart';
 import 'package:fieldguard/core/utils/results.dart';
 import 'package:fieldguard/features/auth/login/presentation/providers/login_provider.dart';
 import 'package:fieldguard/features/auth/login/presentation/providers/login_state.dart';
+import 'package:fieldguard/features/dashboard/dashboard_provider.dart';
 import 'package:fieldguard/features/tasks/data/dto/create_task_response.dart';
 import 'package:fieldguard/features/tasks/data/dto/update_task_request.dart';
 import 'package:fieldguard/features/tasks/presentation/providers/tasks_provider.dart';
@@ -175,6 +176,10 @@ class _TaskDetailBodyState extends ConsumerState<_TaskDetailBody>
       shopName: task.shop?.name ?? task.title,
       address: task.shop?.address,
     );
+    // Pop the imperative MaterialPageRoute (TaskDetailScreen) first, so we
+    // actually reveal the root tab underneath. Otherwise if we're already on
+    // the Routes tab, go_router does nothing and the detail screen stays up.
+    Navigator.of(context).popUntil((route) => route.isFirst);
     context.go(AppRoutes.routes);
   }
 
@@ -187,6 +192,15 @@ class _TaskDetailBodyState extends ConsumerState<_TaskDetailBody>
     );
     if (updated == true && mounted) {
       ref.invalidate(taskDetailProvider(task.id));
+      // Refresh the shared task list + dashboard so the new status shows even
+      // when the user returns via the system back button (which carries no
+      // result to react to). Without this the list stays stale until it's
+      // re-fetched some other way (e.g. switching tabs).
+      ref.read(tasksNotifierProvider.notifier).reload();
+      ref.invalidate(dashboardSummaryProvider);
+      ref.invalidate(dashboardTodayTasksProvider);
+      ref.invalidate(dashboardUrgentTasksProvider);
+      ref.invalidate(dashboardActivityProvider);
     }
   }
 
@@ -361,6 +375,14 @@ class _TrackLiveButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // The assignee's destination — prefer the linked shop's coords, fall back
+    // to the legacy raw ones. Passed to the tracking screen so it can drop a
+    // destination pin + draw the driving route alongside the live pin.
+    final shopLat =
+        double.tryParse(task.shop?.latitude ?? task.shopLatitude ?? '');
+    final shopLng =
+        double.tryParse(task.shop?.longitude ?? task.shopLongitude ?? '');
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -373,6 +395,9 @@ class _TrackLiveButton extends StatelessWidget {
               employeeId: task.assignee.id,
               taskTitle: task.title,
               employeeName: task.assignee.fullName,
+              shopLatitude: shopLat,
+              shopLongitude: shopLng,
+              shopName: task.shop?.name,
             ),
           ),
         ),

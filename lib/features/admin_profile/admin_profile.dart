@@ -1,10 +1,15 @@
+import 'dart:math' as math;
+
+import 'package:fieldguard/core/responsive/responsive.dart';
 import 'package:fieldguard/features/admin_profile/presentation/providers/profile_provider.dart';
 import 'package:fieldguard/features/admin_profile/presentation/providers/profile_state.dart';
+import 'package:fieldguard/features/admin_profile/presentation/providers/profile_stats_provider.dart';
 import 'package:fieldguard/features/admin_profile/presentation/screens/personal_information_screen.dart';
 import 'package:fieldguard/features/admin_profile/section_card.dart';
 import 'package:fieldguard/features/auth/login/presentation/providers/login_provider.dart';
 import 'package:fieldguard/features/employee/presentation/screens/create_employee_screen.dart';
 import 'package:fieldguard/features/manager/presentation/screens/create_manager_screen.dart';
+import 'package:fieldguard/widgets/app_skeletons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -26,12 +31,13 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen>
   @override
   void initState() {
     super.initState();
-    
-    // Fetch profile data when screen loads
-    Future.microtask(
-      () => ref.read(profileNotifierProvider.notifier).fetchProfile(),
-    );
-    
+
+    // Fetch profile data and real stats when screen loads
+    Future.microtask(() {
+      ref.read(profileNotifierProvider.notifier).fetchProfile();
+      ref.read(profileStatsNotifierProvider.notifier).fetch();
+    });
+
     _controller = AnimationController(
       duration: const Duration(milliseconds: 1400),
       vsync: this,
@@ -51,15 +57,13 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen>
       ),
     );
 
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.25),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: const Interval(0.35, 0.85, curve: Curves.easeOutCubic),
-      ),
-    );
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.25), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _controller,
+            curve: const Interval(0.35, 0.85, curve: Curves.easeOutCubic),
+          ),
+        );
 
     _scaleAnimation = Tween<double>(begin: 0.6, end: 1.0).animate(
       CurvedAnimation(
@@ -92,18 +96,12 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen>
     final size = MediaQuery.of(context).size;
     final w = size.width;
     final h = size.height;
-    final avatarSize = w * 0.28;
-    final headerHeight = h * 0.30;
 
     // Show loading or error states
     if (profileState is ProfileLoading) {
       return const Scaffold(
         backgroundColor: Color(0xFFF5F6FA),
-        body: Center(
-          child: CircularProgressIndicator(
-            color: Color(0xff0E5A3B),
-          ),
-        ),
+        body: SkeletonDetail(),
       );
     }
 
@@ -169,17 +167,13 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen>
     final profile = profileState is ProfileSuccess
         ? profileState.profile
         : profileState is ProfileUpdateSuccess
-            ? profileState.profile
-            : null;
+        ? profileState.profile
+        : null;
 
     if (profile == null) {
       return const Scaffold(
         backgroundColor: Color(0xFFF5F6FA),
-        body: Center(
-          child: CircularProgressIndicator(
-            color: Color(0xff0E5A3B),
-          ),
-        ),
+        body: SkeletonDetail(),
       );
     }
 
@@ -188,175 +182,199 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen>
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6FA),
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        child: Column(
-          children: [
-            // Header + Avatar overlap
-            Stack(
-              clipBehavior: Clip.none,
-              children: [
-                FadeTransition(
-                  opacity: _headerFade,
-                  child: _buildGradientHeader(w, h, headerHeight),
-                ),
-                Positioned(
-                  bottom: -(avatarSize / 2),
-                  left: 0,
-                  right: 0,
-                  child: Center(
-                    child: FadeTransition(
-                      opacity: _fadeAnimation,
-                      child: ScaleTransition(
-                        scale: _scaleAnimation,
-                        child: _buildAvatar(avatarSize, w, profile.profileImage),
+      // Suppress the Android stretch/glow overscroll so pulling the screen
+      // doesn't drag the green header and tear the layout.
+      body: ScrollConfiguration(
+        behavior: const _NoOverscrollBehavior(),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final maxW = constraints.maxWidth;
+            final maxH = constraints.maxHeight;
+            // Base every proportional size on the SHORTER side. In portrait
+            // this equals the width (behaviour unchanged); in landscape it
+            // switches to the height, so the avatar/text/header don't blow up
+            // and tear the layout.
+            final unit = math.min(maxW, maxH);
+            final avatarSize = unit * 0.28;
+            final headerHeight = math.max(maxH * 0.30, avatarSize * 1.9);
+            // The header is full-bleed, but the cards below are capped so they
+            // don't stretch huge on wide/landscape screens — they stay a
+            // comfortable phone-width and centre instead.
+            final contentMaxW = math.min(maxW, 600.0);
+
+            return SingleChildScrollView(
+              physics: const ClampingScrollPhysics(),
+              child: Column(
+                children: [
+                  // Header + Avatar overlap
+                  Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      FadeTransition(
+                        opacity: _headerFade,
+                        child: _buildGradientHeader(maxW, unit, headerHeight),
+                      ),
+                      Positioned(
+                        bottom: -(avatarSize / 2),
+                        left: 0,
+                        right: 0,
+                        child: Center(
+                          child: FadeTransition(
+                            opacity: _fadeAnimation,
+                            child: ScaleTransition(
+                              scale: _scaleAnimation,
+                              child: _buildAvatar(
+                                avatarSize,
+                                unit,
+                                profile.profileImage,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: avatarSize / 2 + unit * 0.05),
+                  // Everything below the header is capped to a comfortable
+                  // width and centred, so cards don't stretch on landscape.
+                  Center(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(maxWidth: contentMaxW),
+                      child: Column(
+                        children: [
+                          // Name, email, badge
+                          FadeTransition(
+                            opacity: _fadeAnimation,
+                            child: SlideTransition(
+                              position: _slideAnimation,
+                              child: _buildProfileInfo(unit, profile),
+                            ),
+                          ),
+                          SizedBox(height: unit * 0.025),
+                          // Stats card
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: unit * 0.05,
+                            ),
+                            child: FadeTransition(
+                              opacity: _fadeAnimation,
+                              child: _buildStatsCard(unit, isManager),
+                            ),
+                          ),
+                          SizedBox(height: unit * 0.022),
+                          // Admin Tools
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: unit * 0.05,
+                            ),
+                            child: SlideTransition(
+                              position: _slideAnimation,
+                              child: FadeTransition(
+                                opacity: _fadeAnimation,
+                                child: SectionCard(
+                                  title: 'ADMIN TOOLS',
+                                  highlighted: true,
+                                  items: [
+                                    SectionTile(
+                                      icon: Icons.person_add_alt_1_rounded,
+                                      title: 'Create New Employee',
+                                      iconColor: const Color(0xff0E5A3B),
+                                      iconBg: const Color(0xffDCF5E4),
+                                      isAction: true,
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                const CreateEmployeeScreen(),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                    if (!isManager)
+                                      SectionTile(
+                                        icon: Icons.supervisor_account_rounded,
+                                        title: 'Create New Manager',
+                                        iconColor: const Color(0xff6558FF),
+                                        iconBg: const Color(0xffEEE9FF),
+                                        isAction: true,
+                                        onTap: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  const CreateManagerScreen(),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: unit * 0.018),
+                          // Account
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: unit * 0.05,
+                            ),
+                            child: SlideTransition(
+                              position: _slideAnimation,
+                              child: FadeTransition(
+                                opacity: _fadeAnimation,
+                                child: SectionCard(
+                                  title: 'ACCOUNT',
+                                  items: [
+                                    SectionTile(
+                                      icon: Icons.person_outline_rounded,
+                                      title: 'Personal Information',
+                                      onTap: _navigateToPersonalInformation,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: unit * 0.035),
+                          // Sign Out
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: unit * 0.05,
+                            ),
+                            child: FadeTransition(
+                              opacity: _fadeAnimation,
+                              child: _buildSignOutButton(unit),
+                            ),
+                          ),
+                          SizedBox(height: unit * 0.05),
+                        ],
                       ),
                     ),
                   ),
-                ),
-              ],
-            ),
-            SizedBox(height: avatarSize / 2 + w * 0.05),
-            // Name, email, badge
-            FadeTransition(
-              opacity: _fadeAnimation,
-              child: SlideTransition(
-                position: _slideAnimation,
-                child: _buildProfileInfo(w, profile),
+                ],
               ),
-            ),
-            SizedBox(height: h * 0.025),
-            // Stats card
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: w * 0.05),
-              child: FadeTransition(
-                opacity: _fadeAnimation,
-                child: _buildStatsCard(w, h),
-              ),
-            ),
-            SizedBox(height: h * 0.022),
-            // Admin Tools
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: w * 0.05),
-              child: SlideTransition(
-                position: _slideAnimation,
-                child: FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: SectionCard(
-                    title: 'ADMIN TOOLS',
-                    highlighted: true,
-                    items: [
-                      SectionTile(
-                        icon: Icons.person_add_alt_1_rounded,
-                        title: 'Create New Employee',
-                        iconColor: const Color(0xff0E5A3B),
-                        iconBg: const Color(0xffDCF5E4),
-                        isAction: true,
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const CreateEmployeeScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                      if (!isManager)
-                        SectionTile(
-                          icon: Icons.supervisor_account_rounded,
-                          title: 'Create New Manager',
-                          iconColor: const Color(0xff6558FF),
-                          iconBg: const Color(0xffEEE9FF),
-                          isAction: true,
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    const CreateManagerScreen(),
-                              ),
-                            );
-                          },
-                        ),
-                      const SectionTile(
-                        icon: Icons.settings_outlined,
-                        title: 'System Settings',
-                        selected: true,
-                      ),
-                      const SectionTile(
-                        icon: Icons.receipt_long_outlined,
-                        title: 'Audit Logs',
-                      ),
-                      const SectionTile(
-                        icon: Icons.download_outlined,
-                        title: 'Backup & Export',
-                      ),
-                      const SectionTile(
-                        icon: Icons.gavel_outlined,
-                        title: 'Fraud Rule Configuration',
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            SizedBox(height: h * 0.018),
-            // Account
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: w * 0.05),
-              child: SlideTransition(
-                position: _slideAnimation,
-                child: FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: SectionCard(
-                    title: 'ACCOUNT',
-                    items: [
-                      SectionTile(
-                        icon: Icons.person_outline_rounded,
-                        title: 'Personal Information',
-                        onTap: _navigateToPersonalInformation,
-                      ),
-                      const SectionTile(
-                        icon: Icons.shield_outlined,
-                        title: 'Security & Passwords',
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            SizedBox(height: h * 0.035),
-            // Sign Out
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: w * 0.05),
-              child: FadeTransition(
-                opacity: _fadeAnimation,
-                child: _buildSignOutButton(w, h),
-              ),
-            ),
-            SizedBox(height: h * 0.05),
-          ],
+            );
+          },
         ),
       ),
     );
   }
 
-  Widget _buildGradientHeader(double w, double h, double headerHeight) {
+  // [fullW] is the real viewport width (the header is full-bleed). [unit] is
+  // the shorter screen side — all proportional sizes (fonts, icons, circles,
+  // padding) scale off it so they don't blow up in landscape.
+  Widget _buildGradientHeader(double fullW, double unit, double headerHeight) {
     return ClipPath(
       clipper: _ProfileHeaderClipper(),
       child: Container(
         height: headerHeight,
-        width: w,
+        width: fullW,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              Color(0xff072A1C),
-              Color(0xff0E5A3B),
-              Color(0xff1D7A51),
-            ],
+            colors: [Color(0xff072A1C), Color(0xff0E5A3B), Color(0xff1D7A51)],
             stops: [0.0, 0.55, 1.0],
           ),
         ),
@@ -364,31 +382,31 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen>
           children: [
             // Decorative background circles
             Positioned(
-              top: -h * 0.07,
-              right: -w * 0.12,
-              child: _decorCircle(w * 0.55, 0.07),
+              top: -unit * 0.07,
+              right: -unit * 0.12,
+              child: _decorCircle(unit * 0.55, 0.07),
             ),
             Positioned(
-              top: h * 0.04,
-              right: w * 0.1,
-              child: _decorCircle(w * 0.18, 0.05),
+              top: unit * 0.04,
+              right: fullW * 0.1,
+              child: _decorCircle(unit * 0.18, 0.05),
             ),
             Positioned(
-              top: h * 0.02,
-              left: -w * 0.07,
-              child: _decorCircle(w * 0.38, 0.05),
+              top: unit * 0.02,
+              left: -unit * 0.07,
+              child: _decorCircle(unit * 0.38, 0.05),
             ),
             Positioned(
-              bottom: h * 0.14,
-              left: w * 0.25,
-              child: _decorCircle(w * 0.1, 0.04),
+              bottom: unit * 0.14,
+              left: fullW * 0.25,
+              child: _decorCircle(unit * 0.1, 0.04),
             ),
             // Top bar
             SafeArea(
               child: Padding(
                 padding: EdgeInsets.symmetric(
-                  horizontal: w * 0.04,
-                  vertical: w * 0.01,
+                  horizontal: unit * 0.04,
+                  vertical: unit * 0.01,
                 ),
                 child: Row(
                   children: [
@@ -396,15 +414,15 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen>
                       'My Profile',
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.92),
-                        fontSize: w * 0.05,
+                        fontSize: unit * 0.05,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 0.3,
                       ),
                     ),
                     const Spacer(),
-                    _headerIconButton(Icons.notifications_none_rounded, w),
-                    SizedBox(width: w * 0.02),
-                    _headerIconButton(Icons.more_horiz_rounded, w),
+                    _headerIconButton(Icons.notifications_none_rounded, unit),
+                    SizedBox(width: unit * 0.02),
+                    _headerIconButton(Icons.more_horiz_rounded, unit),
                   ],
                 ),
               ),
@@ -555,9 +573,45 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen>
     );
   }
 
-  Widget _buildStatsCard(double w, double h) {
+  Widget _buildStatsCard(double w, bool isManager) {
+    final statsState = ref.watch(profileStatsNotifierProvider);
+    final loading = statsState is ProfileStatsLoading;
+    final stats = statsState is ProfileStatsLoaded
+        ? statsState.stats
+        : ProfileStats.empty;
+
+    // A MANAGER has no manager count (admin-only endpoint), so that column is
+    // dropped entirely for them rather than shown as an empty dash.
+    final items = <Widget>[
+      if (!isManager)
+        Expanded(
+          child: _StatItem(
+            value: stats.managers,
+            title: 'Managers',
+            loading: loading,
+            delay: 300,
+          ),
+        ),
+      Expanded(
+        child: _StatItem(
+          value: stats.reps,
+          title: 'Reps',
+          loading: loading,
+          delay: 500,
+        ),
+      ),
+      Expanded(
+        child: _StatItem(
+          value: stats.shops,
+          title: 'Shops',
+          loading: loading,
+          delay: 700,
+        ),
+      ),
+    ];
+
     return Container(
-      padding: EdgeInsets.symmetric(vertical: h * 0.024),
+      padding: EdgeInsets.symmetric(vertical: w * 0.05),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(w * 0.05),
@@ -569,47 +623,185 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen>
           ),
         ],
       ),
-      child: const Row(
+      child: Row(
         children: [
-          Expanded(
-            child: AnimatedStatItem(value: '4', title: 'Managers', delay: 300),
-          ),
-          _StatsVerticalDivider(),
-          Expanded(
-            child: AnimatedStatItem(value: '24', title: 'Reps', delay: 500),
-          ),
-          _StatsVerticalDivider(),
-          Expanded(
-            child: AnimatedStatItem(value: '186', title: 'Shops', delay: 700),
-          ),
+          for (int i = 0; i < items.length; i++) ...[
+            if (i > 0) const _StatsVerticalDivider(),
+            items[i],
+          ],
         ],
       ),
     );
   }
 
-  Widget _buildSignOutButton(double w, double h) {
+  Widget _buildSignOutButton(double w) {
     return GestureDetector(
       onTap: () async {
         // Show confirmation dialog
         final shouldLogout = await showDialog<bool>(
           context: context,
+          barrierDismissible: false,
           builder: (BuildContext context) {
-            return AlertDialog(
-              title: const Text('Sign Out'),
-              content: const Text('Are you sure you want to sign out?'),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context, false),
-                  child: const Text('Cancel'),
-                ),
-                TextButton(
-                  onPressed: () => Navigator.pop(context, true),
-                  style: TextButton.styleFrom(
-                    foregroundColor: const Color(0xffE53935),
+            return Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(SizeConfig.scale(28)),
+              ),
+              elevation: 8,
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(SizeConfig.scale(28)),
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Color(0xFFFFFFFF),
+                      Color(0xFFF8FAF9),
+                    ],
                   ),
-                  child: const Text('Sign Out'),
                 ),
-              ],
+                child: Padding(
+                  padding: EdgeInsets.all(SizeConfig.scale(28)),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Icon with gradient background
+                      Container(
+                        width: SizeConfig.scale(72),
+                        height: SizeConfig.scale(72),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Color(0xff0E5A3B),
+                              Color(0xff1D7A51),
+                            ],
+                          ),
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xff0E5A3B).withValues(alpha: 0.3),
+                              blurRadius: SizeConfig.scale(16),
+                              offset: Offset(0, SizeConfig.scale(6)),
+                            ),
+                          ],
+                        ),
+                        child: Icon(
+                          Icons.logout_rounded,
+                          color: Colors.white,
+                          size: SizeConfig.scale(36),
+                        ),
+                      ),
+                      SizedBox(height: SizeConfig.scale(24)),
+                      // Title
+                      Text(
+                        'Sign Out',
+                        style: TextStyle(
+                          fontSize: SizeConfig.scaledFontSize(24),
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xff111111),
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      SizedBox(height: SizeConfig.scale(12)),
+                      // Message
+                      Text(
+                        'Are you sure you want to sign out?',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: SizeConfig.scaledFontSize(15),
+                          color: const Color(0xff667085),
+                          height: 1.5,
+                        ),
+                      ),
+                      SizedBox(height: SizeConfig.scale(32)),
+                      // Buttons
+                      Row(
+                        children: [
+                          // Cancel Button
+                          Expanded(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(SizeConfig.scale(16)),
+                                border: Border.all(
+                                  color: const Color(0xffE8E3DD),
+                                  width: 1.5,
+                                ),
+                              ),
+                              child: Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  onTap: () => Navigator.pop(context, false),
+                                  borderRadius: BorderRadius.circular(SizeConfig.scale(16)),
+                                  child: Container(
+                                    padding: EdgeInsets.symmetric(
+                                      vertical: SizeConfig.scale(16),
+                                    ),
+                                    child: Text(
+                                      'Cancel',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: SizeConfig.scaledFontSize(16),
+                                        fontWeight: FontWeight.w700,
+                                        color: const Color(0xff667085),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(width: SizeConfig.scale(12)),
+                          // Sign Out Button
+                          Expanded(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    Color(0xffE53935),
+                                    Color(0xffC62828),
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(SizeConfig.scale(16)),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xffE53935).withValues(alpha: 0.4),
+                                    blurRadius: SizeConfig.scale(12),
+                                    offset: Offset(0, SizeConfig.scale(4)),
+                                  ),
+                                ],
+                              ),
+                              child: Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  onTap: () => Navigator.pop(context, true),
+                                  borderRadius: BorderRadius.circular(SizeConfig.scale(16)),
+                                  child: Container(
+                                    padding: EdgeInsets.symmetric(
+                                      vertical: SizeConfig.scale(16),
+                                    ),
+                                    child: Text(
+                                      'Sign Out',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: SizeConfig.scaledFontSize(16),
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             );
           },
         );
@@ -621,7 +813,7 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen>
       },
       child: Container(
         width: double.infinity,
-        padding: EdgeInsets.symmetric(vertical: h * 0.019),
+        padding: EdgeInsets.symmetric(vertical: w * 0.045),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(w * 0.04),
@@ -670,6 +862,19 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen>
   }
 }
 
+/// Removes the Android stretch/glow overscroll indicator so an overscroll
+/// can't drag the green header or expose the grey background behind it.
+class _NoOverscrollBehavior extends ScrollBehavior {
+  const _NoOverscrollBehavior();
+
+  @override
+  Widget buildOverscrollIndicator(
+    BuildContext context,
+    Widget child,
+    ScrollableDetails details,
+  ) => child;
+}
+
 class _ProfileHeaderClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
@@ -703,26 +908,32 @@ class _StatsVerticalDivider extends StatelessWidget {
   }
 }
 
-class AnimatedStatItem extends StatefulWidget {
-  final String value;
+/// A single stat (Managers / Reps / Shops) on the profile stats card.
+///
+/// Animates a count-up to [value] once loaded. While [loading] it shows a
+/// muted "…", and if [value] is null (the count failed to load) it shows a
+/// dash — it never fabricates a number.
+class _StatItem extends StatefulWidget {
+  final int? value;
   final String title;
+  final bool loading;
   final int delay;
 
-  const AnimatedStatItem({
-    super.key,
+  const _StatItem({
     required this.value,
     required this.title,
+    required this.loading,
     this.delay = 0,
   });
 
   @override
-  State<AnimatedStatItem> createState() => _AnimatedStatItemState();
+  State<_StatItem> createState() => _StatItemState();
 }
 
-class _AnimatedStatItemState extends State<AnimatedStatItem>
+class _StatItemState extends State<_StatItem>
     with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _animation;
+  late final AnimationController _controller;
+  Animation<double>? _animation;
 
   @override
   void initState() {
@@ -731,14 +942,26 @@ class _AnimatedStatItemState extends State<AnimatedStatItem>
       duration: const Duration(milliseconds: 1200),
       vsync: this,
     );
+    _maybeAnimate();
+  }
 
+  @override
+  void didUpdateWidget(covariant _StatItem oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Count arrived (or changed) after the async fetch resolved — animate now.
+    if (oldWidget.value != widget.value) {
+      _controller.reset();
+      _maybeAnimate();
+    }
+  }
+
+  void _maybeAnimate() {
+    final value = widget.value;
+    if (value == null) return;
     _animation = Tween<double>(
       begin: 0,
-      end: double.parse(widget.value),
-    ).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
-    );
-
+      end: value.toDouble(),
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
     Future.delayed(Duration(milliseconds: widget.delay), () {
       if (mounted) _controller.forward();
     });
@@ -754,33 +977,46 @@ class _AnimatedStatItemState extends State<AnimatedStatItem>
   Widget build(BuildContext context) {
     final w = MediaQuery.of(context).size.width;
 
-    return AnimatedBuilder(
-      animation: _animation,
-      builder: (context, child) {
-        return Column(
-          children: [
-            Text(
-              _animation.value.toInt().toString(),
-              style: TextStyle(
-                fontSize: w * 0.072,
-                fontWeight: FontWeight.w800,
-                color: const Color(0xff0E5A3B),
-                letterSpacing: -0.5,
-              ),
-            ),
-            SizedBox(height: w * 0.012),
-            Text(
-              widget.title,
-              style: TextStyle(
-                fontSize: w * 0.033,
-                color: const Color(0xff9CA3AF),
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.4,
-              ),
-            ),
-          ],
-        );
-      },
+    final valueStyle = TextStyle(
+      fontSize: w * 0.072,
+      fontWeight: FontWeight.w800,
+      color: const Color(0xff0E5A3B),
+      letterSpacing: -0.5,
+    );
+
+    Widget valueText;
+    if (widget.loading) {
+      valueText = Text('…', style: valueStyle);
+    } else if (widget.value == null || _animation == null) {
+      // Count failed to load — show a dash rather than a fake number.
+      valueText = Text('—', style: valueStyle);
+    } else {
+      valueText = AnimatedBuilder(
+        animation: _animation!,
+        builder: (context, child) =>
+            Text(_animation!.value.toInt().toString(), style: valueStyle),
+      );
+    }
+
+    return Column(
+      children: [
+        // FittedBox scales the number down on very narrow columns / large
+        // system font scales instead of overflowing.
+        FittedBox(fit: BoxFit.scaleDown, child: valueText),
+        SizedBox(height: w * 0.012),
+        Text(
+          widget.title,
+          textAlign: TextAlign.center,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontSize: w * 0.033,
+            color: const Color(0xff9CA3AF),
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.4,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -809,9 +1045,11 @@ class SectionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final w = MediaQuery.of(context).size.width;
 
-    final Color effectiveIconBg = iconBg ??
+    final Color effectiveIconBg =
+        iconBg ??
         (selected ? const Color(0xffEEE9FF) : const Color(0xffF3F4F6));
-    final Color effectiveIconColor = iconColor ??
+    final Color effectiveIconColor =
+        iconColor ??
         (selected ? const Color(0xff635BFF) : const Color(0xff6B7280));
 
     return Material(
@@ -842,11 +1080,7 @@ class SectionTile extends StatelessWidget {
                         ]
                       : null,
                 ),
-                child: Icon(
-                  icon,
-                  color: effectiveIconColor,
-                  size: w * 0.055,
-                ),
+                child: Icon(icon, color: effectiveIconColor, size: w * 0.055),
               ),
               SizedBox(width: w * 0.04),
               Expanded(
@@ -870,7 +1104,9 @@ class SectionTile extends StatelessWidget {
                 ),
                 child: Icon(
                   Icons.chevron_right_rounded,
-                  color: isAction ? effectiveIconColor : const Color(0xff9CA3AF),
+                  color: isAction
+                      ? effectiveIconColor
+                      : const Color(0xff9CA3AF),
                   size: w * 0.055,
                 ),
               ),

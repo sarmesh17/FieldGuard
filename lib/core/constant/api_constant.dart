@@ -45,8 +45,20 @@ class ApiConstant {
   // The endpoint for updating admin profile
   static const String updateProfileEndpoint = "$baseUrl/api/v1/auth/profile";
 
+  // The endpoint for updating manager's own profile (MANAGER only)
+  static const String updateManagerProfileEndpoint = "$baseUrl/api/v1/managers/profile";
+
+
   // The endpoint for listing / creating tasks
   static const String tasksEndpoint = "/api/v1/tasks";
+
+  // The endpoint for dashboard aggregated summary (lifetime task totals)
+  static const String dashboardSummaryEndpoint = "$baseUrl/api/v1/dashboard/summary";
+
+  // The endpoint for tasks due TODAY (daily progress) — same bucket shape
+  static const String dashboardTodayTasksEndpoint =
+      "$baseUrl/api/v1/dashboard/today-tasks";
+
 
   // The endpoint for reporting automatic geofence visits
   static const String geofenceVisitsEndpoint =
