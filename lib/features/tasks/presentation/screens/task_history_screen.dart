@@ -1,6 +1,7 @@
 import 'package:fieldguard/features/tasks/data/dto/task_history_response.dart';
 import 'package:fieldguard/features/tasks/presentation/providers/task_history_state.dart';
 import 'package:fieldguard/features/tasks/presentation/providers/tasks_provider.dart';
+import 'package:fieldguard/widgets/app_skeletons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -97,12 +98,7 @@ class _TaskHistoryScreenState extends ConsumerState<TaskHistoryScreen> {
         ),
       ),
       body: switch (state) {
-        TaskHistoryInitial() || TaskHistoryLoading() => const Center(
-            child: CircularProgressIndicator(
-              color: _kBrand,
-              strokeWidth: 2.5,
-            ),
-          ),
+        TaskHistoryInitial() || TaskHistoryLoading() => const SkeletonList(),
         TaskHistoryFailure(:final message) => _ErrorView(
             message: message,
             onRetry: _refresh,

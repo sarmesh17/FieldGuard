@@ -8,6 +8,7 @@ import 'package:fieldguard/features/live_tracking/presentation/screens/live_map_
 import 'package:fieldguard/features/live_tracking/presentation/screens/tracking_history_screen.dart';
 import 'package:fieldguard/features/team/data/datasource/team_datasource_impl.dart';
 import 'package:fieldguard/features/team/data/dto/employee_detail_response.dart';
+import 'package:fieldguard/widgets/app_skeletons.dart';
 import 'package:flutter/material.dart';
 
 class EmployeeDetailScreen extends StatefulWidget {
@@ -32,6 +33,7 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen>
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
+  late Animation<double> _avatarScale;
 
   @override
   void initState() {
@@ -43,11 +45,12 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen>
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeIn),
     );
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.1),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.1), end: Offset.zero).animate(
+          CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+        );
+    _avatarScale = Tween<double>(begin: 0.7, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOutBack),
     );
     _loadEmployeeDetail();
   }
@@ -101,12 +104,42 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen>
     try {
       final date = DateTime.parse(dateStr);
       final months = [
-        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
       ];
       return '${months[date.month - 1]} ${date.day}, ${date.year}';
     } catch (e) {
       return dateStr;
+    }
+  }
+
+  Future<void> _openEditScreen() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditEmployeeScreen(
+          employeeId: int.parse(widget.employeeId),
+          currentFullName: _employee!.fullName,
+          currentPhoneNumber: _employee!.phoneNumber,
+          currentEmail: _employee!.email,
+          currentIsActive: _employee!.isActive,
+          currentProfileImage: _employee!.profileImage,
+        ),
+      ),
+    );
+    // Reload data if update was successful
+    if (result == true) {
+      _loadEmployeeDetail();
     }
   }
 
@@ -129,9 +162,7 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen>
                 Navigator.pop(context);
                 _deleteEmployee();
               },
-              style: TextButton.styleFrom(
-                foregroundColor: Colors.red,
-              ),
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
               child: const Text('Delete'),
             ),
           ],
@@ -144,7 +175,7 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen>
     try {
       final dio = DioClient.createDio();
       final dataSource = EmployeeDataSourceImpl(dio);
-      
+
       await dataSource.deleteEmployee(widget.employeeId);
 
       if (mounted) {
@@ -177,7 +208,6 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen>
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     return ResponsiveBuilder(
@@ -185,10 +215,10 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen>
         return Scaffold(
           backgroundColor: const Color(0xFFF8FAF9),
           body: _isLoading
-              ? const Center(child: CircularProgressIndicator())
+              ? const SkeletonDetail()
               : _errorMessage != null
-                  ? _buildErrorView()
-                  : _buildContent(),
+              ? _buildErrorView()
+              : _buildContent(),
         );
       },
     );
@@ -245,32 +275,45 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen>
             onPressed: () => Navigator.pop(context),
           ),
           actions: [
-            IconButton(
-              icon: const Icon(Icons.edit, color: Colors.white),
-              onPressed: () async {
-                final result = await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => EditEmployeeScreen(
-                      employeeId: int.parse(widget.employeeId),
-                      currentFullName: _employee!.fullName,
-                      currentPhoneNumber: _employee!.phoneNumber,
-                      currentEmail: _employee!.email,
-                      currentIsActive: _employee!.isActive,
-                      currentProfileImage: _employee!.profileImage,
-                    ),
-                  ),
-                );
-                
-                // Reload data if update was successful
-                if (result == true) {
-                  _loadEmployeeDetail();
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert, color: Colors.white),
+              color: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+              onSelected: (value) {
+                if (value == 'edit') {
+                  _openEditScreen();
+                } else if (value == 'delete') {
+                  _showDeleteConfirmation();
                 }
               },
-            ),
-            IconButton(
-              icon: const Icon(Icons.delete, color: Colors.white),
-              onPressed: () => _showDeleteConfirmation(),
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'edit',
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.edit_outlined,
+                        size: 20,
+                        color: Color(0xff0E5A3B),
+                      ),
+                      SizedBox(width: 12),
+                      Text('Edit'),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: 'delete',
+                  child: Row(
+                    children: [
+                      Icon(Icons.delete_outline, size: 20, color: Colors.red),
+                      SizedBox(width: 12),
+                      Text('Delete', style: TextStyle(color: Colors.red)),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ],
           flexibleSpace: FlexibleSpaceBar(
@@ -279,7 +322,11 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen>
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [Color(0xff0E5A3B), Color(0xff2E6F4F)],
+                  colors: [
+                    Color(0xff0B4A30),
+                    Color(0xff0E5A3B),
+                    Color(0xff2E8B57),
+                  ],
                 ),
               ),
               child: Column(
@@ -289,44 +336,7 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen>
                   // Profile Image
                   FadeTransition(
                     opacity: _fadeAnimation,
-                    child: Container(
-                      width: SizeConfig.scale(100),
-                      height: SizeConfig.scale(100),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 4),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.2),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: _employee!.profileImage != null
-                          ? ClipOval(
-                              child: Image.network(
-                                _employee!.profileImage!,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => Container(
-                                  color: Colors.white,
-                                  child: Icon(
-                                    Icons.person,
-                                    size: SizeConfig.scale(50),
-                                    color: const Color(0xff0E5A3B),
-                                  ),
-                                ),
-                              ),
-                            )
-                          : Container(
-                              color: Colors.white,
-                              child: Icon(
-                                Icons.person,
-                                size: SizeConfig.scale(50),
-                                color: const Color(0xff0E5A3B),
-                              ),
-                            ),
-                    ),
+                    child: _buildAvatar(),
                   ),
                   SizedBox(height: SizeConfig.scale(12)),
                   // Name
@@ -345,12 +355,39 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen>
                   // Employee Code
                   FadeTransition(
                     opacity: _fadeAnimation,
-                    child: Text(
-                      _employee!.employeeCode,
-                      style: TextStyle(
-                        fontSize: SizeConfig.scaledFontSize(14),
-                        color: Colors.white.withValues(alpha: 0.9),
-                        fontWeight: FontWeight.w600,
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: SizeConfig.scale(14),
+                        vertical: SizeConfig.scale(5),
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.18),
+                        borderRadius: BorderRadius.circular(
+                          SizeConfig.scale(20),
+                        ),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.35),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.badge_outlined,
+                            size: SizeConfig.scale(13),
+                            color: Colors.white,
+                          ),
+                          SizedBox(width: SizeConfig.scale(6)),
+                          Text(
+                            _employee!.employeeCode,
+                            style: TextStyle(
+                              fontSize: SizeConfig.scaledFontSize(13),
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -382,8 +419,9 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen>
                           color: _employee!.isActive
                               ? const Color(0xffDDF5E0)
                               : const Color(0xffFFE3E6),
-                          borderRadius:
-                              BorderRadius.circular(SizeConfig.scale(20)),
+                          borderRadius: BorderRadius.circular(
+                            SizeConfig.scale(20),
+                          ),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -418,55 +456,53 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen>
                     // Contact Information
                     _buildSectionTitle('Contact Information'),
                     SizedBox(height: SizeConfig.scale(12)),
-                    _buildInfoCard(
-                      icon: Icons.phone,
-                      label: 'Phone Number',
-                      value: formatNepaliPhone(_employee!.phoneNumber),
-                      iconColor: const Color(0xff0E5A3B),
-                    ),
-                    if (_employee!.email != null) ...[
-                      SizedBox(height: SizeConfig.scale(12)),
-                      _buildInfoCard(
-                        icon: Icons.email,
-                        label: 'Email',
-                        value: _employee!.email!,
+                    _sectionCard([
+                      _detailRow(
+                        icon: Icons.phone_rounded,
                         iconColor: const Color(0xff0E5A3B),
+                        label: 'Phone Number',
+                        value: formatNepaliPhone(_employee!.phoneNumber),
                       ),
-                    ],
+                      if (_employee!.email != null)
+                        _detailRow(
+                          icon: Icons.email_rounded,
+                          iconColor: const Color(0xff0E5A3B),
+                          label: 'Email',
+                          value: _employee!.email!,
+                        ),
+                    ]),
                     SizedBox(height: SizeConfig.heightPercent(3)),
 
                     // Employment Details
                     _buildSectionTitle('Employment Details'),
                     SizedBox(height: SizeConfig.scale(12)),
-                    _buildInfoCard(
-                      icon: Icons.badge,
-                      label: 'Role',
-                      value: _employee!.role,
-                      iconColor: const Color(0xff6558FF),
-                    ),
-                    SizedBox(height: SizeConfig.scale(12)),
-                    _buildInfoCard(
-                      icon: Icons.business,
-                      label: 'Company ID',
-                      value: _employee!.companyId,
-                      iconColor: const Color(0xff6558FF),
-                    ),
-                    if (_employee!.managerId != null) ...[
-                      SizedBox(height: SizeConfig.scale(12)),
-                      _buildInfoCard(
-                        icon: Icons.supervisor_account,
-                        label: 'Manager ID',
-                        value: _employee!.managerId!,
+                    _sectionCard([
+                      _detailRow(
+                        icon: Icons.badge_rounded,
                         iconColor: const Color(0xff6558FF),
+                        label: 'Role',
+                        value: _employee!.role,
                       ),
-                    ],
-                    SizedBox(height: SizeConfig.scale(12)),
-                    _buildInfoCard(
-                      icon: Icons.calendar_today,
-                      label: 'Joined Date',
-                      value: _formatDate(_employee!.createdAt),
-                      iconColor: const Color(0xff6558FF),
-                    ),
+                      _detailRow(
+                        icon: Icons.business_rounded,
+                        iconColor: const Color(0xff6558FF),
+                        label: 'Company ID',
+                        value: _employee!.companyId,
+                      ),
+                      if (_employee!.managerId != null)
+                        _detailRow(
+                          icon: Icons.supervisor_account_rounded,
+                          iconColor: const Color(0xff6558FF),
+                          label: 'Manager ID',
+                          value: _employee!.managerId!,
+                        ),
+                      _detailRow(
+                        icon: Icons.calendar_today_rounded,
+                        iconColor: const Color(0xff6558FF),
+                        label: 'Joined Date',
+                        value: _formatDate(_employee!.createdAt),
+                      ),
+                    ]),
                     SizedBox(height: SizeConfig.heightPercent(3)),
 
                     // ── Quick Actions ──────────────────────────
@@ -483,10 +519,8 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen>
                               context,
                               MaterialPageRoute(
                                 builder: (_) => TrackingHistoryScreen(
-                                  employeeId:
-                                      int.parse(widget.employeeId),
-                                  employeeName:
-                                      _employee!.fullName,
+                                  employeeId: int.parse(widget.employeeId),
+                                  employeeName: _employee!.fullName,
                                 ),
                               ),
                             ),
@@ -533,40 +567,113 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen>
     );
   }
 
-  Widget _buildInfoCard({
-    required IconData icon,
-    required String label,
-    required String value,
-    required Color iconColor,
-  }) {
+  /// Circular avatar with a white ring, soft shadow, an initials fallback
+  /// and a live status dot (green when active, grey otherwise).
+  Widget _buildAvatar() {
+    final size = SizeConfig.scale(108);
+    final img = _employee!.profileImage;
+
+    final fallback = Container(
+      color: const Color(0xffEAF4EF),
+      alignment: Alignment.center,
+      child: Text(
+        _initials(),
+        style: TextStyle(
+          fontSize: SizeConfig.scaledFontSize(38),
+          fontWeight: FontWeight.w800,
+          color: const Color(0xff0E5A3B),
+        ),
+      ),
+    );
+
+    return ScaleTransition(
+      scale: _avatarScale,
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white, width: 4),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.25),
+              blurRadius: 14,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: ClipOval(
+          child: img != null
+              ? Image.network(
+                  img,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, _, _) => fallback,
+                )
+              : fallback,
+        ),
+      ),
+    );
+  }
+
+  String _initials() {
+    final name = _employee!.fullName.trim();
+    if (name.isEmpty) return '?';
+    final parts = name.split(RegExp(r'\s+'));
+    if (parts.length == 1) return parts.first.substring(0, 1).toUpperCase();
+    return (parts.first.substring(0, 1) + parts.last.substring(0, 1))
+        .toUpperCase();
+  }
+
+  /// A white card that groups several [_detailRow]s, separated by thin
+  /// dividers — cleaner than one card per field.
+  Widget _sectionCard(List<Widget> rows) {
+    final children = <Widget>[];
+    for (var i = 0; i < rows.length; i++) {
+      children.add(rows[i]);
+      if (i < rows.length - 1) {
+        children.add(
+          Padding(
+            padding: EdgeInsets.only(left: SizeConfig.scale(72)),
+            child: const Divider(height: 1, color: Color(0xffF0ECE6)),
+          ),
+        );
+      }
+    }
     return Container(
-      padding: EdgeInsets.all(SizeConfig.scale(16)),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(SizeConfig.scale(12)),
+        borderRadius: BorderRadius.circular(SizeConfig.scale(16)),
         border: Border.all(color: const Color(0xffE8E3DD)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
+      child: Column(children: children),
+    );
+  }
+
+  Widget _detailRow({
+    required IconData icon,
+    required Color iconColor,
+    required String label,
+    required String value,
+  }) {
+    return Padding(
+      padding: EdgeInsets.all(SizeConfig.scale(16)),
       child: Row(
         children: [
           Container(
-            width: SizeConfig.scale(48),
-            height: SizeConfig.scale(48),
+            width: SizeConfig.scale(44),
+            height: SizeConfig.scale(44),
             decoration: BoxDecoration(
               color: iconColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(SizeConfig.scale(12)),
             ),
-            child: Icon(
-              icon,
-              color: iconColor,
-              size: SizeConfig.scale(24),
-            ),
+            child: Icon(icon, color: iconColor, size: SizeConfig.scale(22)),
           ),
           SizedBox(width: SizeConfig.scale(16)),
           Expanded(
@@ -581,7 +688,7 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen>
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                SizedBox(height: SizeConfig.scale(4)),
+                SizedBox(height: SizeConfig.scale(3)),
                 Text(
                   value,
                   style: TextStyle(
@@ -598,57 +705,82 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen>
     );
   }
 
+  /// Bold gradient action tile (Tracking History / Live Location).
   Widget _buildActionCard({
     required IconData icon,
     required String label,
     required Color color,
     required VoidCallback onTap,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: EdgeInsets.all(SizeConfig.scale(16)),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(SizeConfig.scale(14)),
-          border: Border.all(color: const Color(0xffE8E3DD)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(SizeConfig.scale(16)),
+        child: Container(
+          padding: EdgeInsets.all(SizeConfig.scale(16)),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [color, Color.lerp(color, Colors.black, 0.22)!],
             ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Container(
-              width: SizeConfig.scale(48),
-              height: SizeConfig.scale(48),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(SizeConfig.scale(12)),
+            borderRadius: BorderRadius.circular(SizeConfig.scale(16)),
+            boxShadow: [
+              BoxShadow(
+                color: color.withValues(alpha: 0.32),
+                blurRadius: 14,
+                offset: const Offset(0, 6),
               ),
-              child: Icon(icon, color: color, size: SizeConfig.scale(24)),
-            ),
-            SizedBox(height: SizeConfig.scale(10)),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: SizeConfig.scaledFontSize(12.5),
-                fontWeight: FontWeight.w700,
-                color: const Color(0xff111111),
-                height: 1.3,
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: SizeConfig.scale(44),
+                height: SizeConfig.scale(44),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.22),
+                  borderRadius: BorderRadius.circular(SizeConfig.scale(12)),
+                ),
+                child: Icon(
+                  icon,
+                  color: Colors.white,
+                  size: SizeConfig.scale(24),
+                ),
               ),
-            ),
-            SizedBox(height: SizeConfig.scale(6)),
-            Icon(
-              Icons.arrow_forward_rounded,
-              size: SizeConfig.scale(16),
-              color: color,
-            ),
-          ],
+              SizedBox(height: SizeConfig.scale(14)),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: SizeConfig.scaledFontSize(14),
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                  height: 1.25,
+                ),
+              ),
+              SizedBox(height: SizeConfig.scale(8)),
+              Row(
+                children: [
+                  Text(
+                    'Open',
+                    style: TextStyle(
+                      fontSize: SizeConfig.scaledFontSize(11.5),
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white.withValues(alpha: 0.9),
+                    ),
+                  ),
+                  SizedBox(width: SizeConfig.scale(4)),
+                  Icon(
+                    Icons.arrow_forward_rounded,
+                    size: SizeConfig.scale(15),
+                    color: Colors.white.withValues(alpha: 0.9),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

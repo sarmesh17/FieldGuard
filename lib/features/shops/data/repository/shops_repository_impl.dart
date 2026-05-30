@@ -22,12 +22,21 @@ class ShopsRepositoryImpl implements ShopsRepository {
       if (isFiltered) {
         // Source filter was used — all shops are in myShops with creator info.
         for (final shop in response.myShops) {
+          // Handle shops even if creator info is missing
           if (shop.creator != null) {
             shops.add(ShopWithCreator(
               shop: shop,
               creatorName: shop.creator!.fullName,
               creatorRole: shop.creator!.role,
               creatorCode: shop.creator!.code,
+            ));
+          } else {
+            // Fallback for shops without creator info
+            shops.add(ShopWithCreator(
+              shop: shop,
+              creatorName: 'Unknown',
+              creatorRole: source ?? 'Unknown',
+              creatorCode: 'N/A',
             ));
           }
         }
@@ -82,24 +91,40 @@ class ShopsRepositoryImpl implements ShopsRepository {
 
         // Manager view: the API returns a different envelope — the manager's
         // own shops plus their team's shops.
+        // For "Self" chip (no source param), show only myShops (manager's own created shops)
         for (final shop in response.myShops) {
-          shops.add(ShopWithCreator(
-            shop: shop,
-            creatorName: 'You',
-            creatorRole: 'Manager',
-            creatorCode: 'ME',
-          ));
-        }
-        for (final employeeData in response.team) {
-          for (final shop in employeeData.shops) {
+          // Use creator info if available, otherwise fallback to "You"
+          if (shop.creator != null) {
             shops.add(ShopWithCreator(
               shop: shop,
-              creatorName: employeeData.employee.fullName,
-              creatorRole: 'Employee',
-              creatorCode: employeeData.employee.employeeCode,
+              creatorName: shop.creator!.fullName,
+              creatorRole: shop.creator!.role,
+              creatorCode: shop.creator!.code,
+            ));
+          } else {
+            shops.add(ShopWithCreator(
+              shop: shop,
+              creatorName: 'You',
+              creatorRole: 'Manager',
+              creatorCode: 'ME',
             ));
           }
         }
+        
+        // Note: We're NOT adding sharedWithMe or team here for "Self" view
+        // Those will be shown via "Admin" and "Employee" filter chips
+        // If you want to show them in "Self" view, uncomment below:
+        
+        // for (final employeeData in response.team) {
+        //   for (final shop in employeeData.shops) {
+        //     shops.add(ShopWithCreator(
+        //       shop: shop,
+        //       creatorName: employeeData.employee.fullName,
+        //       creatorRole: 'Employee',
+        //       creatorCode: employeeData.employee.employeeCode,
+        //     ));
+        //   }
+        // }
       }
 
       return Success(shops);

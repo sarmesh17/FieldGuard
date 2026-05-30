@@ -1,10 +1,12 @@
 import 'dart:io';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/networks/dio_client.dart';
 import '../../../../core/responsive/responsive.dart';
+import '../../../auth/login/presentation/providers/login_provider.dart';
+import '../../../auth/login/presentation/providers/login_state.dart';
 import '../../../uploads/image_upload_service.dart';
 import '../../data/dto/profile_response.dart';
 import '../../data/dto/update_profile_request.dart';
@@ -54,15 +56,29 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     super.dispose();
   }
 
+  // Returns true if the logged-in user is a MANAGER.
+  bool get _isManager {
+    final loginState = ref.read(loginNotifierProvider);
+    if (loginState is LoginSuccess) {
+      return loginState.response.user.role.toUpperCase() == 'MANAGER';
+    }
+    return false;
+  }
+
   Future<void> _pickImage() async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.image,
-      allowMultiple: false,
+    // Use image_picker (not file_picker): it preserves the photo's EXIF
+    // orientation. file_picker strips EXIF while caching the content-URI,
+    // leaving the backend with no orientation signal to bake — so photos
+    // uploaded sideways. With EXIF intact, the server's sharp().rotate()
+    // normalises the image to upright on confirm.
+    final picked = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      requestFullMetadata: true,
     );
 
-    if (result != null && result.files.single.path != null) {
+    if (picked != null) {
       setState(() {
-        _selectedImage = File(result.files.single.path!);
+        _selectedImage = File(picked.path);
       });
       await _uploadImage();
     }
@@ -78,13 +94,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     try {
       final dio = DioClient.createDio();
       final uploadService = ImageUploadService(dio);
-      
+
       final uploadResult = await uploadService.upload(
         filePath: _selectedImage!.path,
-        category: 'profiles',  // Changed from 'profile' to 'profiles'
+        category: 'profiles',
         entityId: widget.profile.id,
       );
-      
+
       setState(() {
         _uploadedImageKey = uploadResult.imageKey;
         _isUploadingImage = false;
@@ -113,8 +129,35 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   }
 
   void _saveProfile() {
-    if (_formKey.currentState!.validate()) {
-      final request = UpdateProfileRequest(
+    if (!_formKey.currentState!.validate()) return;
+
+    final UpdateProfileRequest request;
+
+    if (_isManager) {
+      // Manager API only accepts fullName, email, imageKey.
+      final newName = _fullNameController.text.trim();
+      final newEmail = _emailController.text.trim();
+
+      request = UpdateProfileRequest(
+        fullName: newName != widget.profile.fullName ? newName : null,
+        email: newEmail != (widget.profile.email ?? '') ? newEmail : null,
+        imageKey: _uploadedImageKey,
+      );
+
+      if (request.fullName == null &&
+          request.email == null &&
+          request.imageKey == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No changes to save'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        return;
+      }
+    } else {
+      // Admin can update personal + company fields.
+      request = UpdateProfileRequest(
         fullName: _fullNameController.text.trim() != widget.profile.fullName
             ? _fullNameController.text.trim()
             : null,
@@ -125,20 +168,22 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             ? _emailController.text.trim()
             : null,
         imageKey: _uploadedImageKey,
-        companyName: _companyNameController.text.trim() != (widget.profile.company?.companyName ?? '')
+        companyName: _companyNameController.text.trim() !=
+                (widget.profile.company?.companyName ?? '')
             ? _companyNameController.text.trim()
             : null,
-        companyEmail: _companyEmailController.text.trim() != (widget.profile.company?.email ?? '')
+        companyEmail: _companyEmailController.text.trim() !=
+                (widget.profile.company?.email ?? '')
             ? _companyEmailController.text.trim()
             : null,
-        companyPhone: _companyPhoneController.text.trim() != (widget.profile.company?.phoneNumber ?? '')
+        companyPhone: _companyPhoneController.text.trim() !=
+                (widget.profile.company?.phoneNumber ?? '')
             ? _companyPhoneController.text.trim().isNotEmpty
                 ? _companyPhoneController.text.trim()
                 : null
             : null,
       );
 
-      // Check if any field has changed
       if (request.fullName == null &&
           request.phoneNumber == null &&
           request.email == null &&
@@ -154,9 +199,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         );
         return;
       }
-
-      ref.read(profileNotifierProvider.notifier).updateProfile(request);
     }
+
+    ref.read(profileNotifierProvider.notifier).updateProfile(request);
   }
 
   @override
@@ -169,7 +214,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             backgroundColor: Color(0xff0E5A3B),
           ),
         );
-        Navigator.pop(context, true); // Return true to indicate success
+        Navigator.pop(context, true);
       }
       if (next is ProfileUpdateFailure) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -183,6 +228,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
     final profileState = ref.watch(profileNotifierProvider);
     final isUpdating = profileState is ProfileUpdating;
+    final isManager = _isManager;
 
     final w = SizeConfig.widthPercent(100);
     final h = SizeConfig.heightPercent(100);
@@ -215,7 +261,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Profile Image Section
+                // ── Profile Image ──────────────────────────────────────────
                 Center(
                   child: Stack(
                     children: [
@@ -247,35 +293,17 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                   ),
                                 )
                               : _selectedImage != null
-                                  ? Image.file(
-                                      _selectedImage!,
-                                      fit: BoxFit.cover,
-                                    )
+                                  ? Image.file(_selectedImage!, fit: BoxFit.cover)
                                   : widget.profile.profileImage != null
                                       ? Image.network(
                                           widget.profile.profileImage!.startsWith('http')
                                               ? widget.profile.profileImage!
                                               : 'https://fieldguard-be.onrender.com/${widget.profile.profileImage}',
                                           fit: BoxFit.cover,
-                                          errorBuilder: (context, error, stackTrace) {
-                                            return Container(
-                                              color: const Color(0xffE5E7EB),
-                                              child: Icon(
-                                                Icons.person_rounded,
-                                                size: w * 0.15,
-                                                color: const Color(0xff9CA3AF),
-                                              ),
-                                            );
-                                          },
+                                          errorBuilder: (context, error, stackTrace) =>
+                                              _avatarPlaceholder(w),
                                         )
-                                      : Container(
-                                          color: const Color(0xffE5E7EB),
-                                          child: Icon(
-                                            Icons.person_rounded,
-                                            size: w * 0.15,
-                                            color: const Color(0xff9CA3AF),
-                                          ),
-                                        ),
+                                      : _avatarPlaceholder(w),
                         ),
                       ),
                       Positioned(
@@ -289,10 +317,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               color: const Color(0xff0E5A3B),
-                              border: Border.all(
-                                color: Colors.white,
-                                width: 2.5,
-                              ),
+                              border: Border.all(color: Colors.white, width: 2.5),
                               boxShadow: [
                                 BoxShadow(
                                   color: const Color(0xff0E5A3B).withValues(alpha: 0.4),
@@ -315,52 +340,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
                 SizedBox(height: h * 0.04),
 
-                // Full Name Field
-                Text(
-                  'Full Name',
-                  style: TextStyle(
-                    fontSize: w * 0.04,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xff111827),
-                  ),
-                ),
+                // ── Full Name ──────────────────────────────────────────────
+                _fieldLabel('Full Name', w),
                 SizedBox(height: h * 0.01),
-                TextFormField(
+                _textField(
                   controller: _fullNameController,
-                  decoration: InputDecoration(
-                    hintText: 'Enter your full name',
-                    prefixIcon: const Icon(
-                      Icons.person_outline_rounded,
-                      color: Color(0xff0E5A3B),
-                    ),
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(w * 0.03),
-                      borderSide: BorderSide.none,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(w * 0.03),
-                      borderSide: const BorderSide(
-                        color: Color(0xffE5E7EB),
-                        width: 1,
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(w * 0.03),
-                      borderSide: const BorderSide(
-                        color: Color(0xff0E5A3B),
-                        width: 2,
-                      ),
-                    ),
-                    errorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(w * 0.03),
-                      borderSide: BorderSide(
-                        color: Colors.red.shade400,
-                        width: 1,
-                      ),
-                    ),
-                  ),
+                  hint: 'Enter your full name',
+                  icon: Icons.person_outline_rounded,
+                  w: w,
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return 'Please enter your full name';
@@ -371,53 +358,15 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
                 SizedBox(height: h * 0.025),
 
-                // Email Field
-                Text(
-                  'Email Address',
-                  style: TextStyle(
-                    fontSize: w * 0.04,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xff111827),
-                  ),
-                ),
+                // ── Email ──────────────────────────────────────────────────
+                _fieldLabel('Email Address', w),
                 SizedBox(height: h * 0.01),
-                TextFormField(
+                _textField(
                   controller: _emailController,
+                  hint: 'Enter your email',
+                  icon: Icons.email_outlined,
                   keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    hintText: 'Enter your email',
-                    prefixIcon: const Icon(
-                      Icons.email_outlined,
-                      color: Color(0xff0E5A3B),
-                    ),
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(w * 0.03),
-                      borderSide: BorderSide.none,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(w * 0.03),
-                      borderSide: const BorderSide(
-                        color: Color(0xffE5E7EB),
-                        width: 1,
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(w * 0.03),
-                      borderSide: const BorderSide(
-                        color: Color(0xff0E5A3B),
-                        width: 2,
-                      ),
-                    ),
-                    errorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(w * 0.03),
-                      borderSide: BorderSide(
-                        color: Colors.red.shade400,
-                        width: 1,
-                      ),
-                    ),
-                  ),
+                  w: w,
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return 'Please enter your email';
@@ -430,281 +379,129 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   },
                 ),
 
-                SizedBox(height: h * 0.025),
-
-                // Phone Number Field
-                Text(
-                  'Phone Number',
-                  style: TextStyle(
-                    fontSize: w * 0.04,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xff111827),
-                  ),
-                ),
-                SizedBox(height: h * 0.01),
-                TextFormField(
-                  controller: _phoneNumberController,
-                  keyboardType: TextInputType.phone,
-                  maxLength: 10,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(10),
-                  ],
-                  decoration: InputDecoration(
-                    hintText: 'Enter phone number',
-                    prefixIcon: const Icon(
-                      Icons.phone_outlined,
-                      color: Color(0xff0E5A3B),
-                    ),
-                    filled: true,
-                    fillColor: Colors.white,
-                    counterText: '',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(w * 0.03),
-                      borderSide: BorderSide.none,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(w * 0.03),
-                      borderSide: const BorderSide(
-                        color: Color(0xffE5E7EB),
-                        width: 1,
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(w * 0.03),
-                      borderSide: const BorderSide(
-                        color: Color(0xff0E5A3B),
-                        width: 2,
-                      ),
-                    ),
-                    errorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(w * 0.03),
-                      borderSide: BorderSide(
-                        color: Colors.red.shade400,
-                        width: 1,
-                      ),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Please enter phone number';
-                    }
-                    if (value.trim().length != 10) {
-                      return 'Phone number must be exactly 10 digits';
-                    }
-                    if (!RegExp(r'^\d+$').hasMatch(value)) {
-                      return 'Phone number must contain only digits';
-                    }
-                    return null;
-                  },
-                ),
-
-                SizedBox(height: h * 0.03),
-
-                // Company Information Section
-                Container(
-                  padding: EdgeInsets.all(w * 0.04),
-                  decoration: BoxDecoration(
-                    color: const Color(0xffF0FAF5),
-                    borderRadius: BorderRadius.circular(w * 0.03),
-                    border: Border.all(
-                      color: const Color(0xff0E5A3B).withValues(alpha: 0.2),
-                      width: 1,
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.business_rounded,
-                            color: const Color(0xff0E5A3B),
-                            size: w * 0.05,
-                          ),
-                          SizedBox(width: w * 0.02),
-                          Text(
-                            'Company Information',
-                            style: TextStyle(
-                              fontSize: w * 0.042,
-                              fontWeight: FontWeight.w700,
-                              color: const Color(0xff0E5A3B),
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: h * 0.015),
-                      Text(
-                        'Update your company details',
-                        style: TextStyle(
-                          fontSize: w * 0.032,
-                          color: const Color(0xff6B7280),
-                        ),
-                      ),
+                // ── Phone (ADMIN only) ─────────────────────────────────────
+                if (!isManager) ...[
+                  SizedBox(height: h * 0.025),
+                  _fieldLabel('Phone Number', w),
+                  SizedBox(height: h * 0.01),
+                  _textField(
+                    controller: _phoneNumberController,
+                    hint: 'Enter phone number',
+                    icon: Icons.phone_outlined,
+                    keyboardType: TextInputType.phone,
+                    maxLength: 10,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(10),
                     ],
-                  ),
-                ),
-
-                SizedBox(height: h * 0.025),
-
-                // Company Name Field
-                Text(
-                  'Company Name',
-                  style: TextStyle(
-                    fontSize: w * 0.04,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xff111827),
-                  ),
-                ),
-                SizedBox(height: h * 0.01),
-                TextFormField(
-                  controller: _companyNameController,
-                  decoration: InputDecoration(
-                    hintText: 'Enter company name',
-                    prefixIcon: const Icon(
-                      Icons.apartment_rounded,
-                      color: Color(0xff0E5A3B),
-                    ),
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(w * 0.03),
-                      borderSide: BorderSide.none,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(w * 0.03),
-                      borderSide: const BorderSide(
-                        color: Color(0xffE5E7EB),
-                        width: 1,
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(w * 0.03),
-                      borderSide: const BorderSide(
-                        color: Color(0xff0E5A3B),
-                        width: 2,
-                      ),
-                    ),
-                  ),
-                ),
-
-                SizedBox(height: h * 0.025),
-
-                // Company Email Field
-                Text(
-                  'Company Email',
-                  style: TextStyle(
-                    fontSize: w * 0.04,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xff111827),
-                  ),
-                ),
-                SizedBox(height: h * 0.01),
-                TextFormField(
-                  controller: _companyEmailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    hintText: 'Enter company email',
-                    prefixIcon: const Icon(
-                      Icons.email_outlined,
-                      color: Color(0xff0E5A3B),
-                    ),
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(w * 0.03),
-                      borderSide: BorderSide.none,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(w * 0.03),
-                      borderSide: const BorderSide(
-                        color: Color(0xffE5E7EB),
-                        width: 1,
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(w * 0.03),
-                      borderSide: const BorderSide(
-                        color: Color(0xff0E5A3B),
-                        width: 2,
-                      ),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value != null && value.trim().isNotEmpty) {
-                      if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                          .hasMatch(value)) {
-                        return 'Please enter a valid email';
+                    w: w,
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Please enter phone number';
                       }
-                    }
-                    return null;
-                  },
-                ),
-
-                SizedBox(height: h * 0.025),
-
-                // Company Phone Field
-                Text(
-                  'Company Phone',
-                  style: TextStyle(
-                    fontSize: w * 0.04,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xff111827),
-                  ),
-                ),
-                SizedBox(height: h * 0.01),
-                TextFormField(
-                  controller: _companyPhoneController,
-                  keyboardType: TextInputType.phone,
-                  maxLength: 10,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(10),
-                  ],
-                  decoration: InputDecoration(
-                    hintText: 'Enter company phone',
-                    prefixIcon: const Icon(
-                      Icons.phone_in_talk_rounded,
-                      color: Color(0xff0E5A3B),
-                    ),
-                    filled: true,
-                    fillColor: Colors.white,
-                    counterText: '',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(w * 0.03),
-                      borderSide: BorderSide.none,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(w * 0.03),
-                      borderSide: const BorderSide(
-                        color: Color(0xffE5E7EB),
-                        width: 1,
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(w * 0.03),
-                      borderSide: const BorderSide(
-                        color: Color(0xff0E5A3B),
-                        width: 2,
-                      ),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value != null && value.trim().isNotEmpty) {
                       if (value.trim().length != 10) {
                         return 'Phone number must be exactly 10 digits';
                       }
-                      if (!RegExp(r'^\d+$').hasMatch(value)) {
-                        return 'Phone number must contain only digits';
+                      return null;
+                    },
+                  ),
+                ],
+
+                // ── Company Section (ADMIN only) ───────────────────────────
+                if (!isManager) ...[
+                  SizedBox(height: h * 0.03),
+
+                  // Section header
+                  Container(
+                    padding: EdgeInsets.all(w * 0.04),
+                    decoration: BoxDecoration(
+                      color: const Color(0xffF0FAF5),
+                      borderRadius: BorderRadius.circular(w * 0.03),
+                      border: Border.all(
+                        color: const Color(0xff0E5A3B).withValues(alpha: 0.2),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.business_rounded,
+                          color: const Color(0xff0E5A3B),
+                          size: w * 0.05,
+                        ),
+                        SizedBox(width: w * 0.02),
+                        Text(
+                          'Company Information',
+                          style: TextStyle(
+                            fontSize: w * 0.042,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xff0E5A3B),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  SizedBox(height: h * 0.025),
+
+                  _fieldLabel('Company Name', w),
+                  SizedBox(height: h * 0.01),
+                  _textField(
+                    controller: _companyNameController,
+                    hint: 'Enter company name',
+                    icon: Icons.apartment_rounded,
+                    w: w,
+                  ),
+
+                  SizedBox(height: h * 0.025),
+
+                  _fieldLabel('Company Email', w),
+                  SizedBox(height: h * 0.01),
+                  _textField(
+                    controller: _companyEmailController,
+                    hint: 'Enter company email',
+                    icon: Icons.email_outlined,
+                    keyboardType: TextInputType.emailAddress,
+                    w: w,
+                    validator: (value) {
+                      if (value != null && value.trim().isNotEmpty) {
+                        if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                            .hasMatch(value)) {
+                          return 'Please enter a valid email';
+                        }
                       }
-                    }
-                    return null;
-                  },
-                ),
+                      return null;
+                    },
+                  ),
+
+                  SizedBox(height: h * 0.025),
+
+                  _fieldLabel('Company Phone', w),
+                  SizedBox(height: h * 0.01),
+                  _textField(
+                    controller: _companyPhoneController,
+                    hint: 'Enter company phone',
+                    icon: Icons.phone_in_talk_rounded,
+                    keyboardType: TextInputType.phone,
+                    maxLength: 10,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(10),
+                    ],
+                    w: w,
+                    validator: (value) {
+                      if (value != null && value.trim().isNotEmpty) {
+                        if (value.trim().length != 10) {
+                          return 'Phone number must be exactly 10 digits';
+                        }
+                      }
+                      return null;
+                    },
+                  ),
+                ],
 
                 SizedBox(height: h * 0.04),
 
-                // Save Button
+                // ── Save Button ────────────────────────────────────────────
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
@@ -740,6 +537,73 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+
+  Widget _avatarPlaceholder(double w) => Container(
+        color: const Color(0xffE5E7EB),
+        child: Icon(
+          Icons.person_rounded,
+          size: w * 0.15,
+          color: const Color(0xff9CA3AF),
+        ),
+      );
+
+  Widget _fieldLabel(String label, double w) => Text(
+        label,
+        style: TextStyle(
+          fontSize: w * 0.04,
+          fontWeight: FontWeight.w600,
+          color: const Color(0xff111827),
+        ),
+      );
+
+  Widget _textField({
+    required TextEditingController controller,
+    required String hint,
+    required IconData icon,
+    required double w,
+    TextInputType? keyboardType,
+    int? maxLength,
+    List<TextInputFormatter>? inputFormatters,
+    String? Function(String?)? validator,
+  }) {
+    final radius = BorderRadius.circular(w * 0.03);
+    const enabledColor = Color(0xffE5E7EB);
+    const focusColor = Color(0xff0E5A3B);
+
+    return TextFormField(
+      controller: controller,
+      keyboardType: keyboardType,
+      maxLength: maxLength,
+      inputFormatters: inputFormatters,
+      validator: validator,
+      decoration: InputDecoration(
+        hintText: hint,
+        prefixIcon: Icon(icon, color: focusColor),
+        filled: true,
+        fillColor: Colors.white,
+        counterText: '',
+        border: OutlineInputBorder(borderRadius: radius, borderSide: BorderSide.none),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: radius,
+          borderSide: const BorderSide(color: enabledColor, width: 1),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: radius,
+          borderSide: const BorderSide(color: focusColor, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: radius,
+          borderSide: BorderSide(color: Colors.red.shade400, width: 1),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: radius,
+          borderSide: BorderSide(color: Colors.red.shade400, width: 2),
         ),
       ),
     );

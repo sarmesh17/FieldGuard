@@ -9,6 +9,12 @@ class NotificationService {
   NotificationService._();
   static final NotificationService instance = NotificationService._();
 
+  /// Shared id for geofence arrival/departure alerts. The background-service
+  /// isolate and the in-app bridge both fire with THIS id, so when the app is
+  /// alive the named (shop) alert simply overwrites the isolate's generic one
+  /// instead of stacking a duplicate.
+  static const int geofenceAlertId = 7001;
+
   final FlutterLocalNotificationsPlugin _plugin =
       FlutterLocalNotificationsPlugin();
 
@@ -21,6 +27,18 @@ class NotificationService {
     importance: Importance.high,
   );
 
+  /// Channel id for the persistent foreground-service notification shown by
+  /// the background location service. Kept LOW importance so the ongoing
+  /// "tracking" notification doesn't buzz/heads-up like the alerts do.
+  /// [BackgroundLocationService] references this same id.
+  static const foregroundServiceChannelId = 'fg_location_service';
+  static const _fgServiceChannel = AndroidNotificationChannel(
+    foregroundServiceChannelId,
+    'Location Tracking',
+    description: 'Keeps your location active for automatic visit detection.',
+    importance: Importance.low,
+  );
+
   bool _initialised = false;
 
   /// One-time setup: registers the channel and requests notification
@@ -30,18 +48,27 @@ class NotificationService {
     _initialised = true;
 
     try {
-      const androidInit =
-          AndroidInitializationSettings('@mipmap/ic_launcher');
+      const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
       const iosInit = DarwinInitializationSettings();
       await _plugin.initialize(
         const InitializationSettings(android: androidInit, iOS: iosInit),
       );
 
-      final android = _plugin.resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>();
+      final android = _plugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
       if (android != null) {
         await android.createNotificationChannel(_channel);
-        await android.requestNotificationsPermission();
+        await android.createNotificationChannel(_fgServiceChannel);
+        // Requesting the permission needs a foreground Activity. In the
+        // background-service isolate there is none (it throws a
+        // NullPointerException), so make this non-fatal — the channels above
+        // are already created, so alerts still fire. The foreground app
+        // requests the actual grant.
+        try {
+          await android.requestNotificationsPermission();
+        } catch (_) {}
       }
     } catch (_) {
       // Don't leave _initialised=true if init crashed — let it retry next time.
@@ -49,9 +76,13 @@ class NotificationService {
       rethrow;
     }
 
-    final ios = _plugin.resolvePlatformSpecificImplementation<
-        IOSFlutterLocalNotificationsPlugin>();
-    await ios?.requestPermissions(alert: true, badge: true, sound: true);
+    try {
+      final ios = _plugin
+          .resolvePlatformSpecificImplementation<
+            IOSFlutterLocalNotificationsPlugin
+          >();
+      await ios?.requestPermissions(alert: true, badge: true, sound: true);
+    } catch (_) {}
   }
 
   /// Shows an immediate notification. [id] lets callers overwrite their own

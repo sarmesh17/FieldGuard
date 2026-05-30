@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fieldguard/core/utils/phone_format.dart';
+import 'package:fieldguard/features/auto_geofence/presentation/geofence_log_screen.dart';
+import 'package:fieldguard/widgets/app_skeletons.dart';
 import 'edit_profile_screen.dart';
 import '../providers/profile_provider.dart';
 import '../providers/profile_state.dart';
@@ -51,11 +53,7 @@ class _PersonalInformationScreenState
         centerTitle: true,
       ),
       body: profileState is ProfileLoading
-          ? const Center(
-              child: CircularProgressIndicator(
-                color: Color(0xff0E5A3B),
-              ),
-            )
+          ? const SkeletonDetail()
           : profileState is ProfileFailure
               ? Center(
                   child: Column(
@@ -334,6 +332,36 @@ class _PersonalInformationScreenState
                             ),
 
                             SizedBox(height: h * 0.03),
+
+                            // Geofence Log Button
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const GeofenceLogScreen(),
+                                    ),
+                                  );
+                                },
+                                icon: const Icon(Icons.location_history_rounded),
+                                label: const Text('View Geofence Logs'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xff1E40AF),
+                                  foregroundColor: Colors.white,
+                                  padding: EdgeInsets.symmetric(
+                                    vertical: h * 0.018,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(w * 0.03),
+                                  ),
+                                  elevation: 2,
+                                ),
+                              ),
+                            ),
+
+                            SizedBox(height: h * 0.015),
 
                             // Edit Profile Button
                             SizedBox(

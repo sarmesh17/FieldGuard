@@ -1,27 +1,60 @@
-import 'dart:async';
-
 import 'package:fieldguard/core/networks/dio_client.dart';
 import 'package:fieldguard/core/responsive/responsive.dart';
 import 'package:fieldguard/core/utils/results.dart';
 import 'package:fieldguard/features/live_tracking/data/datasource/tracking_history_datasource_impl.dart';
 import 'package:fieldguard/features/live_tracking/data/dto/tracking_history_response.dart';
 import 'package:fieldguard/features/live_tracking/data/usecase/get_tracking_history_usecase.dart';
+import 'package:fieldguard/widgets/app_skeletons.dart';
 import 'package:flutter/material.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
 const _kBrand = Color(0xff0E5A3B);
 const _kInk = Color(0xff111111);
 const _kMuted = Color(0xff667085);
+const _kEnd = Color(0xffC0392B);
 
 const _months = [
   'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
 ];
 
-/// Full-screen tracking session history for an employee.
-///
-/// Shows a timeline of GPS breadcrumbs grouped by session. Each point
-/// displays coordinates, speed, accuracy, and timestamp. Supports date
-/// range filtering via a bottom sheet.
+GetTrackingHistoryUsecase _buildUsecase() => GetTrackingHistoryUsecase(
+      TrackingHistoryDataSourceImpl(DioClient.createDio()),
+    );
+
+// ── Friendly formatters (manager/employee facing — no jargon) ───────────────
+
+String _fmtTime(DateTime dt) {
+  final h12 = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+  final min = dt.minute.toString().padLeft(2, '0');
+  final ampm = dt.hour < 12 ? 'AM' : 'PM';
+  return '$h12:$min $ampm';
+}
+
+/// "Today" / "Yesterday" / "May 24, 2026".
+String _relativeDay(DateTime dt) {
+  final now = DateTime.now();
+  final d = DateTime(dt.year, dt.month, dt.day);
+  final today = DateTime(now.year, now.month, now.day);
+  final diff = today.difference(d).inDays;
+  if (diff == 0) return 'Today';
+  if (diff == 1) return 'Yesterday';
+  return '${_months[dt.month - 1]} ${dt.day}, ${dt.year}';
+}
+
+String _fmtDuration(Duration d) {
+  if (d.inHours > 0) return '${d.inHours} hr ${d.inMinutes.remainder(60)} min';
+  if (d.inMinutes > 0) return '${d.inMinutes} min';
+  return '${d.inSeconds} sec';
+}
+
+String _fmtDistance(double metres) {
+  if (metres >= 1000) return '${(metres / 1000).toStringAsFixed(1)} km';
+  return '${metres.round()} m';
+}
+
+/// Full-screen tracking history for an employee — a plain list of tracking
+/// sessions (when / how long / how far). Tapping one opens its route on a map.
 class TrackingHistoryScreen extends StatefulWidget {
   final int employeeId;
   final String employeeName;
@@ -36,13 +69,10 @@ class TrackingHistoryScreen extends StatefulWidget {
   State<TrackingHistoryScreen> createState() => _TrackingHistoryScreenState();
 }
 
-class _TrackingHistoryScreenState extends State<TrackingHistoryScreen>
-    with SingleTickerProviderStateMixin {
+class _TrackingHistoryScreenState extends State<TrackingHistoryScreen> {
   late final GetTrackingHistoryUsecase _usecase;
-  late AnimationController _animCtrl;
-  late Animation<double> _fadeAnim;
 
-  List<TrackingPoint> _points = [];
+  List<TrackingSession> _sessions = [];
   bool _loading = true;
   String? _error;
 
@@ -53,21 +83,8 @@ class _TrackingHistoryScreenState extends State<TrackingHistoryScreen>
   @override
   void initState() {
     super.initState();
-    _usecase = GetTrackingHistoryUsecase(
-      TrackingHistoryDataSourceImpl(DioClient.createDio()),
-    );
-    _animCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 500),
-    );
-    _fadeAnim = CurvedAnimation(parent: _animCtrl, curve: Curves.easeIn);
+    _usecase = _buildUsecase();
     _load();
-  }
-
-  @override
-  void dispose() {
-    _animCtrl.dispose();
-    super.dispose();
   }
 
   Future<void> _load() async {
@@ -85,11 +102,13 @@ class _TrackingHistoryScreenState extends State<TrackingHistoryScreen>
     if (!mounted) return;
     switch (result) {
       case Success(:final data):
+        final sessions = [...data.sessions]
+          ..sort((a, b) => (b.startedAt ?? DateTime(0))
+              .compareTo(a.startedAt ?? DateTime(0)));
         setState(() {
-          _points = data.points;
+          _sessions = sessions;
           _loading = false;
         });
-        _animCtrl.forward(from: 0);
       case Failure(:final exception):
         setState(() {
           _error = exception.toString();
@@ -97,8 +116,6 @@ class _TrackingHistoryScreenState extends State<TrackingHistoryScreen>
         });
     }
   }
-
-  // ── Filters ──────────────────────────────────────────────────────────────
 
   Future<void> _pickDateRange() async {
     final now = DateTime.now();
@@ -108,7 +125,8 @@ class _TrackingHistoryScreenState extends State<TrackingHistoryScreen>
       lastDate: now,
       initialDateRange: _from != null && _to != null
           ? DateTimeRange(start: _from!, end: _to!)
-          : DateTimeRange(start: now.subtract(const Duration(days: 7)), end: now),
+          : DateTimeRange(
+              start: now.subtract(const Duration(days: 7)), end: now),
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
           colorScheme: const ColorScheme.light(
@@ -136,30 +154,18 @@ class _TrackingHistoryScreenState extends State<TrackingHistoryScreen>
     _load();
   }
 
-  // ── Helpers ──────────────────────────────────────────────────────────────
-
-  /// Groups points by sessionId (or all together if sessionId is null).
-  Map<int?, List<TrackingPoint>> _groupBySession() {
-    final map = <int?, List<TrackingPoint>>{};
-    for (final p in _points) {
-      map.putIfAbsent(p.sessionId, () => []).add(p);
-    }
-    return map;
+  void _openSession(TrackingSession session) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => _SessionRouteScreen(
+          employeeId: widget.employeeId,
+          employeeName: widget.employeeName,
+          session: session,
+        ),
+      ),
+    );
   }
-
-  String _fmtDateTime(String iso) {
-    final dt = DateTime.tryParse(iso)?.toLocal();
-    if (dt == null) return iso;
-    final h12 = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
-    final min = dt.minute.toString().padLeft(2, '0');
-    final ampm = dt.hour < 12 ? 'AM' : 'PM';
-    return '${_months[dt.month - 1]} ${dt.day} · $h12:$min $ampm';
-  }
-
-  String _fmtDate(DateTime dt) =>
-      '${_months[dt.month - 1]} ${dt.day}, ${dt.year}';
-
-  // ── Build ────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -208,61 +214,32 @@ class _TrackingHistoryScreenState extends State<TrackingHistoryScreen>
           ),
           body: Column(
             children: [
-              // Active filter chip
               if (_from != null && _to != null)
-                Container(
-                  width: double.infinity,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  color: _kBrand.withValues(alpha: 0.06),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.date_range_rounded,
-                          size: 16, color: _kBrand),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          '${_fmtDate(_from!)} — ${_fmtDate(_to!)}',
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: _kBrand,
-                          ),
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: _clearFilters,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: _kBrand.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: const Text(
-                            'Clear',
-                            style: TextStyle(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w700,
-                              color: _kBrand,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                _FilterChipBar(
+                  from: _from!,
+                  to: _to!,
+                  onClear: _clearFilters,
                 ),
-
-              // Body
               Expanded(
                 child: _loading
-                    ? const Center(
-                        child: CircularProgressIndicator(color: _kBrand))
+                    ? const SkeletonList()
                     : _error != null
-                        ? _buildError()
-                        : _points.isEmpty
-                            ? _buildEmpty()
-                            : _buildTimeline(),
+                        ? _ErrorView(message: _error!, onRetry: _load)
+                        : _sessions.isEmpty
+                            ? const _EmptyView()
+                            : RefreshIndicator(
+                                color: _kBrand,
+                                onRefresh: _load,
+                                child: ListView.builder(
+                                  padding: const EdgeInsets.fromLTRB(
+                                      16, 16, 16, 32),
+                                  itemCount: _sessions.length,
+                                  itemBuilder: (_, i) => _SessionCard(
+                                    session: _sessions[i],
+                                    onTap: () => _openSession(_sessions[i]),
+                                  ),
+                                ),
+                              ),
               ),
             ],
           ),
@@ -270,8 +247,275 @@ class _TrackingHistoryScreenState extends State<TrackingHistoryScreen>
       },
     );
   }
+}
 
-  Widget _buildError() {
+class _FilterChipBar extends StatelessWidget {
+  final DateTime from;
+  final DateTime to;
+  final VoidCallback onClear;
+
+  const _FilterChipBar(
+      {required this.from, required this.to, required this.onClear});
+
+  @override
+  Widget build(BuildContext context) {
+    String d(DateTime x) => '${_months[x.month - 1]} ${x.day}, ${x.year}';
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      color: _kBrand.withValues(alpha: 0.06),
+      child: Row(
+        children: [
+          const Icon(Icons.date_range_rounded, size: 16, color: _kBrand),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              '${d(from)} — ${d(to)}',
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: _kBrand,
+              ),
+            ),
+          ),
+          GestureDetector(
+            onTap: onClear,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: _kBrand.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: const Text(
+                'Clear',
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w700,
+                  color: _kBrand,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Session summary card (plain language) ───────────────────────────────────
+
+class _SessionCard extends StatelessWidget {
+  final TrackingSession session;
+  final VoidCallback onTap;
+
+  const _SessionCard({required this.session, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final started = session.startedAt?.toLocal();
+    final ended = session.endedAt?.toLocal();
+    final duration = session.duration;
+    final live = session.isActive && ended == null;
+
+    final timeRange = started == null
+        ? 'Time not recorded'
+        : live
+            ? 'Started ${_fmtTime(started)} · still tracking'
+            : ended != null
+                ? '${_fmtTime(started)} – ${_fmtTime(ended)}'
+                : 'Started ${_fmtTime(started)}';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xffE8EDEA)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: _kBrand.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child:
+                          const Icon(Icons.map_rounded, size: 21, color: _kBrand),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            started != null
+                                ? _relativeDay(started)
+                                : 'Unknown date',
+                            style: const TextStyle(
+                              fontSize: 15.5,
+                              fontWeight: FontWeight.w800,
+                              color: _kInk,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            timeRange,
+                            style: const TextStyle(
+                                fontSize: 12.5, color: _kMuted),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (live)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 9, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: const Color(0xffDDF5E0),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.fiber_manual_record,
+                                size: 9, color: _kBrand),
+                            SizedBox(width: 4),
+                            Text(
+                              'Live',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: _kBrand,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      const Icon(Icons.chevron_right_rounded,
+                          color: Color(0xffAAB2BD)),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    if (duration != null)
+                      _StatChip(
+                        icon: Icons.schedule_rounded,
+                        label: _fmtDuration(duration),
+                      ),
+                    if (session.totalDistance > 0)
+                      _StatChip(
+                        icon: Icons.straighten_rounded,
+                        label: _fmtDistance(session.totalDistance),
+                      ),
+                    _StatChip(
+                      icon: Icons.my_location_rounded,
+                      label: '${session.pointCount} locations',
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _StatChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _StatChip({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xffF0F2F5),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: _kMuted),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: _kInk,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Shared empty / error views ──────────────────────────────────────────────
+
+class _EmptyView extends StatelessWidget {
+  const _EmptyView();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.location_off_rounded,
+              size: SizeConfig.scale(56), color: const Color(0xffAAB2BD)),
+          const SizedBox(height: 14),
+          const Text(
+            'No tracking yet',
+            style: TextStyle(
+                fontSize: 15, fontWeight: FontWeight.w600, color: _kMuted),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Tracking sessions will appear here',
+            style: TextStyle(fontSize: 13, color: _kMuted),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ErrorView extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+
+  const _ErrorView({required this.message, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -279,16 +523,16 @@ class _TrackingHistoryScreenState extends State<TrackingHistoryScreen>
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.error_outline_rounded,
-                size: SizeConfig.scale(56), color: const Color(0xffC0392B)),
+                size: SizeConfig.scale(56), color: _kEnd),
             const SizedBox(height: 16),
             Text(
-              _error!,
+              message,
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 14, color: _kMuted),
             ),
             const SizedBox(height: 20),
             ElevatedButton.icon(
-              onPressed: _load,
+              onPressed: onRetry,
               icon: const Icon(Icons.refresh_rounded, size: 18),
               label: const Text('Retry'),
               style: ElevatedButton.styleFrom(
@@ -304,156 +548,192 @@ class _TrackingHistoryScreenState extends State<TrackingHistoryScreen>
       ),
     );
   }
-
-  Widget _buildEmpty() {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.location_off_rounded,
-              size: SizeConfig.scale(56),
-              color: const Color(0xffAAB2BD)),
-          const SizedBox(height: 14),
-          const Text(
-            'No tracking data found',
-            style: TextStyle(
-                fontSize: 15, fontWeight: FontWeight.w600, color: _kMuted),
-          ),
-          const SizedBox(height: 6),
-          const Text(
-            'Try adjusting the date range filter',
-            style: TextStyle(fontSize: 13, color: _kMuted),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTimeline() {
-    final sessions = _groupBySession();
-    final sessionKeys = sessions.keys.toList();
-
-    return FadeTransition(
-      opacity: _fadeAnim,
-      child: ListView.builder(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-        itemCount: sessionKeys.length,
-        itemBuilder: (_, i) {
-          final sid = sessionKeys[i];
-          final pts = sessions[sid]!;
-          return _SessionCard(
-            sessionId: sid,
-            points: pts,
-            fmtDateTime: _fmtDateTime,
-            isLast: i == sessionKeys.length - 1,
-          );
-        },
-      ),
-    );
-  }
 }
 
-// ─── Session card ──────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+// Session route — the recorded path drawn on a map (no GPS jargon).
+// ═══════════════════════════════════════════════════════════════════════════
 
-class _SessionCard extends StatelessWidget {
-  final int? sessionId;
-  final List<TrackingPoint> points;
-  final String Function(String) fmtDateTime;
-  final bool isLast;
+class _SessionRouteScreen extends StatefulWidget {
+  final int employeeId;
+  final String employeeName;
+  final TrackingSession session;
 
-  const _SessionCard({
-    required this.sessionId,
-    required this.points,
-    required this.fmtDateTime,
-    required this.isLast,
+  const _SessionRouteScreen({
+    required this.employeeId,
+    required this.employeeName,
+    required this.session,
   });
 
-  String _duration() {
-    if (points.length < 2) return '';
-    final first = DateTime.tryParse(points.first.recordedAt);
-    final last = DateTime.tryParse(points.last.recordedAt);
-    if (first == null || last == null) return '';
-    final diff = last.difference(first).abs();
-    if (diff.inHours > 0) {
-      return '${diff.inHours}h ${diff.inMinutes.remainder(60)}m';
+  @override
+  State<_SessionRouteScreen> createState() => _SessionRouteScreenState();
+}
+
+class _SessionRouteScreenState extends State<_SessionRouteScreen> {
+  static const _green = _kBrand;
+
+  late final GetTrackingHistoryUsecase _usecase;
+
+  MapboxMap? _map;
+  PolylineAnnotationManager? _lines;
+  CircleAnnotationManager? _circles;
+
+  List<TrackingPoint>? _points; // null = still loading
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _usecase = _buildUsecase();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() => _error = null);
+    final result = await _usecase.route(
+      employeeId: widget.employeeId,
+      sessionId: widget.session.id,
+    );
+    if (!mounted) return;
+    switch (result) {
+      case Success(:final data):
+        // Keep only valid fixes, ordered oldest → newest.
+        final pts = data.points
+            .where((p) => !(p.latitude == 0 && p.longitude == 0))
+            .toList()
+          ..sort((a, b) => a.recordedAt.compareTo(b.recordedAt));
+        setState(() => _points = pts);
+        _drawIfReady();
+      case Failure(:final exception):
+        setState(() => _error = exception.toString());
     }
-    return '${diff.inMinutes}m';
+  }
+
+  Future<void> _onMapCreated(MapboxMap map) async {
+    _map = map;
+    _lines = await map.annotations.createPolylineAnnotationManager();
+    _circles = await map.annotations.createCircleAnnotationManager();
+    _drawIfReady();
+  }
+
+  Future<void> _drawIfReady() async {
+    final map = _map;
+    final lines = _lines;
+    final circles = _circles;
+    final pts = _points;
+    if (map == null || lines == null || circles == null || pts == null) return;
+    if (pts.isEmpty) return;
+
+    final positions = pts
+        .map((p) => Position(p.longitude, p.latitude))
+        .toList(growable: false);
+
+    if (positions.length >= 2) {
+      await lines.create(
+        PolylineAnnotationOptions(
+          geometry: LineString(coordinates: positions),
+          lineColor: _green.toARGB32(),
+          lineWidth: 5.0,
+          lineOpacity: 0.85,
+        ),
+      );
+    }
+
+    // Start (green) + end (red) markers.
+    await circles.create(CircleAnnotationOptions(
+      geometry: Point(coordinates: positions.first),
+      circleRadius: 8.0,
+      circleColor: _green.toARGB32(),
+      circleStrokeColor: Colors.white.toARGB32(),
+      circleStrokeWidth: 3.0,
+    ));
+    if (positions.length >= 2) {
+      await circles.create(CircleAnnotationOptions(
+        geometry: Point(coordinates: positions.last),
+        circleRadius: 8.0,
+        circleColor: _kEnd.toARGB32(),
+        circleStrokeColor: Colors.white.toARGB32(),
+        circleStrokeWidth: 3.0,
+      ));
+    }
+
+    await _fitTo(pts);
+  }
+
+  Future<void> _fitTo(List<TrackingPoint> pts) async {
+    final map = _map;
+    if (map == null) return;
+    final coords = pts
+        .map((p) => Point(coordinates: Position(p.longitude, p.latitude)))
+        .toList(growable: false);
+    if (coords.length == 1) {
+      await map.flyTo(
+        CameraOptions(center: coords.first, zoom: 15.0),
+        MapAnimationOptions(duration: 700),
+      );
+      return;
+    }
+    final cam = await map.cameraForCoordinatesPadding(
+      coords,
+      CameraOptions(),
+      MbxEdgeInsets(top: 120, left: 50, bottom: 220, right: 50),
+      null,
+      null,
+    );
+    await map.flyTo(
+      CameraOptions(
+        center: cam.center,
+        zoom: (cam.zoom ?? 14).clamp(3.0, 16.0),
+        padding: cam.padding,
+      ),
+      MapAnimationOptions(duration: 900),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: EdgeInsets.only(bottom: isLast ? 0 : 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xffE8EDEA)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    final started = widget.session.startedAt?.toLocal();
+    final ended = widget.session.endedAt?.toLocal();
+    final duration = widget.session.duration;
+    final pts = _points;
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8FAF9),
+      body: Stack(
         children: [
-          // Header
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            decoration: const BoxDecoration(
-              color: Color(0xffF8FAF9),
-              borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-            ),
+          MapWidget(
+            key: const ValueKey('sessionRouteMap'),
+            styleUri: MapboxStyles.STANDARD,
+            textureView: true,
+            onMapCreated: _onMapCreated,
+          ),
+
+          // Top bar
+          Positioned(
+            top: 48,
+            left: 16,
+            right: 16,
             child: Row(
               children: [
-                Container(
-                  width: 34,
-                  height: 34,
-                  decoration: BoxDecoration(
-                    color: _kBrand.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child:
-                      const Icon(Icons.route_rounded, size: 18, color: _kBrand),
+                _circleBtn(
+                  icon: Icons.arrow_back,
+                  onTap: () => Navigator.pop(context),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        sessionId != null
-                            ? 'Session #$sessionId'
-                            : 'Tracking Points',
-                        style: const TextStyle(
-                          fontSize: 14.5,
-                          fontWeight: FontWeight.w800,
-                          color: _kInk,
-                        ),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 10),
+                    decoration: _pill,
+                    child: Text(
+                      started != null
+                          ? '${_relativeDay(started)} · ${_fmtTime(started)}'
+                          : widget.employeeName,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: _kInk,
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '${points.length} points${_duration().isNotEmpty ? ' · $_duration()' : ''}',
-                        style: const TextStyle(fontSize: 12, color: _kMuted),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: _kBrand.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    '${points.length}',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                      color: _kBrand,
                     ),
                   ),
                 ),
@@ -461,238 +741,158 @@ class _SessionCard extends StatelessWidget {
             ),
           ),
 
-          // Timeline points (show max 10, rest collapsed)
-          _PointsTimeline(
-            points: points,
-            fmtDateTime: fmtDateTime,
+          // Loading / error / empty overlays
+          if (_error != null)
+            _OverlayCard(
+              icon: Icons.error_outline_rounded,
+              text: _error!,
+              actionLabel: 'Retry',
+              onAction: _load,
+            )
+          else if (pts == null)
+            const Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: LinearProgressIndicator(
+                minHeight: 3,
+                color: _kBrand,
+                backgroundColor: Color(0xffDDF5E0),
+              ),
+            )
+          else if (pts.isEmpty)
+            const _OverlayCard(
+              icon: Icons.location_off_rounded,
+              text: 'No location was recorded for this session.',
+            ),
+
+          // Bottom summary
+          if (pts != null && pts.isNotEmpty)
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: 24,
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.12),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      started != null && ended != null
+                          ? '${_fmtTime(started)} – ${_fmtTime(ended)}'
+                          : started != null
+                              ? 'Started ${_fmtTime(started)}'
+                              : 'This trip',
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: _kInk,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        _Metric(
+                          icon: Icons.schedule_rounded,
+                          label: 'Duration',
+                          value: duration != null
+                              ? _fmtDuration(duration)
+                              : '—',
+                        ),
+                        _Metric(
+                          icon: Icons.straighten_rounded,
+                          label: 'Distance',
+                          value: _fmtDistance(widget.session.totalDistance),
+                        ),
+                        _Metric(
+                          icon: Icons.my_location_rounded,
+                          label: 'Locations',
+                          value: '${pts.length}',
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  BoxDecoration get _pill => BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.12),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
+      );
+
+  Widget _circleBtn({required IconData icon, required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+        ),
+        child: Icon(icon, color: _green, size: 20),
       ),
     );
   }
 }
 
-// ─── Timeline points ───────────────────────────────────────────────────────────
+class _Metric extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
 
-class _PointsTimeline extends StatefulWidget {
-  final List<TrackingPoint> points;
-  final String Function(String) fmtDateTime;
-
-  const _PointsTimeline({required this.points, required this.fmtDateTime});
-
-  @override
-  State<_PointsTimeline> createState() => _PointsTimelineState();
-}
-
-class _PointsTimelineState extends State<_PointsTimeline> {
-  static const _previewCount = 5;
-  bool _expanded = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final all = widget.points;
-    final visible =
-        _expanded ? all : all.take(_previewCount).toList(growable: false);
-    final hasMore = all.length > _previewCount;
-
-    return Column(
-      children: [
-        ...List.generate(visible.length, (i) {
-          final p = visible[i];
-          final isFirst = i == 0;
-          final isLast = i == visible.length - 1 && (_expanded || !hasMore);
-
-          return _TimelineRow(
-            point: p,
-            fmtDateTime: widget.fmtDateTime,
-            isFirst: isFirst,
-            isLast: isLast,
-          );
-        }),
-        if (hasMore && !_expanded)
-          InkWell(
-            onTap: () => setState(() => _expanded = true),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.expand_more_rounded,
-                      size: 18, color: _kBrand),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Show ${all.length - _previewCount} more points',
-                    style: const TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w700,
-                      color: _kBrand,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        if (hasMore && _expanded)
-          InkWell(
-            onTap: () => setState(() => _expanded = false),
-            child: const Padding(
-              padding: EdgeInsets.symmetric(vertical: 12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.expand_less_rounded, size: 18, color: _kBrand),
-                  SizedBox(width: 4),
-                  Text(
-                    'Show less',
-                    style: TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w700,
-                      color: _kBrand,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-// ─── Single timeline row ───────────────────────────────────────────────────────
-
-class _TimelineRow extends StatelessWidget {
-  final TrackingPoint point;
-  final String Function(String) fmtDateTime;
-  final bool isFirst;
-  final bool isLast;
-
-  const _TimelineRow({
-    required this.point,
-    required this.fmtDateTime,
-    required this.isFirst,
-    required this.isLast,
+  const _Metric({
+    required this.icon,
+    required this.label,
+    required this.value,
   });
 
   @override
   Widget build(BuildContext context) {
-    return IntrinsicHeight(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Timeline spine
-          SizedBox(
-            width: 46,
-            child: Column(
-              children: [
-                // Top connector
-                Expanded(
-                  child: Container(
-                    width: 2,
-                    color: isFirst
-                        ? Colors.transparent
-                        : const Color(0xffD0D7DE),
-                  ),
-                ),
-                // Dot
-                Container(
-                  width: 12,
-                  height: 12,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: isFirst ? _kBrand : const Color(0xffD0D7DE),
-                    border: Border.all(
-                      color: isFirst ? _kBrand : const Color(0xffAAB2BD),
-                      width: 2,
-                    ),
-                  ),
-                ),
-                // Bottom connector
-                Expanded(
-                  child: Container(
-                    width: 2,
-                    color: isLast
-                        ? Colors.transparent
-                        : const Color(0xffD0D7DE),
-                  ),
-                ),
-              ],
-            ),
+          Row(
+            children: [
+              Icon(icon, size: 14, color: _kMuted),
+              const SizedBox(width: 5),
+              Text(
+                label,
+                style: const TextStyle(fontSize: 11.5, color: _kMuted),
+              ),
+            ],
           ),
-
-          // Content
-          Expanded(
-            child: Container(
-              margin: const EdgeInsets.fromLTRB(0, 6, 16, 6),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: isFirst
-                    ? _kBrand.withValues(alpha: 0.04)
-                    : const Color(0xffFAFBFC),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isFirst
-                      ? _kBrand.withValues(alpha: 0.15)
-                      : const Color(0xffE8EDEA),
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Timestamp
-                  Text(
-                    fmtDateTime(point.recordedAt),
-                    style: TextStyle(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w700,
-                      color: isFirst ? _kBrand : _kMuted,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  // Coordinates
-                  Row(
-                    children: [
-                      Icon(Icons.location_on_rounded,
-                          size: 14,
-                          color: isFirst ? _kBrand : const Color(0xffAAB2BD)),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          '${point.latitude.toStringAsFixed(6)}, ${point.longitude.toStringAsFixed(6)}',
-                          style: const TextStyle(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w600,
-                            color: _kInk,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  // Meta chips
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 4,
-                    children: [
-                      if (point.speed != null)
-                        _MetaChip(
-                          icon: Icons.speed_rounded,
-                          label: '${point.speed!.toStringAsFixed(1)} m/s',
-                        ),
-                      if (point.accuracy != null)
-                        _MetaChip(
-                          icon: Icons.gps_fixed_rounded,
-                          label: '±${point.accuracy!.toStringAsFixed(0)}m',
-                        ),
-                      if (point.bearing != null)
-                        _MetaChip(
-                          icon: Icons.explore_rounded,
-                          label: '${point.bearing!.toStringAsFixed(0)}°',
-                        ),
-                    ],
-                  ),
-                ],
-              ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+              color: _kInk,
             ),
           ),
         ],
@@ -701,36 +901,62 @@ class _TimelineRow extends StatelessWidget {
   }
 }
 
-// ─── Meta chip ─────────────────────────────────────────────────────────────────
-
-class _MetaChip extends StatelessWidget {
+class _OverlayCard extends StatelessWidget {
   final IconData icon;
-  final String label;
+  final String text;
+  final String? actionLabel;
+  final VoidCallback? onAction;
 
-  const _MetaChip({required this.icon, required this.label});
+  const _OverlayCard({
+    required this.icon,
+    required this.text,
+    this.actionLabel,
+    this.onAction,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-      decoration: BoxDecoration(
-        color: const Color(0xffF0F2F5),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 12, color: _kMuted),
-          const SizedBox(width: 3),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 10.5,
-              fontWeight: FontWeight.w600,
-              color: _kMuted,
+    return Positioned(
+      top: 104,
+      left: 16,
+      right: 16,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.12),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
-          ),
-        ],
+          ],
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 18, color: _kMuted),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                text,
+                style: const TextStyle(fontSize: 13, color: _kMuted),
+              ),
+            ),
+            if (actionLabel != null && onAction != null)
+              GestureDetector(
+                onTap: onAction,
+                child: Text(
+                  actionLabel!,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: _kBrand,
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

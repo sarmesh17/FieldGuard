@@ -7,6 +7,7 @@ import 'package:fieldguard/features/auto_geofence/data/geofence_visit_store.dart
 import 'package:fieldguard/features/auto_geofence/domain/geofence_state.dart';
 import 'package:fieldguard/features/auto_geofence/domain/geofence_visit.dart';
 import 'package:fieldguard/features/auto_geofence/service/mutex.dart';
+import 'package:fieldguard/features/tasks/data/dto/tasks_list_response.dart';
 import 'package:flutter/foundation.dart';
 
 /// Drains the persisted retry queue.
@@ -25,9 +26,20 @@ class GeofenceVisitUploader {
   final GeofenceVisitDatasource _datasource;
   final Mutex _mutex = Mutex();
 
+  /// Read-only event: fires after a queued visit successfully uploads.
+  ///
+  /// [taskId] is the visit's task; [task] is the server's authoritative
+  /// post-write task (status flipped to `COMPLETED` when the backend's
+  /// auto-completion fired). [task] is null on an idempotent duplicate that
+  /// didn't trigger completion, or when the response shape is unexpected —
+  /// callers should fall back to a refresh in that case.
+  ///
+  /// Optional — the upload + retry pipeline runs whether or not this is set.
+  void Function(int taskId, TaskSummary? task)? onUploaded;
+
   Timer? _retryTimer;
 
-  GeofenceVisitUploader(this._store, this._datasource);
+  GeofenceVisitUploader(this._store, this._datasource, {this.onUploaded});
 
   /// Persist a freshly-closed visit to the queue WITHOUT uploading.
   ///
@@ -66,7 +78,7 @@ class GeofenceVisitUploader {
       if (queued.isDead) continue;
       if (queued.nextAttemptAtUtc.isAfter(now)) continue;
 
-      final result = await _datasource.submit(queued.visit);
+      final response = await _datasource.submit(queued.visit);
 
       // Re-resolve by visitId — the list reference is stable here (we hold
       // the mutex) but this keeps the update robust to any reordering.
@@ -75,9 +87,15 @@ class GeofenceVisitUploader {
       );
       if (index == -1) continue;
 
-      switch (result) {
+      switch (response.result) {
         case Success():
+          final taskId = queued.visit.taskId;
+          final task = response.task;
           queue.removeAt(index);
+          // Notify off the mutex via microtask so a slow listener (e.g. a
+          // tasks refresh) can't stall the drain loop.
+          final cb = onUploaded;
+          if (cb != null) scheduleMicrotask(() => cb(taskId, task));
         case Failure():
           final attempt = queued.attemptCount + 1;
           if (attempt >= GeofenceConfig.maxUploadAttempts) {

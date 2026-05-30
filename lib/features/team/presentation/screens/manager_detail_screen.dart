@@ -6,6 +6,7 @@ import 'package:fieldguard/features/manager/data/datasource/manager_datasource_i
 import 'package:fieldguard/features/manager/presentation/screens/edit_manager_screen.dart';
 import 'package:fieldguard/features/team/data/datasource/team_datasource_impl.dart';
 import 'package:fieldguard/features/team/data/dto/manager_detail_response.dart';
+import 'package:fieldguard/widgets/app_skeletons.dart';
 import 'package:flutter/material.dart';
 
 class ManagerDetailScreen extends StatefulWidget {
@@ -183,7 +184,7 @@ class _ManagerDetailScreenState extends State<ManagerDetailScreen>
         return Scaffold(
           backgroundColor: const Color(0xFFF8FAF9),
           body: _isLoading
-              ? const Center(child: CircularProgressIndicator())
+              ? const SkeletonDetail()
               : _errorMessage != null
                   ? _buildErrorView()
                   : _buildContent(),
