@@ -32,6 +32,10 @@ class ImageUploadService {
       minHeight: 1080,
       quality: 85,
       format: CompressFormat.jpeg,
+      // Bake the EXIF rotation into the pixels (native, off the UI thread) and
+      // strip EXIF, so the stored image is always upright — Image.network
+      // doesn't honour EXIF orientation.
+      autoCorrectionAngle: true,
       keepExif: false,
     );
     if (compressed == null) throw Exception('Image compression failed');

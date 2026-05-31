@@ -88,42 +88,26 @@ class _CreateShopMapScreenState extends State<CreateShopMapScreen> {
     }
   }
 
+  /// The shop location is the map's current centre (where the fixed pin
+  /// points) — NOT the device GPS. This lets the user nudge the map so the pin
+  /// sits exactly on the storefront even if they're standing a few metres off.
   Future<void> _createShopHere() async {
     if (_creating) return;
-
-    final status = await Permission.locationWhenInUse.status;
-    if (!status.isGranted) {
-      final newStatus = await Permission.locationWhenInUse.request();
-      if (!newStatus.isGranted) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Location permission is required to create a shop'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-        return;
-      }
-    }
+    final map = _mapboxMap;
+    if (map == null) return;
 
     setState(() => _creating = true);
     try {
-      final pos = await geo.Geolocator.getCurrentPosition(
-        locationSettings: const geo.LocationSettings(
-          accuracy: geo.LocationAccuracy.high,
-        ),
-      );
+      final cam = await map.getCameraState();
+      final lat = cam.center.coordinates.lat.toDouble();
+      final lng = cam.center.coordinates.lng.toDouble();
       if (!mounted) return;
 
       final created = await showModalBottomSheet<bool>(
         context: context,
         isScrollControlled: true,
         backgroundColor: Colors.transparent,
-        builder: (_) => CreateGeofenceForm(
-          latitude: pos.latitude,
-          longitude: pos.longitude,
-        ),
+        builder: (_) => CreateGeofenceForm(latitude: lat, longitude: lng),
       );
 
       if (created == true && mounted) {
@@ -133,7 +117,7 @@ class _CreateShopMapScreenState extends State<CreateShopMapScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Could not get your location. Please try again.'),
+            content: Text('Could not read the map location. Please try again.'),
             backgroundColor: Colors.red,
           ),
         );
@@ -170,10 +154,13 @@ class _CreateShopMapScreenState extends State<CreateShopMapScreen> {
           if (_mapLoading)
             const ColoredBox(
               color: Color(0xFFF5F6FA),
-              child: Center(
-                child: CircularProgressIndicator(color: _brand),
-              ),
+              child: Center(child: CircularProgressIndicator(color: _brand)),
             ),
+
+          // Fixed centre pin — the map pans under it; wherever it points is the
+          // shop location. IgnorePointer so it never eats map gestures.
+          if (!_mapLoading)
+            const Positioned.fill(child: IgnorePointer(child: _CenterPin())),
 
           // Back
           Positioned(
@@ -201,8 +188,7 @@ class _CreateShopMapScreenState extends State<CreateShopMapScreen> {
             left: 72,
             right: 16,
             child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(20),
@@ -215,7 +201,7 @@ class _CreateShopMapScreenState extends State<CreateShopMapScreen> {
                 ],
               ),
               child: const Text(
-                'Stand at the shop, then tap Create Shop Here',
+                'Move the map so the pin sits on the shop, then tap Create Shop Here',
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -262,6 +248,49 @@ class _CreateShopMapScreenState extends State<CreateShopMapScreen> {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// The fixed marker that floats at the centre of the map. Its tip rests on the
+/// precise centre dot — that point is read back as the shop's coordinates.
+class _CenterPin extends StatelessWidget {
+  const _CenterPin();
+
+  static const _brand = Color(0xff0E5A3B);
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        // Pin lifted so its pointed tip lands on the centre dot below.
+        Transform.translate(
+          offset: const Offset(0, -23),
+          child: Icon(
+            Icons.location_on,
+            size: 50,
+            color: _brand,
+            shadows: [
+              Shadow(
+                color: Colors.black.withValues(alpha: 0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+        ),
+        // Precise centre dot (the exact coordinate the pin marks).
+        Container(
+          width: 10,
+          height: 10,
+          decoration: BoxDecoration(
+            color: _brand,
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white, width: 2),
+          ),
+        ),
+      ],
     );
   }
 }

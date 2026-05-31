@@ -14,6 +14,7 @@ import 'package:fieldguard/features/uploads/image_upload_service.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class CreateGeofenceForm extends StatefulWidget {
   final double latitude;
@@ -264,9 +265,7 @@ class _CreateGeofenceFormState extends State<CreateGeofenceForm> {
       await _shopDataSource.createShop(
         CreateShopRequest(
           name: _shopNameController.text.trim(),
-          panNumber: _panNumberController.text.trim().isEmpty
-              ? null
-              : _panNumberController.text.trim(),
+          panNumber: _panNumberController.text.trim(),
           address: _addressController.text.trim(),
           latitude: widget.latitude,
           longitude: widget.longitude,
@@ -400,7 +399,7 @@ class _CreateGeofenceFormState extends State<CreateGeofenceForm> {
                 const SizedBox(height: 6),
                 _buildField(
                   controller: _shopNameController,
-                  hint: 'e.g. Rajan Enterprises',
+                  hint: 'e.g. ABC Store',
                   icon: Icons.storefront_outlined,
                   validator: (v) => (v == null || v.trim().isEmpty)
                       ? 'Shop name is required'
@@ -413,7 +412,7 @@ class _CreateGeofenceFormState extends State<CreateGeofenceForm> {
                   children: [
                     _buildField(
                       controller: _addressController,
-                      hint: 'e.g. Birgunj, Nepal',
+                      hint: 'e.g. Main Road, City',
                       icon: Icons.location_on_outlined,
                       validator: (v) => (v == null || v.trim().isEmpty)
                           ? 'Address is required'
@@ -442,7 +441,7 @@ class _CreateGeofenceFormState extends State<CreateGeofenceForm> {
                 const SizedBox(height: 6),
                 _buildField(
                   controller: _contactNameController,
-                  hint: 'e.g. Bhupendra Prasad',
+                  hint: 'e.g. Full name',
                   icon: Icons.person_outline,
                   validator: (v) => (v == null || v.trim().isEmpty)
                       ? 'Contact name is required'
@@ -453,7 +452,7 @@ class _CreateGeofenceFormState extends State<CreateGeofenceForm> {
                 const SizedBox(height: 6),
                 _buildField(
                   controller: _contactPhoneController,
-                  hint: 'e.g. 9804208475',
+                  hint: 'e.g. 98XXXXXXXX',
                   icon: Icons.phone_outlined,
                   keyboardType: TextInputType.phone,
                   maxLength: 10,
@@ -476,12 +475,23 @@ class _CreateGeofenceFormState extends State<CreateGeofenceForm> {
                   },
                 ),
                 const SizedBox(height: 16),
-                _FieldLabel('PAN Number (Optional)'),
+                _FieldLabel('PAN Number'),
                 const SizedBox(height: 6),
                 _buildField(
                   controller: _panNumberController,
-                  hint: 'e.g. ABCDE1234F',
+                  hint: 'e.g. 123456789',
                   icon: Icons.credit_card_outlined,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(9),
+                  ],
+                  validator: (v) {
+                    final t = v?.trim() ?? '';
+                    if (t.isEmpty) return 'PAN number is required';
+                    if (t.length != 9) return 'PAN number must be 9 digits';
+                    return null;
+                  },
                 ),
                 if (_role != null && _role!.toLowerCase() != 'employee') ...[
                   const SizedBox(height: 16),
@@ -754,6 +764,7 @@ class _CreateGeofenceFormState extends State<CreateGeofenceForm> {
     required IconData icon,
     TextInputType keyboardType = TextInputType.text,
     int? maxLength,
+    List<TextInputFormatter>? inputFormatters,
     String? Function(String?)? validator,
     void Function(String)? onChanged,
   }) {
@@ -761,6 +772,7 @@ class _CreateGeofenceFormState extends State<CreateGeofenceForm> {
       controller: controller,
       keyboardType: keyboardType,
       maxLength: maxLength,
+      inputFormatters: inputFormatters,
       validator: validator,
       onChanged: onChanged,
       decoration: InputDecoration(

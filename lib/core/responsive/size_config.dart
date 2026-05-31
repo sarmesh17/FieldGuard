@@ -60,4 +60,29 @@ class SizeConfig {
     // phones while still respecting user accessibility preferences.
     return scaled * textScaleFactor.clamp(0.8, 1.3);
   }
+
+  // ─── Short-screen aware scaling ───────────────────────────────────────────
+
+  /// Reference design height (matches the 375-wide reference width).
+  static const double _refHeight = 812;
+
+  /// Scales a base value by the *smaller* of the width and height ratios.
+  ///
+  /// Unlike [scale] (width-only), this shrinks values on short devices so
+  /// fixed-height content (logos, paddings, buttons) doesn't overflow or
+  /// overlap vertically. Use for vertical dimensions on height-constrained
+  /// layouts; [scale] remains the default for horizontal/general sizing.
+  static double vScale(double value) {
+    final widthRatio = screenWidth / 375;
+    final heightRatio = screenHeight / _refHeight;
+    final factor = widthRatio < heightRatio ? widthRatio : heightRatio;
+    return value * factor;
+  }
+
+  /// Like [scaledFontSize] but uses the shorter screen side (via [vScale]) so
+  /// text doesn't balloon in landscape. Still respects system text scaling.
+  static double vScaledFontSize(double baseFontSize) {
+    final scaled = vScale(baseFontSize);
+    return scaled * textScaleFactor.clamp(0.8, 1.3);
+  }
 }

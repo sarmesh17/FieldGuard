@@ -86,6 +86,22 @@ class TasksNotifier extends StateNotifier<TasksState> {
     };
   }
 
+  /// Re-fetches page 1 with the LAST-used filters. Call this after a task was
+  /// mutated elsewhere (e.g. status changed on the detail screen) so the list
+  /// reflects the change immediately — even when the user returns via the
+  /// system back button (which carries no result to react to).
+  Future<void> reload() => loadTasks(
+        search: _query.search,
+        status: _query.status,
+        priority: _query.priority,
+        userId: _query.userId,
+        managerId: _query.managerId,
+        hasManager: _query.hasManager,
+        assigneeRole: _query.assigneeRole,
+        createdBy: _query.createdBy,
+        view: _query.view,
+      );
+
   /// Fetches the next page and appends it to the current list.
   Future<void> loadMore() async {
     final current = state;

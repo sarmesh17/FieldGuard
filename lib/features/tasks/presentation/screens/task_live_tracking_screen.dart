@@ -2,10 +2,12 @@ import 'dart:async';
 
 import 'package:fieldguard/core/services/live_tracking_socket.dart';
 import 'package:fieldguard/core/utils/results.dart';
+import 'package:fieldguard/features/routes/data/mapbox_directions_service.dart';
 import 'package:fieldguard/features/live_tracking/data/models/live_location.dart';
 import 'package:fieldguard/features/tasks/presentation/providers/tasks_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart' as geo;
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' hide Size;
 
 /// Live map for one task's assignee (Admin / Manager only).
@@ -20,12 +22,22 @@ class TaskLiveTrackingScreen extends ConsumerStatefulWidget {
   final String? taskTitle;
   final String? employeeName;
 
+  /// The task's shop coordinates — the assignee's destination. Drawn as a
+  /// static pin so the viewer sees where they're heading. Null for tasks
+  /// without usable shop coords, in which case only the live pin shows.
+  final double? shopLatitude;
+  final double? shopLongitude;
+  final String? shopName;
+
   const TaskLiveTrackingScreen({
     super.key,
     required this.taskId,
     this.employeeId,
     this.taskTitle,
     this.employeeName,
+    this.shopLatitude,
+    this.shopLongitude,
+    this.shopName,
   });
 
   @override
@@ -36,12 +48,15 @@ class TaskLiveTrackingScreen extends ConsumerStatefulWidget {
 class _TaskLiveTrackingScreenState
     extends ConsumerState<TaskLiveTrackingScreen> {
   static const _green = Color(0xff0E5A3B);
+  static const _dest = Color(0xffFF3B30);
 
   final _socket = LiveTrackingSocket.instance;
 
   MapboxMap? _map;
   CircleAnnotationManager? _circles;
+  PolylineAnnotationManager? _lines;
   CircleAnnotation? _pin;
+  PolylineAnnotation? _routeLine;
 
   StreamSubscription<TaskLocationEvent>? _locSub;
   StreamSubscription<TaskStatusChangedEvent>? _statusSub;
@@ -55,6 +70,15 @@ class _TaskLiveTrackingScreenState
   SocketStatus _socketStatus = SocketStatus.idle;
   String? _employeeName;
   DateTime? _lastFix;
+
+  // Route (current → destination) summary, recomputed as the assignee moves.
+  double? _routeDistanceMeters;
+  double? _routeDurationSeconds;
+  bool _routeBusy = false;
+  // Origin of the last computed route — used to throttle Directions calls so
+  // we only recompute after the assignee has moved a meaningful distance.
+  double? _routeFromLat;
+  double? _routeFromLng;
 
   /// Set when task:status_changed reports a terminal state — the assignee
   /// is no longer active so we stop following and tell the viewer.
@@ -86,13 +110,48 @@ class _TaskLiveTrackingScreenState
 
   Future<void> _onMapCreated(MapboxMap map) async {
     _map = map;
+    // Polyline manager first so the route line renders beneath the pins.
+    _lines = await map.annotations.createPolylineAnnotationManager();
     _circles = await map.annotations.createCircleAnnotationManager();
+    await _drawDestination();
     await _loadSnapshot();
     // Join the task room regardless of the snapshot result — the socket
     // stream is the source of truth once the assignee starts moving.
     if (!_watching) {
       _socket.emitTaskWatch(widget.taskId);
       _watching = true;
+    }
+  }
+
+  /// Drop a static red pin at the task's shop (the assignee's destination).
+  /// Until the first live fix arrives, frame the map on it so the viewer has
+  /// context instead of a blank default view. No-op when the task carries no
+  /// usable shop coordinates.
+  Future<void> _drawDestination() async {
+    final mgr = _circles;
+    final lat = widget.shopLatitude;
+    final lng = widget.shopLongitude;
+    if (mgr == null || lat == null || lng == null) return;
+
+    final point = Point(coordinates: Position(lng, lat));
+    // Static pin — drawn once, never updated/removed, so we don't keep the ref.
+    await mgr.create(
+      CircleAnnotationOptions(
+        geometry: point,
+        circleRadius: 9.0,
+        circleColor: _dest.toARGB32(),
+        circleStrokeColor: Colors.white.toARGB32(),
+        circleStrokeWidth: 3.0,
+      ),
+    );
+
+    // No live fix yet → center on the destination. The first assignee fix
+    // re-centres on them (see [_movePin], which keys off [_centered]).
+    if (!_centered) {
+      await _map?.flyTo(
+        CameraOptions(center: point, zoom: 14.0),
+        MapAnimationOptions(duration: 600),
+      );
     }
   }
 
@@ -153,6 +212,71 @@ class _TaskLiveTrackingScreenState
       MapAnimationOptions(duration: _centered ? 600 : 900),
     );
     _centered = true;
+
+    // Recompute the driving route to the destination (throttled). Fire and
+    // forget — pin movement must not wait on the Directions API.
+    unawaited(_maybeUpdateRoute(pos));
+  }
+
+  /// Recompute the driving route from the assignee's live position to the
+  /// shop, then redraw the polyline + refresh the ETA/distance. Throttled so
+  /// the Directions API is only hit after the assignee has moved a meaningful
+  /// distance. No-op when the task has no destination coordinates.
+  Future<void> _maybeUpdateRoute(LiveLatLng from) async {
+    final destLat = widget.shopLatitude;
+    final destLng = widget.shopLongitude;
+    if (destLat == null || destLng == null || _routeBusy) return;
+
+    // Skip if we already routed from within 60 m of here — stops API spam on
+    // every fix while the assignee is roughly stationary.
+    final lastLat = _routeFromLat;
+    final lastLng = _routeFromLng;
+    if (lastLat != null && lastLng != null) {
+      final moved = geo.Geolocator.distanceBetween(
+          lastLat, lastLng, from.latitude, from.longitude);
+      if (moved < 60) return;
+    }
+
+    _routeBusy = true;
+    final route = await MapboxDirectionsService.instance.drivingRoute(
+      originLat: from.latitude,
+      originLng: from.longitude,
+      destLat: destLat,
+      destLng: destLng,
+    );
+    _routeBusy = false;
+    if (!mounted || route == null || route.geometry.isEmpty) return;
+
+    _routeFromLat = from.latitude;
+    _routeFromLng = from.longitude;
+    await _drawRoute(route.geometry);
+    setState(() {
+      _routeDistanceMeters = route.distanceMeters;
+      _routeDurationSeconds = route.durationSeconds;
+    });
+  }
+
+  /// Draw (or move) the route polyline. Geometry arrives as `[lng, lat]` pairs.
+  Future<void> _drawRoute(List<List<double>> geometry) async {
+    final mgr = _lines;
+    if (mgr == null) return;
+    final positions =
+        geometry.map((p) => Position(p[0], p[1])).toList(growable: false);
+
+    final existing = _routeLine;
+    if (existing != null) {
+      existing.geometry = LineString(coordinates: positions);
+      await mgr.update(existing);
+    } else {
+      _routeLine = await mgr.create(
+        PolylineAnnotationOptions(
+          geometry: LineString(coordinates: positions),
+          lineColor: _green.toARGB32(),
+          lineWidth: 5.0,
+          lineOpacity: 0.85,
+        ),
+      );
+    }
   }
 
   // ── Socket events ─────────────────────────────────────────────────────────
@@ -297,6 +421,9 @@ class _TaskLiveTrackingScreenState
                     name: _employeeName ?? 'Assignee',
                     lastFix: _lastFix,
                     hasFix: _pin != null,
+                    destinationName: widget.shopName,
+                    routeDistanceMeters: _routeDistanceMeters,
+                    routeDurationSeconds: _routeDurationSeconds,
                   ),
           ),
         ],
@@ -360,12 +487,32 @@ class _LiveInfoCard extends StatelessWidget {
   final String name;
   final DateTime? lastFix;
   final bool hasFix;
+  final String? destinationName;
+  final double? routeDistanceMeters;
+  final double? routeDurationSeconds;
 
   const _LiveInfoCard({
     required this.name,
     required this.lastFix,
     required this.hasFix,
+    this.destinationName,
+    this.routeDistanceMeters,
+    this.routeDurationSeconds,
   });
+
+  bool get _hasRoute =>
+      routeDistanceMeters != null && routeDurationSeconds != null;
+
+  static String _fmtDist(double m) =>
+      m < 1000 ? '${m.round()} m' : '${(m / 1000).toStringAsFixed(1)} km';
+
+  static String _fmtDur(double s) {
+    final mins = (s / 60).round();
+    if (mins < 60) return '~$mins min';
+    final h = mins ~/ 60;
+    final m = mins % 60;
+    return m == 0 ? '~$h h' : '~$h h $m min';
+  }
 
   String get _subtitle {
     if (!hasFix) return 'Waiting for the first location…';
@@ -435,6 +582,35 @@ class _LiveInfoCard extends StatelessWidget {
                   style: const TextStyle(
                       fontSize: 12.5, color: Color(0xff667085)),
                 ),
+                if (destinationName != null &&
+                    destinationName!.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Icon(
+                        _hasRoute
+                            ? Icons.directions_car_rounded
+                            : Icons.flag_rounded,
+                        size: 13,
+                        color: const Color(0xffFF3B30),
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          _hasRoute
+                              ? '${_fmtDist(routeDistanceMeters!)} · '
+                                  '${_fmtDur(routeDurationSeconds!)} '
+                                  'to $destinationName'
+                              : 'To $destinationName',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                              fontSize: 12, color: Color(0xff667085)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),

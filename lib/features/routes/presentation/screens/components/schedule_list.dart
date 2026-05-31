@@ -17,8 +17,63 @@ class ScheduleList extends ConsumerWidget {
     return Column(
       children: [
         for (var i = 0; i < tasks.length; i++)
-          _ScheduleItem(task: tasks[i], index: i + 1),
+          _ScheduleEntry(
+            index: i,
+            child: _ScheduleItem(task: tasks[i], index: i + 1),
+          ),
       ],
+    );
+  }
+}
+
+/// Fades + slides each schedule row in with a small per-index delay, so the
+/// list cascades nicely instead of popping in all at once.
+class _ScheduleEntry extends StatefulWidget {
+  final int index;
+  final Widget child;
+
+  const _ScheduleEntry({required this.index, required this.child});
+
+  @override
+  State<_ScheduleEntry> createState() => _ScheduleEntryState();
+}
+
+class _ScheduleEntryState extends State<_ScheduleEntry>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _fade;
+  late final Animation<Offset> _slide;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 420),
+    );
+    _fade = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
+    _slide = Tween<Offset>(
+      begin: const Offset(0, 0.12),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
+
+    final delayMs = (widget.index.clamp(0, 8)) * 70;
+    Future.delayed(Duration(milliseconds: delayMs), () {
+      if (mounted) _controller.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _fade,
+      child: SlideTransition(position: _slide, child: widget.child),
     );
   }
 }
@@ -40,9 +95,7 @@ class _ScheduleItem extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
         onTap: () => Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => TaskDetailScreen(taskId: task.id),
-          ),
+          MaterialPageRoute(builder: (_) => TaskDetailScreen(taskId: task.id)),
         ),
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -91,8 +144,11 @@ class _ScheduleItem extends StatelessWidget {
                     const SizedBox(height: 2),
                     Row(
                       children: [
-                        Icon(theme.subtitleIcon,
-                            size: 14, color: theme.subtitleColor),
+                        Icon(
+                          theme.subtitleIcon,
+                          size: 14,
+                          color: theme.subtitleColor,
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           theme.subtitle(timeText),

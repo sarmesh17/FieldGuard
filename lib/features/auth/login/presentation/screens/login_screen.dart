@@ -4,6 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../../core/responsive/responsive.dart';
 import '../../../../../core/router/app_routes.dart';
+import '../../../../legal/legal_content.dart';
+import '../../../../legal/presentation/providers/legal_version_provider.dart';
+import '../../../../legal/presentation/widgets/legal_consent_checkbox.dart';
 import '../providers/login_provider.dart';
 import '../providers/login_state.dart';
 
@@ -26,6 +29,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _hidePassword = true;
+  bool _agreedToTerms = false;
 
   late final AnimationController _ctrl;
   late final Animation<double> _logoScale;
@@ -75,6 +79,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     );
 
     _ctrl.forward();
+
+    // Warm up the legal version from the backend so it's ready by submit time.
+    ref.read(legalVersionProvider);
   }
 
   @override
@@ -94,7 +101,28 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
       );
       return;
     }
-    ref.read(loginNotifierProvider.notifier).login(phone, password);
+    if (!_agreedToTerms) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Please accept the Terms & Conditions and Privacy Policy to continue',
+          ),
+        ),
+      );
+      return;
+    }
+    // Version comes from the backend (source of truth); fall back to the
+    // bundled version if the fetch hasn't resolved yet.
+    final termsVersion =
+        ref.read(legalVersionProvider).asData?.value ?? kLegalLastUpdated;
+    ref
+        .read(loginNotifierProvider.notifier)
+        .login(
+          phone,
+          password,
+          termsAccepted: _agreedToTerms,
+          termsVersion: termsVersion,
+        );
   }
 
   @override
@@ -106,15 +134,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     final loginState = ref.watch(loginNotifierProvider);
     final isLoading = loginState is LoginLoading;
     final errorMessage = loginState is LoginFailure ? loginState.message : null;
+    final rateLimited = loginState is LoginFailure && loginState.rateLimited;
 
-    // collapseProgress: 0 = keyboard hidden, 1 = fully collapsed.
-    // Driven directly by keyboard inset so layout syncs frame-by-frame
-    // with the keyboard animation — no competing timers.
     final kbHeight = MediaQuery.of(context).viewInsets.bottom;
     final t = (kbHeight / 220.0).clamp(0.0, 1.0);
 
     return ResponsiveBuilder(
       builder: (context, screenType, orientation, constraints) {
+        // Safe fallback for checking orientation standardly
+        final isLandscape =
+            MediaQuery.of(context).orientation == Orientation.landscape;
+
         return Scaffold(
           resizeToAvoidBottomInset: false,
           body: Stack(
@@ -135,327 +165,429 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
               Positioned(
                 top: -80,
                 right: -80,
-                child: _Orb(size: 240, opacity: 0.08),
+                child: const _Orb(size: 240, opacity: 0.08),
               ),
               Positioned(
                 top: 140,
                 left: -90,
-                child: _Orb(size: 200, opacity: 0.06),
+                child: const _Orb(size: 200, opacity: 0.06),
               ),
               Positioned(
                 bottom: -60,
                 left: -40,
-                child: _Orb(size: 180, opacity: 0.07),
+                child: const _Orb(size: 180, opacity: 0.07),
               ),
               Positioned(
                 bottom: 120,
                 right: -55,
-                child: _Orb(size: 150, opacity: 0.05),
+                child: const _Orb(size: 150, opacity: 0.05),
               ),
 
+              // ── Main Content (Adaptive Form Implementation) ─────────────────
               SafeArea(
-                child: Padding(
-                  padding: EdgeInsets.only(
-                    left: AppSpacing.md,
-                    right: AppSpacing.md,
-                    bottom: kbHeight,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      // Top spacing shrinks with keyboard
-                      SizedBox(
-                        height:
-                            8.0 +
-                            (SizeConfig.heightPercent(4) - 8.0) * (1.0 - t),
-                      ),
+                child: LayoutBuilder(
+                  builder: (context, viewportConstraints) {
+                    // A "short" screen can't fit the full-size logo, card and
+                    // footer at once. Detect it so vertical spacing collapses
+                    // instead of overlapping ("blender").
+                    final isShort = viewportConstraints.maxHeight < 680;
+                    // Flexible gaps above/below the card. They shrink to zero on
+                    // short screens (scroll takes over) but breathe on tall ones.
+                    final gap = isShort
+                        ? SizeConfig.vScale(12)
+                        : SizeConfig.heightPercent(3);
 
-                      // ── Logo + header collapse in sync with keyboard ─────────
-                      // ClipRect+Align(heightFactor) is the most efficient way
-                      // to animate height — no AnimationController needed.
-                      ClipRect(
-                        child: Align(
-                          alignment: Alignment.topCenter,
-                          heightFactor: 1.0 - t,
-                          child: Opacity(
-                            opacity: 1.0 - t,
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                // Logo
-                                ScaleTransition(
-                                  scale: _logoScale,
-                                  child: Container(
-                                    width: SizeConfig.scale(72),
-                                    height: SizeConfig.scale(72),
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      gradient: const LinearGradient(
-                                        colors: [
-                                          Color(0xFF2E7D52),
-                                          Color(0xFF1A4731),
-                                        ],
-                                        begin: Alignment.topLeft,
-                                        end: Alignment.bottomRight,
+                    return SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minHeight: viewportConstraints.maxHeight,
+                        ),
+                        child: Center(
+                          child: ConstrainedBox(
+                            // Limit max width in landscape to avoid stretched UI
+                            constraints: BoxConstraints(
+                              maxWidth: isLandscape ? 480 : double.infinity,
+                            ),
+                            child: Padding(
+                              padding: EdgeInsets.only(
+                                // Remove side padding in landscape since it's already centered and constrained
+                                left: isLandscape ? 0 : AppSpacing.md,
+                                right: isLandscape ? 0 : AppSpacing.md,
+                                top: SizeConfig.vScale(8),
+                                bottom: kbHeight > 0
+                                    ? kbHeight + 20
+                                    : SizeConfig.vScale(16),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  SizedBox(
+                                    height:
+                                        SizeConfig.vScale(8) +
+                                        (SizeConfig.vScale(24) -
+                                                SizeConfig.vScale(8)) *
+                                            (1.0 - t),
+                                  ),
+
+                                  // ── Logo + Header ──────────────────────────
+                                  ClipRect(
+                                    child: Align(
+                                      alignment: Alignment.topCenter,
+                                      heightFactor: 1.0 - t,
+                                      child: Opacity(
+                                        opacity: 1.0 - t,
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            ScaleTransition(
+                                              scale: _logoScale,
+                                              child: Container(
+                                                width: SizeConfig.vScale(72),
+                                                height: SizeConfig.vScale(72),
+                                                decoration: BoxDecoration(
+                                                  shape: BoxShape.circle,
+                                                  gradient:
+                                                      const LinearGradient(
+                                                        colors: [
+                                                          Color(0xFF2E7D52),
+                                                          Color(0xFF1A4731),
+                                                        ],
+                                                        begin:
+                                                            Alignment.topLeft,
+                                                        end: Alignment
+                                                            .bottomRight,
+                                                      ),
+                                                  border: Border.all(
+                                                    color: Colors.white
+                                                        .withValues(
+                                                          alpha: 0.25,
+                                                        ),
+                                                    width: 2.5,
+                                                  ),
+                                                  boxShadow: [
+                                                    BoxShadow(
+                                                      color: _kDark.withValues(
+                                                        alpha: 0.40,
+                                                      ),
+                                                      blurRadius: 24,
+                                                      offset: const Offset(
+                                                        0,
+                                                        8,
+                                                      ),
+                                                    ),
+                                                    BoxShadow(
+                                                      color: Colors.white
+                                                          .withValues(
+                                                            alpha: 0.08,
+                                                          ),
+                                                      blurRadius: 8,
+                                                      offset: const Offset(
+                                                        -2,
+                                                        -2,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                child: Icon(
+                                                  Icons.shield_outlined,
+                                                  color: Colors.white,
+                                                  size: SizeConfig.vScale(36),
+                                                ),
+                                              ),
+                                            ),
+                                            SizedBox(
+                                              height: SizeConfig.vScale(16),
+                                            ),
+                                            FadeTransition(
+                                              opacity: _headerFade,
+                                              child: SlideTransition(
+                                                position: _headerSlide,
+                                                child: Column(
+                                                  children: [
+                                                    Container(
+                                                      padding:
+                                                          EdgeInsets.symmetric(
+                                                            horizontal:
+                                                                SizeConfig.scale(
+                                                                  14,
+                                                                ),
+                                                            vertical:
+                                                                SizeConfig.scale(
+                                                                  5,
+                                                                ),
+                                                          ),
+                                                      decoration: BoxDecoration(
+                                                        color: Colors.white
+                                                            .withValues(
+                                                              alpha: 0.14,
+                                                            ),
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              SizeConfig.scale(
+                                                                20,
+                                                              ),
+                                                            ),
+                                                        border: Border.all(
+                                                          color: Colors.white
+                                                              .withValues(
+                                                                alpha: 0.28,
+                                                              ),
+                                                        ),
+                                                      ),
+                                                      child: Row(
+                                                        mainAxisSize:
+                                                            MainAxisSize.min,
+                                                        children: [
+                                                          Icon(
+                                                            Icons
+                                                                .verified_user_outlined,
+                                                            color: Colors.white
+                                                                .withValues(
+                                                                  alpha: 0.90,
+                                                                ),
+                                                            size:
+                                                                SizeConfig.scale(
+                                                                  12,
+                                                                ),
+                                                          ),
+                                                          SizedBox(
+                                                            width:
+                                                                SizeConfig.scale(
+                                                                  6,
+                                                                ),
+                                                          ),
+                                                          Text(
+                                                            'SECURE ACCESS',
+                                                            style: TextStyle(
+                                                              color: Colors
+                                                                  .white
+                                                                  .withValues(
+                                                                    alpha: 0.90,
+                                                                  ),
+                                                              fontSize:
+                                                                  SizeConfig.scaledFontSize(
+                                                                    9,
+                                                                  ),
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w700,
+                                                              letterSpacing:
+                                                                  1.5,
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                    SizedBox(
+                                                      height:
+                                                          SizeConfig.heightPercent(
+                                                            1.2,
+                                                          ),
+                                                    ),
+                                                    Text(
+                                                      'Login Portal',
+                                                      style: TextStyle(
+                                                        color: Colors.white,
+                                                        fontSize:
+                                                            SizeConfig.scaledFontSize(
+                                                              28,
+                                                            ),
+                                                        fontWeight:
+                                                            FontWeight.w800,
+                                                        letterSpacing: -0.5,
+                                                        height: 1.1,
+                                                      ),
+                                                    ),
+                                                    SizedBox(
+                                                      height:
+                                                          SizeConfig.heightPercent(
+                                                            0.8,
+                                                          ),
+                                                    ),
+                                                    Text(
+                                                      'Enter your credentials to access your portal',
+                                                      textAlign:
+                                                          TextAlign.center,
+                                                      style: TextStyle(
+                                                        color: Colors.white
+                                                            .withValues(
+                                                              alpha: 0.65,
+                                                            ),
+                                                        fontSize:
+                                                            SizeConfig.scaledFontSize(
+                                                              12,
+                                                            ),
+                                                        height: 1.4,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                      border: Border.all(
-                                        color: Colors.white.withValues(
-                                          alpha: 0.25,
-                                        ),
-                                        width: 2.5,
-                                      ),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: _kDark.withValues(alpha: 0.40),
-                                          blurRadius: 24,
-                                          offset: const Offset(0, 8),
-                                        ),
-                                        BoxShadow(
-                                          color: Colors.white.withValues(
-                                            alpha: 0.08,
-                                          ),
-                                          blurRadius: 8,
-                                          offset: const Offset(-2, -2),
-                                        ),
-                                      ],
-                                    ),
-                                    child: Icon(
-                                      Icons.shield_outlined,
-                                      color: Colors.white,
-                                      size: SizeConfig.scale(36),
                                     ),
                                   ),
-                                ),
 
-                                SizedBox(height: SizeConfig.heightPercent(2)),
+                                  SizedBox(height: gap),
 
-                                // Badge + title + subtitle
-                                FadeTransition(
-                                  opacity: _headerFade,
-                                  child: SlideTransition(
-                                    position: _headerSlide,
-                                    child: Column(
-                                      children: [
-                                        Container(
-                                          padding: EdgeInsets.symmetric(
-                                            horizontal: SizeConfig.scale(14),
-                                            vertical: SizeConfig.scale(5),
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: Colors.white.withValues(
-                                              alpha: 0.14,
-                                            ),
-                                            borderRadius: BorderRadius.circular(
-                                              SizeConfig.scale(20),
-                                            ),
-                                            border: Border.all(
-                                              color: Colors.white.withValues(
-                                                alpha: 0.28,
-                                              ),
-                                            ),
-                                          ),
-                                          child: Row(
+                                  // ── Form card ──────────────────────────────
+                                  FadeTransition(
+                                    opacity: _cardFade,
+                                    child: SlideTransition(
+                                      position: _cardSlide,
+                                      child: _FormCard(
+                                        phoneController: _phoneController,
+                                        passwordController: _passwordController,
+                                        hidePassword: _hidePassword,
+                                        isLoading: isLoading,
+                                        errorMessage: errorMessage,
+                                        rateLimited: rateLimited,
+                                        agreedToTerms: _agreedToTerms,
+                                        onToggleTerms: (v) =>
+                                            setState(() => _agreedToTerms = v),
+                                        onTogglePassword: () => setState(
+                                          () => _hidePassword = !_hidePassword,
+                                        ),
+                                        onSignIn: _onSignIn,
+                                      ),
+                                    ),
+                                  ),
+
+                                  SizedBox(height: gap),
+
+                                  // ── Footer ─────────────────────────────────
+                                  ClipRect(
+                                    child: Align(
+                                      alignment: Alignment.topCenter,
+                                      heightFactor: 1.0 - t,
+                                      child: Opacity(
+                                        opacity: 1.0 - t,
+                                        child: FadeTransition(
+                                          opacity: _bottomFade,
+                                          child: Column(
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
-                                              Icon(
-                                                Icons.verified_user_outlined,
-                                                color: Colors.white.withValues(
-                                                  alpha: 0.90,
+                                              GestureDetector(
+                                                onTap: () => context.push(
+                                                  AppRoutes.signup,
                                                 ),
-                                                size: SizeConfig.scale(12),
+                                                child: Container(
+                                                  padding: EdgeInsets.symmetric(
+                                                    horizontal:
+                                                        SizeConfig.scale(20),
+                                                    vertical: SizeConfig.scale(
+                                                      11,
+                                                    ),
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.white
+                                                        .withValues(
+                                                          alpha: 0.13,
+                                                        ),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          SizeConfig.scale(14),
+                                                        ),
+                                                    border: Border.all(
+                                                      color: Colors.white
+                                                          .withValues(
+                                                            alpha: 0.25,
+                                                          ),
+                                                    ),
+                                                  ),
+                                                  child: Row(
+                                                    mainAxisSize:
+                                                        MainAxisSize.min,
+                                                    children: [
+                                                      Icon(
+                                                        Icons
+                                                            .add_business_outlined,
+                                                        size: SizeConfig.scale(
+                                                          15,
+                                                        ),
+                                                        color: Colors.white
+                                                            .withValues(
+                                                              alpha: 0.85,
+                                                            ),
+                                                      ),
+                                                      SizedBox(
+                                                        width: SizeConfig.scale(
+                                                          8,
+                                                        ),
+                                                      ),
+                                                      RichText(
+                                                        text: TextSpan(
+                                                          style: TextStyle(
+                                                            fontSize:
+                                                                SizeConfig.scaledFontSize(
+                                                                  13,
+                                                                ),
+                                                            color: Colors.white
+                                                                .withValues(
+                                                                  alpha: 0.75,
+                                                                ),
+                                                          ),
+                                                          children: const [
+                                                            TextSpan(
+                                                              text:
+                                                                  "New here?  ",
+                                                            ),
+                                                            TextSpan(
+                                                              text:
+                                                                  'Register Your Company',
+                                                              style: TextStyle(
+                                                                color: Colors
+                                                                    .white,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w700,
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
                                               ),
+
                                               SizedBox(
-                                                width: SizeConfig.scale(6),
+                                                height: SizeConfig.scale(3),
                                               ),
                                               Text(
-                                                'SECURE ACCESS',
+                                                'Access is granted by your organization admin only',
+                                                textAlign: TextAlign.center,
                                                 style: TextStyle(
-                                                  color: Colors.white
-                                                      .withValues(alpha: 0.90),
                                                   fontSize:
                                                       SizeConfig.scaledFontSize(
                                                         9,
                                                       ),
-                                                  fontWeight: FontWeight.w700,
-                                                  letterSpacing: 1.5,
+                                                  color: Colors.white
+                                                      .withValues(alpha: 0.32),
                                                 ),
+                                              ),
+                                              SizedBox(
+                                                height:
+                                                    SizeConfig.heightPercent(3),
                                               ),
                                             ],
                                           ),
                                         ),
-
-                                        SizedBox(
-                                          height: SizeConfig.heightPercent(1.2),
-                                        ),
-
-                                        Text(
-                                          'Login Portal',
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: SizeConfig.scaledFontSize(
-                                              28,
-                                            ),
-                                            fontWeight: FontWeight.w800,
-                                            letterSpacing: -0.5,
-                                            height: 1.1,
-                                          ),
-                                        ),
-
-                                        SizedBox(
-                                          height: SizeConfig.heightPercent(0.8),
-                                        ),
-
-                                        Text(
-                                          'Enter your credentials to access your portal',
-                                          textAlign: TextAlign.center,
-                                          style: TextStyle(
-                                            color: Colors.white.withValues(
-                                              alpha: 0.65,
-                                            ),
-                                            fontSize: SizeConfig.scaledFontSize(
-                                              12,
-                                            ),
-                                            height: 1.4,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      const Spacer(),
-
-                      // ── Form card ───────────────────────────────────────────
-                      FadeTransition(
-                        opacity: _cardFade,
-                        child: SlideTransition(
-                          position: _cardSlide,
-                          child: _FormCard(
-                            phoneController: _phoneController,
-                            passwordController: _passwordController,
-                            hidePassword: _hidePassword,
-                            isLoading: isLoading,
-                            errorMessage: errorMessage,
-                            onTogglePassword: () =>
-                                setState(() => _hidePassword = !_hidePassword),
-                            onSignIn: _onSignIn,
-                          ),
-                        ),
-                      ),
-
-                      const Spacer(),
-
-                      // ── Footer collapses in sync with keyboard ──────────────
-                      ClipRect(
-                        child: Align(
-                          alignment: Alignment.topCenter,
-                          heightFactor: 1.0 - t,
-                          child: Opacity(
-                            opacity: 1.0 - t,
-                            child: FadeTransition(
-                              opacity: _bottomFade,
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  GestureDetector(
-                                    onTap: () => context.push(AppRoutes.signup),
-                                    child: Container(
-                                      padding: EdgeInsets.symmetric(
-                                        horizontal: SizeConfig.scale(20),
-                                        vertical: SizeConfig.scale(11),
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white.withValues(
-                                          alpha: 0.13,
-                                        ),
-                                        borderRadius: BorderRadius.circular(
-                                          SizeConfig.scale(14),
-                                        ),
-                                        border: Border.all(
-                                          color: Colors.white.withValues(
-                                            alpha: 0.25,
-                                          ),
-                                        ),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Icon(
-                                            Icons.add_business_outlined,
-                                            size: SizeConfig.scale(15),
-                                            color: Colors.white.withValues(
-                                              alpha: 0.85,
-                                            ),
-                                          ),
-                                          SizedBox(width: SizeConfig.scale(8)),
-                                          RichText(
-                                            text: TextSpan(
-                                              style: TextStyle(
-                                                fontSize:
-                                                    SizeConfig.scaledFontSize(
-                                                      13,
-                                                    ),
-                                                color: Colors.white.withValues(
-                                                  alpha: 0.75,
-                                                ),
-                                              ),
-                                              children: const [
-                                                TextSpan(text: "New here?  "),
-                                                TextSpan(
-                                                  text: 'Register Your Company',
-                                                  style: TextStyle(
-                                                    color: Colors.white,
-                                                    fontWeight: FontWeight.w700,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ],
                                       ),
                                     ),
                                   ),
-
-                                  SizedBox(
-                                    height: SizeConfig.heightPercent(1.5),
-                                  ),
-
-                                  Text(
-                                    'FIELDGUARD PORTAL V1.0',
-                                    style: TextStyle(
-                                      fontSize: SizeConfig.scaledFontSize(8),
-                                      letterSpacing: 1.5,
-                                      color: Colors.white.withValues(
-                                        alpha: 0.40,
-                                      ),
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  SizedBox(height: SizeConfig.scale(3)),
-                                  Text(
-                                    'Access is granted by your organization admin only',
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      fontSize: SizeConfig.scaledFontSize(9),
-                                      color: Colors.white.withValues(
-                                        alpha: 0.32,
-                                      ),
-                                    ),
-                                  ),
-                                  SizedBox(height: SizeConfig.heightPercent(3)),
                                 ],
                               ),
                             ),
                           ),
                         ),
                       ),
-                    ],
-                  ),
+                    );
+                  },
                 ),
               ),
             ],
@@ -475,6 +607,9 @@ class _FormCard extends StatelessWidget {
   final bool hidePassword;
   final bool isLoading;
   final String? errorMessage;
+  final bool rateLimited;
+  final bool agreedToTerms;
+  final ValueChanged<bool> onToggleTerms;
   final VoidCallback onTogglePassword;
   final VoidCallback onSignIn;
 
@@ -484,6 +619,9 @@ class _FormCard extends StatelessWidget {
     required this.hidePassword,
     required this.isLoading,
     this.errorMessage,
+    this.rateLimited = false,
+    required this.agreedToTerms,
+    required this.onToggleTerms,
     required this.onTogglePassword,
     required this.onSignIn,
   });
@@ -535,7 +673,6 @@ class _FormCard extends StatelessWidget {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    // Tag pill
                     Container(
                       padding: EdgeInsets.symmetric(
                         horizontal: SizeConfig.scale(10),
@@ -594,7 +731,7 @@ class _FormCard extends StatelessWidget {
                 _ModernField(
                   controller: phoneController,
                   icon: Icons.phone_android_rounded,
-                  hint: '+977  9800000000',
+                  hint: '9800000000',
                   keyboardType: TextInputType.phone,
                   inputFormatters: [
                     FilteringTextInputFormatter.digitsOnly,
@@ -621,8 +758,12 @@ class _FormCard extends StatelessWidget {
                     child: Row(
                       children: [
                         Icon(
-                          Icons.error_outline_rounded,
-                          color: Colors.red.shade600,
+                          rateLimited
+                              ? Icons.hourglass_top_rounded
+                              : Icons.error_outline_rounded,
+                          color: rateLimited
+                              ? Colors.orange.shade800
+                              : Colors.red.shade600,
                           size: SizeConfig.scale(14),
                         ),
                         SizedBox(width: SizeConfig.scale(6)),
@@ -630,7 +771,9 @@ class _FormCard extends StatelessWidget {
                           child: Text(
                             errorMessage!,
                             style: TextStyle(
-                              color: Colors.red.shade600,
+                              color: rateLimited
+                                  ? Colors.orange.shade800
+                                  : Colors.red.shade600,
                               fontSize: SizeConfig.scaledFontSize(11),
                               fontWeight: FontWeight.w500,
                               height: 1.3,
@@ -664,7 +807,15 @@ class _FormCard extends StatelessWidget {
                   ),
                 ),
 
-                SizedBox(height: SizeConfig.scale(12)),
+                SizedBox(height: SizeConfig.scale(4)),
+
+                // ── Consent checkbox ─────────────────────────────────────────
+                LegalConsentCheckbox(
+                  value: agreedToTerms,
+                  onChanged: onToggleTerms,
+                ),
+
+                SizedBox(height: SizeConfig.scale(16)),
 
                 // ── Sign in button ───────────────────────────────────────────
                 _SignInButton(isLoading: isLoading, onPressed: onSignIn),
@@ -731,7 +882,6 @@ class _ModernFieldState extends State<_ModernField> {
           padding: EdgeInsets.symmetric(horizontal: SizeConfig.scale(14)),
           child: Row(
             children: [
-              // Animated icon badge
               AnimatedContainer(
                 duration: const Duration(milliseconds: 220),
                 curve: Curves.easeOut,
@@ -764,9 +914,7 @@ class _ModernFieldState extends State<_ModernField> {
                   size: SizeConfig.scale(16),
                 ),
               ),
-
               SizedBox(width: SizeConfig.scale(12)),
-
               Expanded(
                 child: TextField(
                   controller: widget.controller,
@@ -849,7 +997,6 @@ class _ModernPasswordFieldState extends State<_ModernPasswordField> {
           ),
           child: Row(
             children: [
-              // Animated icon badge
               AnimatedContainer(
                 duration: const Duration(milliseconds: 220),
                 curve: Curves.easeOut,
@@ -882,9 +1029,7 @@ class _ModernPasswordFieldState extends State<_ModernPasswordField> {
                   size: SizeConfig.scale(16),
                 ),
               ),
-
               SizedBox(width: SizeConfig.scale(12)),
-
               Expanded(
                 child: TextField(
                   controller: widget.controller,
@@ -905,8 +1050,6 @@ class _ModernPasswordFieldState extends State<_ModernPasswordField> {
                   ),
                 ),
               ),
-
-              // Toggle visibility
               GestureDetector(
                 onTap: widget.onToggle,
                 child: Container(

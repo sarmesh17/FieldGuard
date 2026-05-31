@@ -7,13 +7,18 @@ class GeofenceConfig {
 
   // ── Detection geometry ─────────────────────────────────────────────
   /// Distance (m) at or under which an ARMED target counts as entered.
-  static const double enterRadiusMeters = 20;
+  ///
+  /// 30 m (not 20): GPS carries 5–10 m error and saved shop coordinates are
+  /// rarely pinpoint, so a tight 20 m fence misses real arrivals (matches the
+  /// proven field_guard_re value). The consecutive-fix + hysteresis guards
+  /// still prevent false positives.
+  static const double enterRadiusMeters = 30;
 
   /// Distance (m) at or beyond which an INSIDE visit starts accruing
   /// exit evidence. The gap to [enterRadiusMeters] is the hysteresis
   /// band — fixes inside it change nothing, which is what stops boundary
   /// jitter from spamming enter/exit transitions.
-  static const double exitRadiusMeters = 28;
+  static const double exitRadiusMeters = 40;
 
   /// Fixes with an accuracy radius worse (larger) than this are dropped:
   /// a noisy fix is neither enter nor exit evidence.

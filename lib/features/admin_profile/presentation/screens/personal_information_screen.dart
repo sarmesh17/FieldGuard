@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fieldguard/core/utils/phone_format.dart';
+import 'package:fieldguard/widgets/app_skeletons.dart';
 import 'edit_profile_screen.dart';
 import '../providers/profile_provider.dart';
 import '../providers/profile_state.dart';
@@ -51,11 +52,7 @@ class _PersonalInformationScreenState
         centerTitle: true,
       ),
       body: profileState is ProfileLoading
-          ? const Center(
-              child: CircularProgressIndicator(
-                color: Color(0xff0E5A3B),
-              ),
-            )
+          ? const SkeletonDetail()
           : profileState is ProfileFailure
               ? Center(
                   child: Column(
@@ -333,7 +330,7 @@ class _PersonalInformationScreenState
                               ],
                             ),
 
-                            SizedBox(height: h * 0.03),
+                            SizedBox(height: h * 0.015),
 
                             // Edit Profile Button
                             SizedBox(

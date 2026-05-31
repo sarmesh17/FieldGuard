@@ -30,7 +30,12 @@ class LoginSuccess extends LoginState {
 
 class LoginFailure extends LoginState {
   final String message;
-  const LoginFailure(this.message);
+
+  /// True when the failure is a 429 rate-limit (too many attempts), so the UI
+  /// can present it as a warning instead of a credentials error.
+  final bool rateLimited;
+
+  const LoginFailure(this.message, {this.rateLimited = false});
 }
 
 // New state for checking existing session
