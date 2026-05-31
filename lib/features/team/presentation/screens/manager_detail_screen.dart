@@ -1,11 +1,13 @@
 import 'package:dio/dio.dart';
 import 'package:fieldguard/core/networks/dio_client.dart';
 import 'package:fieldguard/core/responsive/responsive.dart';
+import 'package:fieldguard/core/services/session.dart';
 import 'package:fieldguard/core/utils/phone_format.dart';
 import 'package:fieldguard/features/manager/data/datasource/manager_datasource_impl.dart';
 import 'package:fieldguard/features/manager/presentation/screens/edit_manager_screen.dart';
 import 'package:fieldguard/features/team/data/datasource/team_datasource_impl.dart';
 import 'package:fieldguard/features/team/data/dto/manager_detail_response.dart';
+import 'package:fieldguard/widgets/app_skeletons.dart';
 import 'package:flutter/material.dart';
 
 class ManagerDetailScreen extends StatefulWidget {
@@ -27,6 +29,7 @@ class _ManagerDetailScreenState extends State<ManagerDetailScreen>
   bool _isLoading = true;
   ManagerDetail? _manager;
   String? _errorMessage;
+  bool _isAdmin = false;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
@@ -48,6 +51,12 @@ class _ManagerDetailScreenState extends State<ManagerDetailScreen>
       CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
     );
     _loadManagerDetail();
+    _loadRole();
+  }
+
+  Future<void> _loadRole() async {
+    final r = await Session.role();
+    if (mounted) setState(() => _isAdmin = r?.toUpperCase() == 'ADMIN');
   }
 
   @override
@@ -115,7 +124,9 @@ class _ManagerDetailScreenState extends State<ManagerDetailScreen>
         return AlertDialog(
           title: const Text('Delete Manager'),
           content: Text(
-            'Are you sure you want to delete ${_manager?.fullName ?? 'this manager'}? This action cannot be undone.',
+            'Are you sure you want to delete ${_manager?.fullName ?? 'this manager'}?\n\n'
+            'This is permanent. Once deleted, the manager cannot be recovered '
+            'or restored — this action cannot be undone.',
           ),
           actions: [
             TextButton(
@@ -149,7 +160,7 @@ class _ManagerDetailScreenState extends State<ManagerDetailScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Manager deleted successfully'),
-            backgroundColor: Color(0xff6558FF),
+            backgroundColor: Color(0xff0E5A3B),
           ),
         );
         Navigator.pop(context, true); // Return to previous screen
@@ -183,7 +194,7 @@ class _ManagerDetailScreenState extends State<ManagerDetailScreen>
         return Scaffold(
           backgroundColor: const Color(0xFFF8FAF9),
           body: _isLoading
-              ? const Center(child: CircularProgressIndicator())
+              ? const SkeletonDetail()
               : _errorMessage != null
                   ? _buildErrorView()
                   : _buildContent(),
@@ -215,7 +226,7 @@ class _ManagerDetailScreenState extends State<ManagerDetailScreen>
           ElevatedButton(
             onPressed: _loadManagerDetail,
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xff6558FF),
+              backgroundColor: const Color(0xff0E5A3B),
               padding: EdgeInsets.symmetric(
                 horizontal: SizeConfig.scale(32),
                 vertical: SizeConfig.scale(12),
@@ -237,7 +248,7 @@ class _ManagerDetailScreenState extends State<ManagerDetailScreen>
         SliverAppBar(
           expandedHeight: SizeConfig.heightPercent(30),
           pinned: true,
-          backgroundColor: const Color(0xff6558FF),
+          backgroundColor: const Color(0xff0E5A3B),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back, color: Colors.white),
             onPressed: () => Navigator.pop(context),
@@ -266,10 +277,12 @@ class _ManagerDetailScreenState extends State<ManagerDetailScreen>
                 }
               },
             ),
-            IconButton(
-              icon: const Icon(Icons.delete, color: Colors.white),
-              onPressed: () => _showDeleteConfirmation(),
-            ),
+            // Soft-delete is ADMIN only — hidden for managers (who can still edit).
+            if (_isAdmin)
+              IconButton(
+                icon: const Icon(Icons.delete, color: Colors.white),
+                onPressed: () => _showDeleteConfirmation(),
+              ),
           ],
           flexibleSpace: FlexibleSpaceBar(
             background: Container(
@@ -277,7 +290,7 @@ class _ManagerDetailScreenState extends State<ManagerDetailScreen>
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [Color(0xff6558FF), Color(0xff8B3DFF)],
+                  colors: [Color(0xff0E5A3B), Color(0xff1D7A51)],
                 ),
               ),
               child: Column(
@@ -311,7 +324,7 @@ class _ManagerDetailScreenState extends State<ManagerDetailScreen>
                                   child: Icon(
                                     Icons.person,
                                     size: SizeConfig.scale(50),
-                                    color: const Color(0xff6558FF),
+                                    color: const Color(0xff0E5A3B),
                                   ),
                                 ),
                               ),
@@ -321,7 +334,7 @@ class _ManagerDetailScreenState extends State<ManagerDetailScreen>
                               child: Icon(
                                 Icons.person,
                                 size: SizeConfig.scale(50),
-                                color: const Color(0xff6558FF),
+                                color: const Color(0xff0E5A3B),
                               ),
                             ),
                     ),
@@ -421,7 +434,7 @@ class _ManagerDetailScreenState extends State<ManagerDetailScreen>
                             'Assigned',
                             _manager!.assignedCount.toString(),
                             Icons.people,
-                            const Color(0xff6558FF),
+                            const Color(0xff0E5A3B),
                           ),
                         ),
                         SizedBox(width: SizeConfig.scale(12)),
@@ -430,7 +443,7 @@ class _ManagerDetailScreenState extends State<ManagerDetailScreen>
                             'Created',
                             _manager!.createdCount.toString(),
                             Icons.person_add,
-                            const Color(0xff8B3DFF),
+                            const Color(0xff1D7A51),
                           ),
                         ),
                       ],
@@ -444,7 +457,7 @@ class _ManagerDetailScreenState extends State<ManagerDetailScreen>
                       icon: Icons.phone,
                       label: 'Phone Number',
                       value: formatNepaliPhone(_manager!.phoneNumber),
-                      iconColor: const Color(0xff6558FF),
+                      iconColor: const Color(0xff0E5A3B),
                     ),
                     if (_manager!.email != null) ...[
                       SizedBox(height: SizeConfig.scale(12)),
@@ -452,7 +465,7 @@ class _ManagerDetailScreenState extends State<ManagerDetailScreen>
                         icon: Icons.email,
                         label: 'Email',
                         value: _manager!.email!,
-                        iconColor: const Color(0xff6558FF),
+                        iconColor: const Color(0xff0E5A3B),
                       ),
                     ],
                     SizedBox(height: SizeConfig.heightPercent(3)),
@@ -464,21 +477,21 @@ class _ManagerDetailScreenState extends State<ManagerDetailScreen>
                       icon: Icons.badge,
                       label: 'Role',
                       value: _manager!.role,
-                      iconColor: const Color(0xff8B3DFF),
+                      iconColor: const Color(0xff1D7A51),
                     ),
                     SizedBox(height: SizeConfig.scale(12)),
                     _buildInfoCard(
                       icon: Icons.business,
                       label: 'Company ID',
                       value: _manager!.companyId,
-                      iconColor: const Color(0xff8B3DFF),
+                      iconColor: const Color(0xff1D7A51),
                     ),
                     SizedBox(height: SizeConfig.scale(12)),
                     _buildInfoCard(
                       icon: Icons.calendar_today,
                       label: 'Joined Date',
                       value: _formatDate(_manager!.createdAt),
-                      iconColor: const Color(0xff8B3DFF),
+                      iconColor: const Color(0xff1D7A51),
                     ),
                     SizedBox(height: SizeConfig.heightPercent(3)),
                   ],

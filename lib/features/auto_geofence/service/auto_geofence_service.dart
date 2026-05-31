@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:fieldguard/core/networks/dio_client.dart';
 import 'package:fieldguard/core/services/location_tracker.dart';
+import 'package:fieldguard/core/services/session.dart';
 import 'package:fieldguard/core/utils/results.dart';
 import 'package:fieldguard/features/auto_geofence/config/geofence_config.dart';
 import 'package:fieldguard/features/auto_geofence/data/geofence_task_datasource.dart';
@@ -14,12 +15,15 @@ import 'package:fieldguard/features/auto_geofence/domain/geofence_target.dart';
 import 'package:fieldguard/features/auto_geofence/domain/geofence_visit.dart';
 import 'package:fieldguard/features/auto_geofence/domain/open_visit.dart';
 import 'package:fieldguard/features/auto_geofence/service/geofence_geo.dart';
+import 'package:fieldguard/features/auto_geofence/service/geofence_logger.dart';
 import 'package:fieldguard/features/auto_geofence/service/geofence_visit_uploader.dart';
 import 'package:fieldguard/features/auto_geofence/service/mutex.dart';
 import 'package:fieldguard/features/tasks/data/dto/tasks_list_response.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:geolocator/geolocator.dart';
+
+final _log = GeofenceLogger.instance;
 
 /// The single source of truth for automatic geofence visit tracking.
 ///
@@ -47,6 +51,13 @@ class AutoGeofenceService with WidgetsBindingObserver {
   late final GeofenceVisitUploader _uploader = GeofenceVisitUploader(
     _store,
     GeofenceVisitDatasource(DioClient.createDio()),
+    // Forward upload-success events through the service so a single
+    // app-level listener (the geofence bridge) sees them — keeps the
+    // public surface coherent.
+    onUploaded: (taskId, task) {
+      final cb = onVisitUploaded;
+      if (cb != null) cb(taskId, task);
+    },
   );
 
   /// Serialises every state mutation (fix handling, task application,
@@ -72,6 +83,18 @@ class AutoGeofenceService with WidgetsBindingObserver {
   /// Fired on a real, observed EXIT (not an app-kill/permission-loss
   /// estimate). The route UI uses this to clear its "arrived" state.
   void Function(int taskId)? onRealExit;
+
+  /// Fired after a queued visit successfully uploads.
+  ///
+  /// [task] is the server's authoritative post-write task — when the backend
+  /// auto-completion fired, its status is `COMPLETED`. Callers can splice it
+  /// straight into local state for an instant UI flip (no extra GET). [task]
+  /// is null on an idempotent duplicate that didn't trigger completion or on
+  /// an unexpected response shape — fall back to a refresh in that case.
+  ///
+  /// Critical for the offline path: an exit while offline persists the visit;
+  /// this fires later when the upload finally lands.
+  void Function(int taskId, TaskSummary? task)? onVisitUploaded;
 
   /// The task whose geofence the agent is currently INSIDE, or null. Lets a
   /// UI rebuilt from scratch (e.g. after returning from background) know the
@@ -99,6 +122,7 @@ class AutoGeofenceService with WidgetsBindingObserver {
   Future<void> start() async {
     if (_started) return;
     _started = true;
+    _log.info('Lifecycle', 'Service STARTED — recovering open visits & arming');
     WidgetsBinding.instance.addObserver(this);
 
     await _mutex.run(_recoverOpenVisit);
@@ -117,6 +141,7 @@ class AutoGeofenceService with WidgetsBindingObserver {
   Future<void> stop() async {
     if (!_started) return;
     _started = false;
+    _log.info('Lifecycle', 'Service STOPPED (logout/session expiry)');
     WidgetsBinding.instance.removeObserver(this);
     _taskPollTimer?.cancel();
     _taskPollTimer = null;
@@ -146,6 +171,14 @@ class AutoGeofenceService with WidgetsBindingObserver {
     await _uploader.flush();
   }
 
+  /// Force an immediate task re-fetch (and arm/disarm reconcile). Used by the
+  /// background-service isolate when the UI pings it after an in-app task
+  /// change, so arming is instant instead of waiting for the safety-net poll.
+  Future<void> refreshNow() async {
+    if (!_started) return;
+    await _refreshTasks();
+  }
+
   /// Reactive task feed — the PRIMARY arm/disarm trigger.
   ///
   /// Called by the task-state bridge the instant the manager's IN_PROGRESS
@@ -154,6 +187,7 @@ class AutoGeofenceService with WidgetsBindingObserver {
   /// safety-net poll. No-op until the service is started (authenticated).
   Future<void> syncTasks(List<TaskSummary> tasks) async {
     if (!_started) return;
+    _log.debug('Tasks', 'syncTasks called with ${tasks.length} tasks');
     await _mutex.run(() => _applyTasks(tasks));
   }
 
@@ -166,7 +200,14 @@ class AutoGeofenceService with WidgetsBindingObserver {
   /// normally. MUST run inside [_mutex].
   Future<void> _recoverOpenVisit() async {
     final ov = await _store.loadOpenVisit();
-    if (ov == null) return;
+    if (ov == null) {
+      _log.debug('Recovery', 'No open visit to recover');
+      return;
+    }
+    _log.warn(
+      'Recovery',
+      'Recovered open visit for task=${ov.taskId}, closing with estimated exit',
+    );
     _openVisit = ov;
     await _closeVisitLocked(exitFix: ov.lastInsideFix, exitEstimated: true);
   }
@@ -180,10 +221,21 @@ class AutoGeofenceService with WidgetsBindingObserver {
       final result = await _taskDatasource.fetchInProgressTasks();
       switch (result) {
         case Success(:final data):
-          await _mutex.run(() => _applyTasks(data));
-        case Failure():
-          // Transient fetch failure → keep current targets; never disarm
-          // on a network blip. A later poll / resume recovers.
+          // Only the assignee's own device should detect the visit. ADMIN /
+          // MANAGER can see everyone's IN_PROGRESS tasks, but they don't
+          // physically visit the shop — arming geofence for someone else's
+          // task just burns battery/GPS. Keep only tasks assigned to me.
+          final me = await Session.userId();
+          final mine = me == null
+              ? const <TaskSummary>[]
+              : data.where((t) => t.assignee.id == me).toList();
+          _log.info(
+            'Tasks',
+            'Fetched ${data.length} IN_PROGRESS tasks — ${mine.length} assigned to me (userId=$me)',
+          );
+          await _mutex.run(() => _applyTasks(mine));
+        case Failure(:final exception):
+          _log.error('Tasks', 'Failed to fetch tasks: $exception');
           break;
       }
     } finally {
@@ -195,30 +247,55 @@ class AutoGeofenceService with WidgetsBindingObserver {
   /// against them, then arm/disarm. MUST run inside [_mutex].
   Future<void> _applyTasks(List<TaskSummary> tasks) async {
     final targets = <GeofenceTarget>[];
+    int skippedNoCoords = 0;
     for (final t in tasks) {
       if (t.status != 'IN_PROGRESS') continue;
-      final shop = t.shop;
-      if (shop == null) continue;
-      final lat = double.tryParse(shop.latitude ?? '');
-      final lng = double.tryParse(shop.longitude ?? '');
-      if (lat == null || lng == null) continue; // missing/invalid → skip
-      if (lat < -90 || lat > 90 || lng < -180 || lng > 180) continue;
+      // Use the same coord-resolution the route screen uses: prefer the
+      // top-level shop_latitude/shop_longitude snapshot (always populated
+      // on newer tasks) and fall back to the embedded shop relation.
+      final coords = taskShopLatLng(t);
+      if (coords == null) {
+        skippedNoCoords++;
+        continue;
+      }
+      if (coords.lat < -90 ||
+          coords.lat > 90 ||
+          coords.lng < -180 ||
+          coords.lng > 180)
+        continue;
       targets.add(
         GeofenceTarget(
           taskId: t.id,
-          shopId: shop.id,
-          shopName: shop.name,
-          latitude: lat,
-          longitude: lng,
+          shopId: t.shop?.id ?? 0,
+          shopName: t.shop?.name ?? t.title,
+          latitude: coords.lat,
+          longitude: coords.lng,
         ),
       );
     }
     _targets = targets;
 
+    if (skippedNoCoords > 0) {
+      _log.warn(
+        'Tasks',
+        'Skipped $skippedNoCoords tasks with missing/invalid coords',
+      );
+    }
+    for (final tg in targets) {
+      _log.info(
+        'Tasks',
+        'Target: task=${tg.taskId} shop="${tg.shopName}" @ (${tg.latitude.toStringAsFixed(6)}, ${tg.longitude.toStringAsFixed(6)})',
+      );
+    }
+
     // Task completed/cancelled (or reassigned) while we were inside its
     // geofence → close & send immediately.
     final ov = _openVisit;
     if (ov != null && !targets.any((tg) => tg.taskId == ov.taskId)) {
+      _log.warn(
+        'Tasks',
+        'Open visit task=${ov.taskId} no longer in targets — closing',
+      );
       await _closeVisitLocked(
         exitFix: _lastFix ?? ov.lastInsideFix,
         exitEstimated: true,
@@ -226,8 +303,10 @@ class AutoGeofenceService with WidgetsBindingObserver {
     }
 
     if (_targets.isEmpty && _openVisit == null) {
+      _log.info('Tasks', 'No targets → DISARMING');
       await _disarmLocked();
     } else {
+      _log.info('Tasks', '${_targets.length} target(s) → ARMING');
       await _armLocked();
     }
   }
@@ -236,29 +315,39 @@ class AutoGeofenceService with WidgetsBindingObserver {
 
   Future<void> _armLocked() async {
     if (_positionSub == null) {
-      // Feed from the app's single shared location stream — never open a
-      // second stream (that would risk a duplicate foreground notification).
-      final ok = await LocationTracker.instance.acquire(_locationToken);
+      // Detection runs in the background-service isolate, which has no
+      // foreground Activity — so only CHECK the permission, never request it
+      // (requesting throws "Unable to detect current Activity"). The grant is
+      // obtained by the foreground app before the service starts.
+      final ok = await LocationTracker.instance.acquire(
+        _locationToken,
+        requestPermission: false,
+      );
       if (!ok) {
-        // Location blocked → stay disarmed; retried on the next poll.
+        _log.error('Arm', 'Location permission DENIED — staying disarmed');
         _setState(GeofenceState.disarmed);
         return;
       }
+      _log.info('Arm', 'Location stream acquired — listening for GPS fixes');
       _positionSub = LocationTracker.instance.stream.listen(
         _onPosition,
         onError: (_) {},
       );
-      // Evaluate immediately against the last known fix rather than
-      // waiting for the next movement.
       final last = LocationTracker.instance.lastPosition;
-      if (last != null) _onPosition(last);
+      if (last != null) {
+        _log.debug('Arm', 'Evaluating last known position immediately');
+        _onPosition(last);
+      }
     }
-    _setState(
-      _openVisit != null ? GeofenceState.inside : GeofenceState.armed,
-    );
+    final newState = _openVisit != null
+        ? GeofenceState.inside
+        : GeofenceState.armed;
+    _log.info('Arm', 'State → $newState');
+    _setState(newState);
   }
 
   Future<void> _disarmLocked() async {
+    _log.info('Disarm', 'Releasing location stream — DISARMED');
     await _positionSub?.cancel();
     _positionSub = null;
     await LocationTracker.instance.release(_locationToken);
@@ -273,11 +362,25 @@ class AutoGeofenceService with WidgetsBindingObserver {
   }
 
   Future<void> _processFix(GeoFix fix) async {
-    // Drop GPS teleport glitches (compared against the last GOOD fix) and
-    // low-accuracy noise — neither is enter or exit evidence.
-    if (GeofenceGeo.isTeleport(fix, _lastFix)) return;
-    if (!GeofenceGeo.isAccurate(fix)) return;
+    if (GeofenceGeo.isTeleport(fix, _lastFix)) {
+      _log.warn(
+        'Fix',
+        'DROPPED teleport glitch @ (${fix.latitude.toStringAsFixed(6)}, ${fix.longitude.toStringAsFixed(6)})',
+      );
+      return;
+    }
+    if (!GeofenceGeo.isAccurate(fix)) {
+      _log.debug(
+        'Fix',
+        'DROPPED low-accuracy fix (${fix.accuracyMeters.toStringAsFixed(1)}m > ${GeofenceConfig.maxAccuracyMeters}m)',
+      );
+      return;
+    }
     _lastFix = fix;
+    _log.debug(
+      'Fix',
+      'GPS (${fix.latitude.toStringAsFixed(6)}, ${fix.longitude.toStringAsFixed(6)}) acc=${fix.accuracyMeters.toStringAsFixed(1)}m',
+    );
 
     if (_openVisit != null) {
       await _handleInside(fix);
@@ -304,10 +407,20 @@ class AutoGeofenceService with WidgetsBindingObserver {
         nearest = t;
       }
     }
-    if (nearest == null ||
-        nearestDistance > GeofenceConfig.enterRadiusMeters) {
+    if (nearest == null || nearestDistance > GeofenceConfig.enterRadiusMeters) {
+      if (nearest != null) {
+        _log.debug(
+          'Armed',
+          '${nearestDistance.toStringAsFixed(1)}m from "${nearest.shopName}" (enter=${GeofenceConfig.enterRadiusMeters}m) — outside',
+        );
+      }
       return;
     }
+
+    _log.info(
+      'ENTER',
+      '🟢 ENTERED geofence of "${nearest.shopName}" (task=${nearest.taskId}) at ${nearestDistance.toStringAsFixed(1)}m',
+    );
 
     final visit = OpenVisit(
       visitId: _generateVisitId(),
@@ -325,7 +438,6 @@ class AutoGeofenceService with WidgetsBindingObserver {
     _insideTaskId = visit.taskId;
     _setState(GeofenceState.inside);
 
-    // Notify listeners off the mutex so a slow handler can't stall detection.
     final cb = onEnter;
     if (cb != null) scheduleMicrotask(() => cb(visit.taskId));
   }
@@ -344,7 +456,10 @@ class AutoGeofenceService with WidgetsBindingObserver {
     );
 
     if (distance <= GeofenceConfig.enterRadiusMeters) {
-      // Firmly inside → advance the recovery anchor, clear exit evidence.
+      _log.debug(
+        'Inside',
+        'Still inside (${distance.toStringAsFixed(1)}m) — anchor updated',
+      );
       final updated = ov.copyWith(
         lastInsideFix: fix,
         clearOutsideEvidence: true,
@@ -355,7 +470,10 @@ class AutoGeofenceService with WidgetsBindingObserver {
     }
 
     if (distance < GeofenceConfig.exitRadiusMeters) {
-      // Hysteresis band — ambiguous. Neither confirm exit nor move anchor.
+      _log.debug(
+        'Inside',
+        'In hysteresis band (${distance.toStringAsFixed(1)}m) — holding',
+      );
       return;
     }
 
@@ -366,7 +484,13 @@ class AutoGeofenceService with WidgetsBindingObserver {
         fix.timestampUtc.difference(firstOutside) >=
         GeofenceConfig.exitSustainedDuration;
 
+    _log.info(
+      'Exit',
+      'Outside at ${distance.toStringAsFixed(1)}m — evidence $consecutive/${GeofenceConfig.exitConsecutiveFixes} fixes, sustained=$sustained',
+    );
+
     if (consecutive >= GeofenceConfig.exitConsecutiveFixes || sustained) {
+      _log.info('EXIT', '🔴 EXITED geofence of task=${ov.taskId} (confirmed)');
       await _closeVisitLocked(exitFix: fix, exitEstimated: false);
     } else {
       final updated = ov.copyWith(
@@ -443,15 +567,16 @@ class AutoGeofenceService with WidgetsBindingObserver {
     final isValid =
         visit.stayDurationSeconds >= GeofenceConfig.minValidStay.inSeconds;
 
-    // Persist to the queue first so a crash here can't lose the visit.
+    _log.info(
+      'Close',
+      'Visit task=${ov.taskId}: stay=${visit.stayDurationSeconds}s, valid=$isValid, estimated=$exitEstimated',
+    );
+
     if (isValid) await _uploader.persist(visit);
 
     _openVisit = null;
     await _store.clearOpenVisit();
 
-    // Clear the inside marker always; signal a real (observed) exit only —
-    // an estimated exit (app-kill / permission loss) isn't a deliberate leave,
-    // so the route UI shouldn't treat it as "departed".
     _insideTaskId = null;
     if (!exitEstimated) {
       final cb = onRealExit;
@@ -468,10 +593,15 @@ class AutoGeofenceService with WidgetsBindingObserver {
     }
 
     if (isValid) {
+      _log.info(
+        'Upload',
+        'Visit queued for upload (${visit.stayDurationSeconds}s stay)',
+      );
       unawaited(_uploader.flush());
-    } else if (kDebugMode) {
-      debugPrint(
-        '[Geofence] discarded ${visit.stayDurationSeconds}s jitter visit',
+    } else {
+      _log.warn(
+        'Close',
+        'Discarded ${visit.stayDurationSeconds}s jitter visit (min=${GeofenceConfig.minValidStay.inSeconds}s)',
       );
     }
   }

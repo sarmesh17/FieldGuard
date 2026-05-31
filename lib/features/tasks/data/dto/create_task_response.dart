@@ -142,12 +142,18 @@ class TaskGeofenceVisit {
 
   factory TaskGeofenceVisit.fromJson(Map<String, dynamic> json) {
     double parseCoord(dynamic v) => double.tryParse('${v ?? ''}') ?? 0.0;
+    // Lenient timestamp parse — a backend hiccup with a malformed entered_at
+    // / exited_at must not throw and blank the whole visit history. Falling
+    // back to "now" keeps the row visible (with a slightly wrong time) rather
+    // than dropping it; mirrors field_guard_re's defensive parsing.
+    DateTime parseTs(dynamic v) =>
+        DateTime.tryParse(v?.toString() ?? '') ?? DateTime.now();
     return TaskGeofenceVisit(
       id: json['id']?.toString() ?? '',
       visitId: json['visit_id']?.toString() ?? '',
       shopId: (json['shop_id'] as num?)?.toInt(),
-      enteredAt: DateTime.parse(json['entered_at'] as String),
-      exitedAt: DateTime.parse(json['exited_at'] as String),
+      enteredAt: parseTs(json['entered_at']),
+      exitedAt: parseTs(json['exited_at']),
       stayDurationSeconds: (json['stay_duration_seconds'] as num?)?.toInt() ?? 0,
       enterLatitude: parseCoord(json['enter_latitude']),
       enterLongitude: parseCoord(json['enter_longitude']),

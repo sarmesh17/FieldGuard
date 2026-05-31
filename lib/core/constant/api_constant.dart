@@ -10,6 +10,10 @@ class ApiConstant {
   // The endpoint for company registration
   static const String companyRegistration = "$baseUrl/api/v1/company/register";
 
+  // The endpoint for the current legal (Terms/Privacy) version — public, no auth.
+  // Source of truth for the `termsVersion` sent on register/login.
+  static const String legalVersionEndpoint = "$baseUrl/api/v1/legal/version";
+
   // The endpoint for confirming company documents (PATCH)
   static const String companyEndpoint = "$baseUrl/api/v1/company";
 
@@ -45,8 +49,20 @@ class ApiConstant {
   // The endpoint for updating admin profile
   static const String updateProfileEndpoint = "$baseUrl/api/v1/auth/profile";
 
+  // The endpoint for updating manager's own profile (MANAGER only)
+  static const String updateManagerProfileEndpoint = "$baseUrl/api/v1/managers/profile";
+
+
   // The endpoint for listing / creating tasks
   static const String tasksEndpoint = "/api/v1/tasks";
+
+  // The endpoint for dashboard aggregated summary (lifetime task totals)
+  static const String dashboardSummaryEndpoint = "$baseUrl/api/v1/dashboard/summary";
+
+  // The endpoint for tasks due TODAY (daily progress) — same bucket shape
+  static const String dashboardTodayTasksEndpoint =
+      "$baseUrl/api/v1/dashboard/today-tasks";
+
 
   // The endpoint for reporting automatic geofence visits
   static const String geofenceVisitsEndpoint =

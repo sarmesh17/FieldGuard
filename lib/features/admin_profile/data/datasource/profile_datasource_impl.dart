@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import '../../../../core/constant/api_constant.dart';
+import '../../../../core/services/session.dart';
 import '../../../../core/utils/api_runner.dart';
 import '../../../../core/utils/results.dart';
 import '../dto/profile_response.dart';
@@ -22,8 +23,14 @@ class ProfileDataSourceImpl extends ProfileDataSource with ApiRunner {
     UpdateProfileRequest request,
   ) =>
       safeCall(() async {
+        // MANAGER hits their own endpoint; ADMIN hits the auth/profile endpoint.
+        final isManager = await Session.isManager();
+        final endpoint = isManager
+            ? ApiConstant.updateManagerProfileEndpoint
+            : ApiConstant.updateProfileEndpoint;
+
         final response = await _dio.patch(
-          ApiConstant.updateProfileEndpoint,
+          endpoint,
           data: request.toJson(),
         );
         return ProfileResponse.fromJson(response.data as Map<String, dynamic>);

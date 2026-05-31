@@ -1,6 +1,9 @@
 import 'dart:io';
 
+import 'package:dio/dio.dart';
 import 'package:fieldguard/core/networks/dio_client.dart';
+import 'package:fieldguard/core/services/session.dart';
+import 'package:fieldguard/features/shops/data/datasource/shop_datasource_impl.dart';
 import 'package:fieldguard/features/shops/data/dto/shops_hierarchy_response.dart';
 import 'package:fieldguard/features/shops/data/dto/update_shop_request.dart';
 import 'package:fieldguard/features/shops/presentation/providers/update_shop_provider.dart';
@@ -8,6 +11,7 @@ import 'package:fieldguard/features/shops/presentation/providers/update_shop_sta
 import 'package:fieldguard/features/uploads/image_upload_service.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart' as geo;
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
@@ -54,9 +58,13 @@ class _UpdateShopScreenState extends ConsumerState<UpdateShopScreen> {
   // shown inline on the phone field via its validator; cleared on edit.
   String? _phoneServerError;
 
+  bool _isAdmin = false;
+  bool _isDeleting = false;
+
   @override
   void initState() {
     super.initState();
+    _loadRole();
     _lat = double.tryParse(widget.shop.latitude) ?? 0.0;
     _lng = double.tryParse(widget.shop.longitude) ?? 0.0;
     _nameController = TextEditingController(text: widget.shop.name);
@@ -67,6 +75,11 @@ class _UpdateShopScreenState extends ConsumerState<UpdateShopScreen> {
         TextEditingController(text: widget.shop.contactPhone);
     _isActive = widget.shop.isActive;
     _uploadService = ImageUploadService(DioClient.createDio());
+  }
+
+  Future<void> _loadRole() async {
+    final r = await Session.role();
+    if (mounted) setState(() => _isAdmin = r?.toUpperCase() == 'ADMIN');
   }
 
   @override
@@ -224,9 +237,7 @@ class _UpdateShopScreenState extends ConsumerState<UpdateShopScreen> {
           widget.shop.id,
           UpdateShopRequest(
             name: _nameController.text.trim(),
-            panNumber: _panNumberController.text.trim().isEmpty
-                ? null
-                : _panNumberController.text.trim(),
+            panNumber: _panNumberController.text.trim(),
             address: _addressController.text.trim(),
             latitude: _lat,
             longitude: _lng,
@@ -236,6 +247,69 @@ class _UpdateShopScreenState extends ConsumerState<UpdateShopScreen> {
             imageKey: _imageKey,
           ),
         );
+  }
+
+  /// Deletes the shop via `DELETE /api/v1/shops/{id}` (ADMIN only), after a
+  /// confirmation. Presented as permanent — there is no in-app path to recover
+  /// a deleted shop. On success, pops back so the shops list refreshes.
+  Future<void> _deleteShop() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Shop'),
+        content: Text(
+          'Are you sure you want to delete "${widget.shop.name}"?\n\n'
+          'This is permanent. Once deleted, the shop cannot be recovered or '
+          'restored — this action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style:
+                TextButton.styleFrom(foregroundColor: const Color(0xffFF3B3B)),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    setState(() => _isDeleting = true);
+    try {
+      final dataSource = ShopDataSourceImpl(DioClient.createDio());
+      await dataSource.deleteShop(widget.shop.id);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Shop deleted'),
+          backgroundColor: Color(0xff0E5A3B),
+        ),
+      );
+      Navigator.of(context).pop(true);
+    } on DioException catch (e) {
+      if (!mounted) return;
+      final data = e.response?.data;
+      final msg = data is Map<String, dynamic> && data['message'] is String
+          ? data['message'] as String
+          : 'Failed to delete shop';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(msg), backgroundColor: Colors.red),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to delete shop'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isDeleting = false);
+    }
   }
 
   // ── Build ─────────────────────────────────────────────────────────────────────
@@ -270,10 +344,11 @@ class _UpdateShopScreenState extends ConsumerState<UpdateShopScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAF9),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xff0E5A3B),
         elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xff111111)),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Column(
@@ -282,16 +357,16 @@ class _UpdateShopScreenState extends ConsumerState<UpdateShopScreen> {
             const Text(
               'Edit Shop',
               style: TextStyle(
-                color: Color(0xff111111),
+                color: Colors.white,
                 fontWeight: FontWeight.w700,
                 fontSize: 20,
               ),
             ),
             Text(
               widget.shop.name,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
-                color: Color(0xff667085),
+                color: Colors.white.withValues(alpha: 0.85),
                 fontWeight: FontWeight.w400,
               ),
             ),
@@ -321,7 +396,7 @@ class _UpdateShopScreenState extends ConsumerState<UpdateShopScreen> {
                     const SizedBox(height: 6),
                     _buildField(
                       controller: _nameController,
-                      hint: 'e.g. Rajan Enterprises',
+                      hint: 'e.g. ABC Store',
                       icon: Icons.storefront_outlined,
                       validator: (v) => (v == null || v.trim().isEmpty)
                           ? 'Shop name is required'
@@ -332,7 +407,7 @@ class _UpdateShopScreenState extends ConsumerState<UpdateShopScreen> {
                     const SizedBox(height: 6),
                     _buildField(
                       controller: _addressController,
-                      hint: 'e.g. Birgunj, Nepal',
+                      hint: 'e.g. Main Road, City',
                       icon: Icons.location_on_outlined,
                       validator: (v) => (v == null || v.trim().isEmpty)
                           ? 'Address is required'
@@ -343,7 +418,7 @@ class _UpdateShopScreenState extends ConsumerState<UpdateShopScreen> {
                     const SizedBox(height: 6),
                     _buildField(
                       controller: _contactNameController,
-                      hint: 'e.g. Bhupendra Prasad',
+                      hint: 'e.g. Full name',
                       icon: Icons.person_outline,
                       validator: (v) => (v == null || v.trim().isEmpty)
                           ? 'Contact name is required'
@@ -354,7 +429,7 @@ class _UpdateShopScreenState extends ConsumerState<UpdateShopScreen> {
                     const SizedBox(height: 6),
                     _buildField(
                       controller: _contactPhoneController,
-                      hint: 'e.g. 9804208475',
+                      hint: 'e.g. 98XXXXXXXX',
                       icon: Icons.phone_outlined,
                       keyboardType: TextInputType.phone,
                       maxLength: 10,
@@ -377,12 +452,23 @@ class _UpdateShopScreenState extends ConsumerState<UpdateShopScreen> {
                       },
                     ),
                     const SizedBox(height: 16),
-                    _FieldLabel('PAN Number (Optional)'),
+                    _FieldLabel('PAN Number'),
                     const SizedBox(height: 6),
                     _buildField(
                       controller: _panNumberController,
-                      hint: 'e.g. ABCDE1234F',
+                      hint: 'e.g. 123456789',
                       icon: Icons.credit_card_outlined,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(9),
+                      ],
+                      validator: (v) {
+                        final t = v?.trim() ?? '';
+                        if (t.isEmpty) return 'PAN number is required';
+                        if (t.length != 9) return 'PAN number must be 9 digits';
+                        return null;
+                      },
                     ),
                     const SizedBox(height: 16),
                     _buildActiveToggle(),
@@ -419,6 +505,45 @@ class _UpdateShopScreenState extends ConsumerState<UpdateShopScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
+
+                    // Delete shop (permanent) — ADMIN only.
+                    if (_isAdmin) ...[
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: _isDeleting ? null : _deleteShop,
+                          icon: _isDeleting
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Color(0xffFF3B3B),
+                                  ),
+                                )
+                              : const Icon(Icons.delete_forever, size: 20),
+                          label: Text(
+                            _isDeleting ? 'Deleting...' : 'Delete Shop',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: const Color(0xffFF3B3B),
+                            side: const BorderSide(
+                              color: Color(0xffFF3B3B),
+                              width: 1.5,
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
                   ],
                 ),
               ),
@@ -848,6 +973,7 @@ class _UpdateShopScreenState extends ConsumerState<UpdateShopScreen> {
     required IconData icon,
     TextInputType keyboardType = TextInputType.text,
     int? maxLength,
+    List<TextInputFormatter>? inputFormatters,
     String? Function(String?)? validator,
     void Function(String)? onChanged,
   }) {
@@ -855,6 +981,7 @@ class _UpdateShopScreenState extends ConsumerState<UpdateShopScreen> {
       controller: controller,
       keyboardType: keyboardType,
       maxLength: maxLength,
+      inputFormatters: inputFormatters,
       validator: validator,
       onChanged: onChanged,
       decoration: InputDecoration(

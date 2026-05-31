@@ -188,7 +188,11 @@ class _LiveMapScreenState extends State<LiveMapScreen> {
           MapWidget(
             key: const ValueKey('liveTeamMap'),
             styleUri: MapboxStyles.STANDARD,
-            textureView: true,
+            // PERF TEST: SurfaceView (default) renders the map directly instead
+            // of copying every frame into a Flutter texture — smoother + less
+            // heat/battery. If overlays flicker or z-order breaks, flip back to
+            // true. Validated here before rolling out to the other map screens.
+            textureView: false,
             onMapCreated: _onMapCreated,
           ),
 

@@ -17,6 +17,15 @@ class NetworkExceptionMapper {
         if (status == 401) {
           return const UnauthorizedException(AppStrings.invalidCredentials);
         }
+        if (status == 429) {
+          final retryAfter = int.tryParse(
+            e.response?.headers.value('retry-after') ?? '',
+          );
+          final msg =
+              _extractApiMessage(e.response?.data, const <FieldError>[]) ??
+                  'Too many attempts — try again in a few minutes';
+          return RateLimitException(msg, retryAfterSeconds: retryAfter);
+        }
         final body = e.response?.data;
         final fieldErrors = _extractFieldErrors(body);
         final apiMessage = _extractApiMessage(body, fieldErrors);

@@ -8,4 +8,8 @@ abstract class ShopDataSource {
     String shopId,
     UpdateShopVisibilityRequest request,
   );
+
+  /// Permanently deletes a shop. ADMIN only.
+  /// `DELETE /api/v1/shops/{id}`.
+  Future<void> deleteShop(int id);
 }

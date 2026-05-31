@@ -9,6 +9,8 @@ import 'package:fieldguard/core/utils/network_exception_mapper.dart';
 import 'package:fieldguard/core/services/session.dart';
 import 'package:fieldguard/features/employee/data/datasource/employee_datasource_impl.dart';
 import 'package:fieldguard/features/employee/data/dto/create_employee_request.dart';
+import 'package:fieldguard/features/team/data/datasource/team_datasource_impl.dart';
+import 'package:fieldguard/features/team/data/dto/managers_list_response.dart';
 import 'package:fieldguard/features/uploads/image_upload_service.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -27,7 +29,12 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen>
   final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _managerIdController = TextEditingController();
+
+  // Manager picker (ADMIN only) — fetched from the managers list so the admin
+  // selects by name instead of remembering a numeric id.
+  List<ManagerItem> _managers = [];
+  String? _selectedManagerId;
+  bool _loadingManagers = false;
 
   // Server-side phone error from a 400 (e.g. invalid format) or 409 (already
   // in use), surfaced via the phone field's validator. Cleared when the user
@@ -72,7 +79,25 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen>
 
   Future<void> _checkRole() async {
     final isManager = await Session.isManager();
-    if (mounted) setState(() => _isManagerUser = isManager);
+    if (!mounted) return;
+    setState(() => _isManagerUser = isManager);
+    // Only ADMIN assigns a manager — load the list for the dropdown.
+    if (!isManager) _loadManagers();
+  }
+
+  Future<void> _loadManagers() async {
+    setState(() => _loadingManagers = true);
+    try {
+      final dio = DioClient.createDio();
+      final res = await TeamDataSourceImpl(dio).getManagers();
+      if (!mounted) return;
+      setState(() {
+        _managers = res.managers;
+        _loadingManagers = false;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _loadingManagers = false);
+    }
   }
 
   @override
@@ -82,7 +107,6 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen>
     _phoneController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
-    _managerIdController.dispose();
     super.dispose();
   }
 
@@ -170,9 +194,7 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen>
             ? null
             : _emailController.text.trim(),
         password: _passwordController.text,
-        managerId: _managerIdController.text.trim().isEmpty
-            ? null
-            : _managerIdController.text.trim(),
+        managerId: _selectedManagerId,
         imageKey: _uploadedImageKey,
       );
 
@@ -471,18 +493,13 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen>
                       ),
                       SizedBox(height: SizeConfig.heightPercent(2)),
 
-                      // Manager ID Field — ADMIN only.
+                      // Manager Field — ADMIN only.
                       if (!_isManagerUser) ...[
-                        _buildLabel('Manager ID (Optional)'),
-                        _buildTextField(
-                          controller: _managerIdController,
-                          hint:
-                              'Leave blank to create employee without manager',
-                          icon: Icons.supervisor_account_outlined,
-                        ),
+                        _buildLabel('Manager (Optional)'),
+                        _buildManagerDropdown(),
                         SizedBox(height: SizeConfig.heightPercent(1)),
                         Text(
-                          'Leave blank to create employee without a manager (ADMIN only)',
+                          'Choose a manager, or leave as "No manager" (ADMIN only)',
                           style: TextStyle(
                             color: const Color(0xff667085),
                             fontSize: SizeConfig.scaledFontSize(11),
@@ -566,6 +583,82 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen>
             vertical: SizeConfig.scale(16),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildManagerDropdown() {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: SizeConfig.scale(16),
+        vertical: SizeConfig.scale(6),
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(SizeConfig.scale(12)),
+        border: Border.all(color: const Color(0xffE8E3DD)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.supervisor_account_outlined,
+              color: Color(0xff0E5A3B)),
+          SizedBox(width: SizeConfig.scale(12)),
+          Expanded(
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String?>(
+                value: _selectedManagerId,
+                isExpanded: true,
+                borderRadius: BorderRadius.circular(SizeConfig.scale(12)),
+                icon: _loadingManagers
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Color(0xff0E5A3B),
+                        ),
+                      )
+                    : const Icon(Icons.arrow_drop_down_rounded,
+                        color: Color(0xff0E5A3B)),
+                items: [
+                  DropdownMenuItem<String?>(
+                    value: null,
+                    child: Text(
+                      'No manager',
+                      style: TextStyle(
+                        fontSize: SizeConfig.scaledFontSize(14),
+                        color: const Color(0xff667085),
+                      ),
+                    ),
+                  ),
+                  ..._managers.map(
+                    (m) => DropdownMenuItem<String?>(
+                      value: m.id,
+                      child: Text(
+                        m.managerCode.isEmpty
+                            ? m.fullName
+                            : '${m.fullName} · ${m.managerCode}',
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: SizeConfig.scaledFontSize(14),
+                          color: const Color(0xff111111),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+                onChanged: (v) => setState(() => _selectedManagerId = v),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

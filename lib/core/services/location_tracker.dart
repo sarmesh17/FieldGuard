@@ -48,18 +48,24 @@ class LocationTracker {
   /// Ensures location services + permission. Returns false if blocked.
   /// "Always" is requested for background but a "While in use" grant is
   /// still accepted (foreground-only operation).
-  Future<bool> ensurePermission() async {
+  ///
+  /// [requestIfNeeded] must be false when called from the background-service
+  /// isolate: requesting a permission needs a foreground Activity, which the
+  /// isolate doesn't have (it throws "Unable to detect current Activity").
+  /// The foreground app is responsible for obtaining the grant first; here we
+  /// only CHECK the already-granted status.
+  Future<bool> ensurePermission({bool requestIfNeeded = true}) async {
     if (!await Geolocator.isLocationServiceEnabled()) return false;
 
     var permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
+    if (permission == LocationPermission.denied && requestIfNeeded) {
       permission = await Geolocator.requestPermission();
     }
     if (permission == LocationPermission.denied ||
         permission == LocationPermission.deniedForever) {
       return false;
     }
-    if (permission == LocationPermission.whileInUse) {
+    if (permission == LocationPermission.whileInUse && requestIfNeeded) {
       await Permission.locationAlways.request();
     }
     return true;
@@ -68,9 +74,11 @@ class LocationTracker {
   /// Acquire the shared stream under [token]. Starts the underlying stream
   /// on the first acquisition. Returns false if permission/services are
   /// unavailable. Re-acquiring with the same token is a no-op.
-  Future<bool> acquire(Object token) async {
+  Future<bool> acquire(Object token, {bool requestPermission = true}) async {
     if (_sub == null) {
-      if (!await ensurePermission()) return false;
+      if (!await ensurePermission(requestIfNeeded: requestPermission)) {
+        return false;
+      }
       _sub =
           Geolocator.getPositionStream(locationSettings: _settings()).listen(
             (p) {

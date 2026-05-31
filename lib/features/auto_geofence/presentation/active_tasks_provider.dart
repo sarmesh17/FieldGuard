@@ -2,10 +2,11 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:fieldguard/core/networks/dio_client.dart';
+import 'package:fieldguard/core/services/background_location_service.dart';
 import 'package:fieldguard/core/services/live_tracking_socket.dart';
+import 'package:fieldguard/core/services/session.dart';
 import 'package:fieldguard/core/utils/results.dart';
 import 'package:fieldguard/features/auto_geofence/data/geofence_task_datasource.dart';
-import 'package:fieldguard/features/auto_geofence/service/auto_geofence_service.dart';
 import 'package:fieldguard/features/tasks/data/dto/tasks_list_response.dart';
 import 'package:fieldguard/features/tasks/presentation/providers/tasks_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -48,7 +49,15 @@ class ActiveInProgressTasksNotifier extends StateNotifier<List<TaskSummary>> {
     if (_disposed) return;
     switch (result) {
       case Success(:final data):
-        state = data;
+        // Only tasks assigned to ME drive the geofence service — an ADMIN /
+        // MANAGER can see the whole team's IN_PROGRESS tasks, but they don't
+        // physically visit, so starting the foreground location service for
+        // someone else's task just wastes battery. Keep only my own.
+        final me = await Session.userId();
+        if (_disposed) return;
+        state = me == null
+            ? const []
+            : data.where((t) => t.assignee.id == me).toList();
       case Failure():
         // Keep the last known list — a transient blip must not disarm.
         break;
@@ -83,12 +92,23 @@ final activeInProgressTasksProvider =
       return notifier;
     });
 
-/// Bridges the reactive task source into [AutoGeofenceService]. Read once
-/// when authenticated (keeping the source alive) and invalidated on logout.
+/// Bridges the reactive task source into the background-service lifecycle.
+/// Read once when authenticated (keeping the source alive) and invalidated on
+/// logout.
+///
+/// Detection itself lives in the background-service isolate (so it survives an
+/// app-kill); this just toggles that service on/off as IN_PROGRESS tasks come
+/// and go — so the persistent foreground notification only shows while there's
+/// actually a task to track. A `refresh` ping makes the isolate re-fetch
+/// immediately, so arming is instant after an in-app task change instead of
+/// waiting for the service's safety-net poll.
 final geofenceTaskSyncProvider = Provider<void>((ref) {
-  ref.listen<List<TaskSummary>>(
-    activeInProgressTasksProvider,
-    (_, tasks) => AutoGeofenceService.instance.syncTasks(tasks),
-    fireImmediately: true,
-  );
+  ref.listen<List<TaskSummary>>(activeInProgressTasksProvider, (_, tasks) {
+    if (tasks.isNotEmpty) {
+      unawaited(BackgroundLocationService.start());
+      BackgroundLocationService.refresh();
+    } else {
+      BackgroundLocationService.stop();
+    }
+  }, fireImmediately: true);
 });

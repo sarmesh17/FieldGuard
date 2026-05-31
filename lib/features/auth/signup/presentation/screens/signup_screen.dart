@@ -3,6 +3,9 @@ import 'package:fieldguard/core/responsive/responsive.dart';
 import 'package:fieldguard/core/router/app_routes.dart';
 import 'package:fieldguard/features/auth/signup/presentation/providers/signup_provider.dart';
 import 'package:fieldguard/features/auth/signup/presentation/providers/signup_state.dart';
+import 'package:fieldguard/features/legal/legal_content.dart';
+import 'package:fieldguard/features/legal/presentation/providers/legal_version_provider.dart';
+import 'package:fieldguard/features/legal/presentation/widgets/legal_consent_checkbox.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -35,6 +38,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
 
   String? _citizenshipImagePath;
   String? _registrationDocPath;
+  bool _agreedToTerms = false;
 
   // ── Animation ──────────────────────────────────────────────────────────────
   late final AnimationController _ctrl;
@@ -105,6 +109,9 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
     });
 
     _ctrl.forward();
+
+    // Warm up the legal version from the backend so it's ready by submit time.
+    ref.read(legalVersionProvider);
   }
 
   @override
@@ -148,6 +155,17 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
       _snack('Please upload both required documents');
       return;
     }
+    if (!_agreedToTerms) {
+      _snack(
+        'Please accept the Terms & Conditions and Privacy Policy to continue',
+      );
+      return;
+    }
+
+    // Version comes from the backend (source of truth); fall back to the
+    // bundled version if the fetch hasn't resolved yet.
+    final termsVersion =
+        ref.read(legalVersionProvider).asData?.value ?? kLegalLastUpdated;
 
     ref
         .read(signupNotifierProvider.notifier)
@@ -161,6 +179,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
           password: password,
           citizenshipImagePath: _citizenshipImagePath!,
           registrationDocPath: _registrationDocPath!,
+          termsAccepted: _agreedToTerms,
+          termsVersion: termsVersion,
         );
   }
 
@@ -630,6 +650,20 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
 
                                         SizedBox(
                                           height: SizeConfig.heightPercent(4),
+                                        ),
+
+                                        // ── Consent ────────────────────────────
+                                        _item(
+                                          7,
+                                          LegalConsentCheckbox(
+                                            value: _agreedToTerms,
+                                            onChanged: (v) => setState(
+                                              () => _agreedToTerms = v,
+                                            ),
+                                          ),
+                                        ),
+                                        SizedBox(
+                                          height: SizeConfig.heightPercent(2.5),
                                         ),
 
                                         // ── Submit ─────────────────────────────
