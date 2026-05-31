@@ -14,6 +14,15 @@ class UnauthorizedException extends AppException {
   const UnauthorizedException(super.message);
 }
 
+/// HTTP 429 — too many requests (rate limit). Surfaced distinctly so the
+/// login/refresh UI can show it as a "too many attempts" warning rather than a
+/// credentials error. [retryAfterSeconds] is read from the `Retry-After`
+/// header when present, else null.
+class RateLimitException extends AppException {
+  final int? retryAfterSeconds;
+  const RateLimitException(super.message, {this.retryAfterSeconds});
+}
+
 /// A single server-side field validation error, from a 400's `errors[]`.
 class FieldError {
   final String field;

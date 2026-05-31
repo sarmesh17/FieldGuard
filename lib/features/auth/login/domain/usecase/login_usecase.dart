@@ -7,7 +7,17 @@ class LoginUsecase {
 
   LoginUsecase(this.repository);
 
-  Future<Result<LoginResponse>> call(String phoneNumber, String password) {
-    return repository.login(phoneNumber, password);
+  Future<Result<LoginResponse>> call(
+    String phoneNumber,
+    String password, {
+    required bool termsAccepted,
+    required String termsVersion,
+  }) {
+    return repository.login(
+      phoneNumber,
+      password,
+      termsAccepted: termsAccepted,
+      termsVersion: termsVersion,
+    );
   }
 }

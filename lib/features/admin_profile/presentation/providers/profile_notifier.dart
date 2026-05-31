@@ -37,6 +37,8 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
           exception is AppException
               ? exception.message
               : 'Failed to update profile',
+          fieldErrors:
+              exception is ValidationException ? exception.fieldErrors : const [],
         ),
     };
   }

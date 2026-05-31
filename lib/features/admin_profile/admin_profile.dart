@@ -8,6 +8,7 @@ import 'package:fieldguard/features/admin_profile/presentation/screens/personal_
 import 'package:fieldguard/features/admin_profile/section_card.dart';
 import 'package:fieldguard/features/auth/login/presentation/providers/login_provider.dart';
 import 'package:fieldguard/features/employee/presentation/screens/create_employee_screen.dart';
+import 'package:fieldguard/features/legal/presentation/screens/legal_screen.dart';
 import 'package:fieldguard/features/manager/presentation/screens/create_manager_screen.dart';
 import 'package:fieldguard/widgets/app_skeletons.dart';
 import 'package:flutter/material.dart';
@@ -86,6 +87,15 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen>
       context,
       MaterialPageRoute(
         builder: (context) => const PersonalInformationScreen(),
+      ),
+    );
+  }
+
+  void _navigateToLegal(LegalTab tab) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => LegalScreen(initialTab: tab),
       ),
     );
   }
@@ -330,6 +340,36 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen>
                                       icon: Icons.person_outline_rounded,
                                       title: 'Personal Information',
                                       onTap: _navigateToPersonalInformation,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: unit * 0.018),
+                          // Legal
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: unit * 0.05,
+                            ),
+                            child: SlideTransition(
+                              position: _slideAnimation,
+                              child: FadeTransition(
+                                opacity: _fadeAnimation,
+                                child: SectionCard(
+                                  title: 'LEGAL',
+                                  items: [
+                                    SectionTile(
+                                      icon: Icons.description_outlined,
+                                      title: 'Terms & Conditions',
+                                      onTap: () =>
+                                          _navigateToLegal(LegalTab.terms),
+                                    ),
+                                    SectionTile(
+                                      icon: Icons.privacy_tip_outlined,
+                                      title: 'Privacy Policy',
+                                      onTap: () =>
+                                          _navigateToLegal(LegalTab.privacy),
                                     ),
                                   ],
                                 ),

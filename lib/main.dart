@@ -1,3 +1,5 @@
+import 'package:fieldguard/core/security/root_detection_service.dart';
+import 'package:fieldguard/core/security/security_blocked_screen.dart';
 import 'package:fieldguard/core/services/background_location_service.dart';
 import 'package:fieldguard/core/services/notification_service.dart';
 import 'package:fieldguard/features/auth/login/presentation/providers/login_provider.dart';
@@ -12,6 +14,15 @@ import 'core/router/app_router.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Block rooted / jailbroken devices before initializing anything else: a
+  // compromised device shows the security screen and the real app (router,
+  // providers, background services) is never mounted.
+  if (await RootDetectionService.isDeviceCompromised()) {
+    runApp(const SecurityBlockedApp());
+    return;
+  }
+
   await dotenv.load(fileName: '.env');
   MapboxOptions.setAccessToken(dotenv.env['MAPBOX_PUBLIC_TOKEN']!);
   // Register the notification channels + prompt for permission before any

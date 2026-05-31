@@ -1,3 +1,4 @@
+import '../../../../core/errors/app_exception.dart';
 import '../../data/dto/profile_response.dart';
 
 sealed class ProfileState {
@@ -33,5 +34,12 @@ class ProfileUpdateSuccess extends ProfileState {
 
 class ProfileUpdateFailure extends ProfileState {
   final String message;
-  const ProfileUpdateFailure(this.message);
+
+  /// Per-field server validation errors (from a 400 `errors[]`). Empty for a
+  /// 409 or any failure without per-field detail. The edit screen binds these
+  /// to the matching input (e.g. `phoneNumber`, `companyPhone`) and shows
+  /// anything unbound as a snackbar.
+  final List<FieldError> fieldErrors;
+
+  const ProfileUpdateFailure(this.message, {this.fieldErrors = const []});
 }

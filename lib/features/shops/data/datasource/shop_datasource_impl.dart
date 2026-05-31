@@ -31,4 +31,9 @@ class ShopDataSourceImpl implements ShopDataSource {
       options: Options(contentType: 'application/json'),
     );
   }
+
+  @override
+  Future<void> deleteShop(int id) async {
+    await _dio.delete('${ApiConstant.getShopsEndpoint}/$id');
+  }
 }

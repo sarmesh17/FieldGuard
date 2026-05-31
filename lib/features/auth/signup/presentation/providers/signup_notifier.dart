@@ -36,6 +36,8 @@ class SignupNotifier extends StateNotifier<SignupState> {
     required String password,
     required String citizenshipImagePath,
     required String registrationDocPath,
+    required bool termsAccepted,
+    required String termsVersion,
   }) async {
     state = state.copyWith(isLoading: true, clearError: true, clearStatus: true);
 
@@ -47,6 +49,8 @@ class SignupNotifier extends StateNotifier<SignupState> {
       adminName: adminName,
       phoneNumber: phoneNumber,
       password: password,
+      termsAccepted: termsAccepted,
+      termsVersion: termsVersion,
     );
 
     final result = await _signupUsecase(
