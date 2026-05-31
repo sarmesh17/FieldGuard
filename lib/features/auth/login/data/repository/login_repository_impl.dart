@@ -13,10 +13,17 @@ class LoginRepositoryImpl extends LoginRepository {
   @override
   Future<Result<LoginResponse>> login(
     String phoneNumber,
-    String password,
-  ) async {
+    String password, {
+    required bool termsAccepted,
+    required String termsVersion,
+  }) async {
     final result = await _dataSource.login(
-      LoginRequest(phoneNumber: phoneNumber, password: password),
+      LoginRequest(
+        phoneNumber: phoneNumber,
+        password: password,
+        termsAccepted: termsAccepted,
+        termsVersion: termsVersion,
+      ),
     );
 
     if (result is Success<LoginResponse>) {

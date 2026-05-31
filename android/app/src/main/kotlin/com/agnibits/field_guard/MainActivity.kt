@@ -1,4 +1,4 @@
-package com.example.field_guard
+package com.agnibits.field_guard
 
 import io.flutter.embedding.android.FlutterActivity
 

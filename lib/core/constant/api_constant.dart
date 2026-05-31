@@ -10,6 +10,10 @@ class ApiConstant {
   // The endpoint for company registration
   static const String companyRegistration = "$baseUrl/api/v1/company/register";
 
+  // The endpoint for the current legal (Terms/Privacy) version — public, no auth.
+  // Source of truth for the `termsVersion` sent on register/login.
+  static const String legalVersionEndpoint = "$baseUrl/api/v1/legal/version";
+
   // The endpoint for confirming company documents (PATCH)
   static const String companyEndpoint = "$baseUrl/api/v1/company";
 

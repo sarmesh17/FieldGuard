@@ -103,15 +103,26 @@ class LoginNotifier extends StateNotifier<LoginState> {
     }
   }
 
-  Future<void> login(String phoneNumber, String password) async {
+  Future<void> login(
+    String phoneNumber,
+    String password, {
+    required bool termsAccepted,
+    required String termsVersion,
+  }) async {
     state = const LoginLoading();
 
-    final result = await _loginUsecase(phoneNumber, password);
+    final result = await _loginUsecase(
+      phoneNumber,
+      password,
+      termsAccepted: termsAccepted,
+      termsVersion: termsVersion,
+    );
 
     state = switch (result) {
       Success(:final data) => await _resolveApproval(data),
       Failure(:final exception) => LoginFailure(
         exception is AppException ? exception.message : AppStrings.serverError,
+        rateLimited: exception is RateLimitException,
       ),
     };
   }

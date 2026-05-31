@@ -34,6 +34,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   String? _uploadedImageKey;
   bool _isUploadingImage = false;
 
+  // Server-side phone errors (from a 400 `errors[]`), shown inline under the
+  // matching field; cleared when the user edits that field or re-submits.
+  String? _phoneError;
+  String? _companyPhoneError;
+
   @override
   void initState() {
     super.initState();
@@ -131,6 +136,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   void _saveProfile() {
     if (!_formKey.currentState!.validate()) return;
 
+    // Clear previous server-side field errors before re-submitting.
+    setState(() {
+      _phoneError = null;
+      _companyPhoneError = null;
+    });
+
     final UpdateProfileRequest request;
 
     if (_isManager) {
@@ -217,12 +228,27 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         Navigator.pop(context, true);
       }
       if (next is ProfileUpdateFailure) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(next.message),
-            backgroundColor: Colors.red.shade700,
-          ),
-        );
+        // Bind per-field server errors (e.g. a 400 on phoneNumber/companyPhone)
+        // inline under the matching input; show anything unbound (e.g. a 409
+        // phone conflict) as a snackbar.
+        String? phoneErr;
+        String? companyPhoneErr;
+        for (final e in next.fieldErrors) {
+          if (e.field == 'phoneNumber') phoneErr = e.message;
+          if (e.field == 'companyPhone') companyPhoneErr = e.message;
+        }
+        setState(() {
+          _phoneError = phoneErr;
+          _companyPhoneError = companyPhoneErr;
+        });
+        if (phoneErr == null && companyPhoneErr == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(next.message),
+              backgroundColor: Colors.red.shade700,
+            ),
+          );
+        }
       }
     });
 
@@ -395,6 +421,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       LengthLimitingTextInputFormatter(10),
                     ],
                     w: w,
+                    errorText: _phoneError,
+                    onChanged: (_) {
+                      if (_phoneError != null) {
+                        setState(() => _phoneError = null);
+                      }
+                    },
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
                         return 'Please enter phone number';
@@ -488,6 +520,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       LengthLimitingTextInputFormatter(10),
                     ],
                     w: w,
+                    errorText: _companyPhoneError,
+                    onChanged: (_) {
+                      if (_companyPhoneError != null) {
+                        setState(() => _companyPhoneError = null);
+                      }
+                    },
                     validator: (value) {
                       if (value != null && value.trim().isNotEmpty) {
                         if (value.trim().length != 10) {
@@ -571,6 +609,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     int? maxLength,
     List<TextInputFormatter>? inputFormatters,
     String? Function(String?)? validator,
+    String? errorText,
+    void Function(String)? onChanged,
   }) {
     final radius = BorderRadius.circular(w * 0.03);
     const enabledColor = Color(0xffE5E7EB);
@@ -582,8 +622,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       maxLength: maxLength,
       inputFormatters: inputFormatters,
       validator: validator,
+      onChanged: onChanged,
       decoration: InputDecoration(
         hintText: hint,
+        errorText: errorText,
         prefixIcon: Icon(icon, color: focusColor),
         filled: true,
         fillColor: Colors.white,

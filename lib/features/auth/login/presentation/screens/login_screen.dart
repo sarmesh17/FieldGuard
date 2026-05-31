@@ -4,6 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../../core/responsive/responsive.dart';
 import '../../../../../core/router/app_routes.dart';
+import '../../../../legal/legal_content.dart';
+import '../../../../legal/presentation/providers/legal_version_provider.dart';
+import '../../../../legal/presentation/widgets/legal_consent_checkbox.dart';
 import '../providers/login_provider.dart';
 import '../providers/login_state.dart';
 
@@ -26,6 +29,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _hidePassword = true;
+  bool _agreedToTerms = false;
 
   late final AnimationController _ctrl;
   late final Animation<double> _logoScale;
@@ -75,6 +79,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     );
 
     _ctrl.forward();
+
+    // Warm up the legal version from the backend so it's ready by submit time.
+    ref.read(legalVersionProvider);
   }
 
   @override
@@ -94,7 +101,28 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
       );
       return;
     }
-    ref.read(loginNotifierProvider.notifier).login(phone, password);
+    if (!_agreedToTerms) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Please accept the Terms & Conditions and Privacy Policy to continue',
+          ),
+        ),
+      );
+      return;
+    }
+    // Version comes from the backend (source of truth); fall back to the
+    // bundled version if the fetch hasn't resolved yet.
+    final termsVersion =
+        ref.read(legalVersionProvider).asData?.value ?? kLegalLastUpdated;
+    ref
+        .read(loginNotifierProvider.notifier)
+        .login(
+          phone,
+          password,
+          termsAccepted: _agreedToTerms,
+          termsVersion: termsVersion,
+        );
   }
 
   @override
@@ -106,6 +134,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     final loginState = ref.watch(loginNotifierProvider);
     final isLoading = loginState is LoginLoading;
     final errorMessage = loginState is LoginFailure ? loginState.message : null;
+    final rateLimited = loginState is LoginFailure && loginState.rateLimited;
 
     final kbHeight = MediaQuery.of(context).viewInsets.bottom;
     final t = (kbHeight / 220.0).clamp(0.0, 1.0);
@@ -416,6 +445,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                                         hidePassword: _hidePassword,
                                         isLoading: isLoading,
                                         errorMessage: errorMessage,
+                                        rateLimited: rateLimited,
+                                        agreedToTerms: _agreedToTerms,
+                                        onToggleTerms: (v) =>
+                                            setState(() => _agreedToTerms = v),
                                         onTogglePassword: () => setState(
                                           () => _hidePassword = !_hidePassword,
                                         ),
@@ -574,6 +607,9 @@ class _FormCard extends StatelessWidget {
   final bool hidePassword;
   final bool isLoading;
   final String? errorMessage;
+  final bool rateLimited;
+  final bool agreedToTerms;
+  final ValueChanged<bool> onToggleTerms;
   final VoidCallback onTogglePassword;
   final VoidCallback onSignIn;
 
@@ -583,6 +619,9 @@ class _FormCard extends StatelessWidget {
     required this.hidePassword,
     required this.isLoading,
     this.errorMessage,
+    this.rateLimited = false,
+    required this.agreedToTerms,
+    required this.onToggleTerms,
     required this.onTogglePassword,
     required this.onSignIn,
   });
@@ -692,7 +731,7 @@ class _FormCard extends StatelessWidget {
                 _ModernField(
                   controller: phoneController,
                   icon: Icons.phone_android_rounded,
-                  hint: '+977  9800000000',
+                  hint: '9800000000',
                   keyboardType: TextInputType.phone,
                   inputFormatters: [
                     FilteringTextInputFormatter.digitsOnly,
@@ -719,8 +758,12 @@ class _FormCard extends StatelessWidget {
                     child: Row(
                       children: [
                         Icon(
-                          Icons.error_outline_rounded,
-                          color: Colors.red.shade600,
+                          rateLimited
+                              ? Icons.hourglass_top_rounded
+                              : Icons.error_outline_rounded,
+                          color: rateLimited
+                              ? Colors.orange.shade800
+                              : Colors.red.shade600,
                           size: SizeConfig.scale(14),
                         ),
                         SizedBox(width: SizeConfig.scale(6)),
@@ -728,7 +771,9 @@ class _FormCard extends StatelessWidget {
                           child: Text(
                             errorMessage!,
                             style: TextStyle(
-                              color: Colors.red.shade600,
+                              color: rateLimited
+                                  ? Colors.orange.shade800
+                                  : Colors.red.shade600,
                               fontSize: SizeConfig.scaledFontSize(11),
                               fontWeight: FontWeight.w500,
                               height: 1.3,
@@ -762,7 +807,15 @@ class _FormCard extends StatelessWidget {
                   ),
                 ),
 
-                SizedBox(height: SizeConfig.scale(12)),
+                SizedBox(height: SizeConfig.scale(4)),
+
+                // ── Consent checkbox ─────────────────────────────────────────
+                LegalConsentCheckbox(
+                  value: agreedToTerms,
+                  onChanged: onToggleTerms,
+                ),
+
+                SizedBox(height: SizeConfig.scale(16)),
 
                 // ── Sign in button ───────────────────────────────────────────
                 _SignInButton(isLoading: isLoading, onPressed: onSignIn),

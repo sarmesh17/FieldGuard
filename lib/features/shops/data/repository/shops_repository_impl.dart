@@ -31,11 +31,13 @@ class ShopsRepositoryImpl implements ShopsRepository {
               creatorCode: shop.creator!.code,
             ));
           } else {
-            // Fallback for shops without creator info
+            // Fallback for shops without creator info. `source` is non-null
+            // inside this branch (isFiltered == source != null), so it's the
+            // applied filter value.
             shops.add(ShopWithCreator(
               shop: shop,
               creatorName: 'Unknown',
-              creatorRole: source ?? 'Unknown',
+              creatorRole: source,
               creatorCode: 'N/A',
             ));
           }
