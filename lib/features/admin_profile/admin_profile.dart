@@ -10,6 +10,7 @@ import 'package:fieldguard/features/auth/login/presentation/providers/login_prov
 import 'package:fieldguard/features/employee/presentation/screens/create_employee_screen.dart';
 import 'package:fieldguard/features/legal/presentation/screens/legal_screen.dart';
 import 'package:fieldguard/features/manager/presentation/screens/create_manager_screen.dart';
+import 'package:fieldguard/features/subscription/presentation/screens/subscription_screen.dart';
 import 'package:fieldguard/widgets/app_skeletons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -97,6 +98,13 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen>
       MaterialPageRoute(
         builder: (context) => LegalScreen(initialTab: tab),
       ),
+    );
+  }
+
+  void _navigateToSubscription() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const SubscriptionScreen()),
     );
   }
 
@@ -324,6 +332,32 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen>
                             ),
                           ),
                           SizedBox(height: unit * 0.018),
+                          // Subscription — ADMIN only (plan + seats + billing).
+                          if (!isManager)
+                            Padding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: unit * 0.05,
+                              ),
+                              child: SlideTransition(
+                                position: _slideAnimation,
+                                child: FadeTransition(
+                                  opacity: _fadeAnimation,
+                                  child: SectionCard(
+                                    title: 'SUBSCRIPTION',
+                                    items: [
+                                      SectionTile(
+                                        icon: Icons.workspace_premium_rounded,
+                                        title: 'Plan & Billing',
+                                        iconColor: const Color(0xff0E5A3B),
+                                        iconBg: const Color(0xffDCF5E4),
+                                        onTap: _navigateToSubscription,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          if (!isManager) SizedBox(height: unit * 0.018),
                           // Account
                           Padding(
                             padding: EdgeInsets.symmetric(
@@ -459,10 +493,6 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen>
                         letterSpacing: 0.3,
                       ),
                     ),
-                    const Spacer(),
-                    _headerIconButton(Icons.notifications_none_rounded, unit),
-                    SizedBox(width: unit * 0.02),
-                    _headerIconButton(Icons.more_horiz_rounded, unit),
                   ],
                 ),
               ),
@@ -470,18 +500,6 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen>
           ],
         ),
       ),
-    );
-  }
-
-  Widget _headerIconButton(IconData icon, double w) {
-    return Container(
-      width: w * 0.1,
-      height: w * 0.1,
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(w * 0.03),
-      ),
-      child: Icon(icon, color: Colors.white, size: w * 0.055),
     );
   }
 
@@ -548,24 +566,13 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen>
           ),
         ),
         SizedBox(height: w * 0.018),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.alternate_email_rounded,
-              size: w * 0.038,
-              color: const Color(0xff6B7280),
-            ),
-            SizedBox(width: w * 0.012),
-            Text(
-              profile.company?.email ?? 'No company email',
-              style: TextStyle(
-                fontSize: w * 0.037,
-                color: const Color(0xff6B7280),
-                fontWeight: FontWeight.w400,
-              ),
-            ),
-          ],
+        Text(
+          profile.email ?? profile.company?.email ?? 'No email',
+          style: TextStyle(
+            fontSize: w * 0.037,
+            color: const Color(0xff6B7280),
+            fontWeight: FontWeight.w400,
+          ),
         ),
         SizedBox(height: w * 0.04),
         Container(

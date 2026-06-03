@@ -8,6 +8,7 @@ import 'package:fieldguard/core/responsive/responsive.dart';
 import 'package:fieldguard/core/utils/network_exception_mapper.dart';
 import 'package:fieldguard/features/manager/data/datasource/manager_datasource_impl.dart';
 import 'package:fieldguard/features/manager/data/dto/create_manager_request.dart';
+import 'package:fieldguard/features/subscription/presentation/widgets/seat_limit_dialog.dart';
 import 'package:fieldguard/features/uploads/image_upload_service.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -186,6 +187,13 @@ class _CreateManagerScreenState extends State<CreateManagerScreen>
         }
       }
     } on DioException catch (e) {
+      // 402 = staff seat limit reached → prompt to upgrade the plan.
+      if (e.response?.statusCode == 402) {
+        if (mounted) {
+          showSeatLimitDialog(context, NetworkExceptionMapper.map(e).message);
+        }
+        return;
+      }
       if (mounted) _handlePhoneAwareError(e);
     } catch (e) {
       if (mounted) {

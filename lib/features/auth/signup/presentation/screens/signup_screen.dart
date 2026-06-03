@@ -151,6 +151,10 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
       _snack('Please enter a valid company email');
       return;
     }
+    if (panCard.length != 9) {
+      _snack('PAN number must be 9 digits');
+      return;
+    }
     if (_citizenshipImagePath == null || _registrationDocPath == null) {
       _snack('Please upload both required documents');
       return;
@@ -472,7 +476,15 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
                                           _InputField(
                                             controller: _panCardController,
                                             icon: Icons.contact_page_outlined,
-                                            hint: 'ABCDE1234N',
+                                            hint: '123456789',
+                                            keyboardType: TextInputType.number,
+                                            inputFormatters: [
+                                              FilteringTextInputFormatter
+                                                  .digitsOnly,
+                                              LengthLimitingTextInputFormatter(
+                                                9,
+                                              ),
+                                            ],
                                           ),
                                         ),
 

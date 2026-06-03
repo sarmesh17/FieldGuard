@@ -27,8 +27,15 @@ class ErrorInterceptor extends Interceptor {
     final path = err.requestOptions.path;
 
     final isUnauthorized = status == 401;
+    // A 401 from these public endpoints is meaningful in its own right
+    // (bad credentials / bad-or-expired OTP), never a "session expired". Let it
+    // pass straight through so we don't fire a pointless refresh or log the
+    // user out of a session they aren't even in.
     final isAuthEndpoint =
-        path.contains('/auth/refresh-token') || path.contains('/auth/login');
+        path.contains('/auth/refresh-token') ||
+        path.contains('/auth/login') ||
+        path.contains('/auth/forgot-password') ||
+        path.contains('/auth/reset-password');
     final alreadyRetried = err.requestOptions.extra[_retriedFlag] == true;
 
     if (!isUnauthorized || isAuthEndpoint || alreadyRetried) {

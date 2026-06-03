@@ -43,6 +43,16 @@ class Session {
     return id is int ? id : null;
   }
 
+  /// Company id from the `companyId` claim, or null if unknown. Used as the
+  /// `entityId` when requesting a presigned upload URL for company-scoped
+  /// assets (e.g. payment screenshots).
+  static Future<int?> companyId() async {
+    final token = await TokenStorage.getAccessToken();
+    if (token == null || token.isEmpty) return null;
+    final id = _decodeJwt(token)['companyId'];
+    return id is num ? id.toInt() : null;
+  }
+
   /// Access-token expiry from the `exp` claim, or null if unknown.
   static Future<DateTime?> accessTokenExpiry() async {
     final token = await TokenStorage.getAccessToken();
