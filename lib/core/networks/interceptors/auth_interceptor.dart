@@ -10,8 +10,14 @@ class AuthInterceptor extends Interceptor {
     RequestInterceptorHandler handler,
   ) async {
     final path = options.path;
+    // Public auth endpoints: no token to attach and no point pre-refreshing one.
+    // forgot-/reset-password are reached while logged out, so any stale token
+    // must not trigger a refresh attempt here.
     final isAuthEndpoint =
-        path.contains('/auth/refresh-token') || path.contains('/auth/login');
+        path.contains('/auth/refresh-token') ||
+        path.contains('/auth/login') ||
+        path.contains('/auth/forgot-password') ||
+        path.contains('/auth/reset-password');
 
     // Proactively refresh an access token that has already expired instead
     // of firing a request that is guaranteed to 401. This is what keeps a

@@ -7,6 +7,15 @@ class ApiConstant {
   static const String refreshTokenEndpoint =
       "$baseUrl/api/v1/auth/refresh-token";
 
+  // OTP-based password reset (ADMIN only). Both are public — no auth token.
+  // Step 1: request an OTP by phone number.
+  static const String forgotPasswordEndpoint =
+      "$baseUrl/api/v1/auth/forgot-password";
+  // Step 2: submit the OTP + new password. A 401 here means a bad/expired OTP,
+  // NOT a session problem.
+  static const String resetPasswordEndpoint =
+      "$baseUrl/api/v1/auth/reset-password";
+
   // The endpoint for company registration
   static const String companyRegistration = "$baseUrl/api/v1/company/register";
 
@@ -16,6 +25,26 @@ class ApiConstant {
 
   // The endpoint for confirming company documents (PATCH)
   static const String companyEndpoint = "$baseUrl/api/v1/company";
+
+  // ─── Subscription / billing (company ADMIN) ─────────────────────────────────
+  // Current plan + seat usage + available plans + payment QR.
+  static const String companySubscriptionEndpoint =
+      "$baseUrl/api/v1/company/subscription";
+  // Submit a PRO upgrade request (months + payment proof image key).
+  static const String subscriptionRequestEndpoint =
+      "$baseUrl/api/v1/company/subscription/request";
+  // List upgrade requests (newest first) — polled while one is pending.
+  static const String subscriptionRequestsEndpoint =
+      "$baseUrl/api/v1/company/subscription/requests";
+
+  // ─── ENTERPRISE "Talk to us" call requests (company ADMIN) ──────────────────
+  // Submit a call-back lead (contact phone + optional staff count / note). Only
+  // one PENDING allowed at a time → a 409 means one is already open.
+  static const String enterpriseInquiryEndpoint =
+      "$baseUrl/api/v1/company/subscription/enterprise-inquiry";
+  // List this company's enterprise inquiries (newest first) — track status.
+  static const String enterpriseInquiriesEndpoint =
+      "$baseUrl/api/v1/company/subscription/enterprise-inquiries";
 
   // The endpoint for creating employees
   static const String createEmployeeEndpoint = "$baseUrl/api/v1/employees";

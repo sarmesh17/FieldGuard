@@ -788,7 +788,7 @@ class _FormCard extends StatelessWidget {
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: () {},
+                    onPressed: () => context.push(AppRoutes.forgotPassword),
                     style: TextButton.styleFrom(
                       padding: EdgeInsets.symmetric(
                         vertical: SizeConfig.scale(6),

@@ -167,7 +167,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                 FittedBox(
                   fit: BoxFit.scaleDown,
                   child: Text(
-                    'FieldGuard',
+                    'FieldGuard HQ',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: SizeConfig.scaledFontSize(30),

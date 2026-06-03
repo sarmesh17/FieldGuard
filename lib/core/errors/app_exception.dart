@@ -52,3 +52,17 @@ class ValidationException extends AppException {
 class ServerException extends AppException {
   const ServerException(super.message);
 }
+
+/// HTTP 409 — the request conflicts with existing state (e.g. a subscription
+/// upgrade request is already pending). Surfaced distinctly so callers can
+/// react to the conflict (e.g. jump to the waiting screen) instead of treating
+/// it as a generic validation error.
+class ConflictException extends AppException {
+  const ConflictException(super.message);
+}
+
+/// HTTP 402 — payment required. The company has hit a plan limit (e.g. no staff
+/// seats left) and must upgrade. [message] is the backend's explanation.
+class PaymentRequiredException extends AppException {
+  const PaymentRequiredException(super.message);
+}
