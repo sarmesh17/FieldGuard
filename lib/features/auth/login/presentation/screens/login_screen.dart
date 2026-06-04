@@ -12,8 +12,8 @@ import '../providers/login_state.dart';
 import 'package:fieldguard/core/theme/app_colors.dart';
 
 // ─── Brand colours ─────────────────────────────────────────────────────────────
-const _kDark = AppColors.green10;
-const _kPrimary = AppColors.green12;
+const _kDark = AppColors.green;
+const _kPrimary = AppColors.green;
 const _kMid = AppColors.gradientStart;
 const _kLight = AppColors.gradientEnd;
 const _kFocus = AppColors.green6;
@@ -252,8 +252,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                                                   gradient:
                                                       const LinearGradient(
                                                         colors: [
-                                                          AppColors.green25,
-                                                          AppColors.green10,
+                                                          AppColors.green5,
+                                                          AppColors.green,
                                                         ],
                                                         begin:
                                                             Alignment.topLeft,
@@ -893,7 +893,7 @@ class _ModernFieldState extends State<_ModernField> {
                   gradient: LinearGradient(
                     colors: _focused
                         ? [_kMid, _kDark]
-                        : [AppColors.grey15, AppColors.green14],
+                        : [AppColors.grey15, AppColors.green6],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -1008,7 +1008,7 @@ class _ModernPasswordFieldState extends State<_ModernPasswordField> {
                   gradient: LinearGradient(
                     colors: _focused
                         ? [_kMid, _kDark]
-                        : [AppColors.grey15, AppColors.green14],
+                        : [AppColors.grey15, AppColors.green6],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),

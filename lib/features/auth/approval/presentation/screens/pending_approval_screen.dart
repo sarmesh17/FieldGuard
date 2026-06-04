@@ -7,8 +7,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fieldguard/core/theme/app_colors.dart';
 
 // ─── Brand colours ───────────────────────────────────────────────────────────
-const _kDark = AppColors.green10;
-const _kPrimary = AppColors.green12;
+const _kDark = AppColors.green;
+const _kPrimary = AppColors.green;
 const _kMid = AppColors.gradientStart;
 const _kLight = AppColors.gradientEnd;
 

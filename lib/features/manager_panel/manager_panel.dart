@@ -47,7 +47,7 @@ class ManageRepsScreen extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: wp(.08),
                                 fontWeight: FontWeight.w700,
-                                color: AppColors.green23,
+                                color: AppColors.green,
                               ),
                             ),
                           ),
@@ -56,7 +56,7 @@ class ManageRepsScreen extends StatelessWidget {
                               Icon(
                                 Icons.add,
                                 size: wp(.08),
-                                color: AppColors.green13,
+                                color: AppColors.green,
                               ),
                               SizedBox(width: wp(.015)),
                               Text(
@@ -64,7 +64,7 @@ class ManageRepsScreen extends StatelessWidget {
                                 style: TextStyle(
                                   fontSize: wp(.055),
                                   fontWeight: FontWeight.w600,
-                                  color: AppColors.green13,
+                                  color: AppColors.green,
                                 ),
                               ),
                             ],
@@ -178,7 +178,7 @@ class FilterChipWidget extends StatelessWidget {
     this.active = false,
     this.outlinedRed = false,
     this.icon,
-    this.activeColor = AppColors.green13,
+    this.activeColor = AppColors.green,
   });
 
   @override
@@ -290,7 +290,7 @@ class RepCard extends StatelessWidget {
                               width: width * .05,
                               height: width * .05,
                               decoration: BoxDecoration(
-                                color: AppColors.green27,
+                                color: AppColors.green5,
                                 shape: BoxShape.circle,
                                 border: Border.all(
                                   color: Colors.white,
@@ -329,7 +329,7 @@ class RepCard extends StatelessWidget {
                         child: Switch(
                           value: true,
                           activeColor: Colors.white,
-                          activeTrackColor: AppColors.green13,
+                          activeTrackColor: AppColors.green,
                           onChanged: (_) {},
                         ),
                       ),

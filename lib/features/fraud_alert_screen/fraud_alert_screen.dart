@@ -151,7 +151,7 @@ class TopTab extends StatelessWidget {
         Text(
           text,
           style: TextStyle(
-            color: selected ? AppColors.green18 : AppColors.grey5,
+            color: selected ? AppColors.green : AppColors.grey5,
             fontSize: width * .042,
             fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
           ),
@@ -162,7 +162,7 @@ class TopTab extends StatelessWidget {
           width: selected ? width * .11 : 0,
           height: width * .008,
           decoration: BoxDecoration(
-            color: AppColors.green18,
+            color: AppColors.green,
             borderRadius: BorderRadius.circular(width * .02),
           ),
         ),
@@ -308,14 +308,14 @@ class ResolvedCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: AppColors.green19,
+                      color: AppColors.gradientEnd,
                       width: width * .004,
                     ),
                   ),
                   child: Icon(
                     Icons.check,
                     size: width * .045,
-                    color: AppColors.green19,
+                    color: AppColors.gradientEnd,
                   ),
                 ),
               ],

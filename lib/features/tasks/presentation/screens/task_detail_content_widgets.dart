@@ -825,7 +825,7 @@ class _LoadingSkeleton extends StatelessWidget {
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [AppColors.green16, _kBrandLight],
+              colors: [AppColors.green, _kBrandLight],
             ),
           ),
           child: const SafeArea(

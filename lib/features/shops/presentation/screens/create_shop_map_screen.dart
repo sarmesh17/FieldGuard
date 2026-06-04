@@ -148,7 +148,7 @@ class _CreateShopMapScreenState extends State<CreateShopMapScreen> {
               child: LinearProgressIndicator(
                 minHeight: 3,
                 color: _brand,
-                backgroundColor: AppColors.green4,
+                backgroundColor: AppColors.green6,
               ),
             ),
 

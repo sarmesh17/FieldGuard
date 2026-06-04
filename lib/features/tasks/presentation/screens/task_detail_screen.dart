@@ -25,8 +25,8 @@ part 'task_detail_status_widgets.dart';
 part 'task_detail_content_widgets.dart';
 part 'task_detail_action_widgets.dart';
 
-const _kBrand = AppColors.green2;
-const _kBrandLight = AppColors.green7;
+const _kBrand = AppColors.green;
+const _kBrandLight = AppColors.green;
 const _kInk = AppColors.ink2;
 const _kMuted = AppColors.grey8;
 const _kBg = AppColors.white2;

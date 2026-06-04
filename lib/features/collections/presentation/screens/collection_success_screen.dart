@@ -118,7 +118,7 @@ class _SuccessHero extends StatelessWidget {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [_kBrand, AppColors.green7],
+          colors: [_kBrand, AppColors.green],
         ),
         boxShadow: [
           BoxShadow(

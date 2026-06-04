@@ -194,7 +194,7 @@ class AlertCard extends StatelessWidget {
                       height: height * .055,
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.green22,
+                          backgroundColor: AppColors.green,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(width * .025),

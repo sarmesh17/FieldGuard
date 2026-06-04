@@ -291,7 +291,7 @@ class _ManagerDetailScreenState extends State<ManagerDetailScreen>
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [AppColors.green, AppColors.green3],
+                  colors: [AppColors.green, AppColors.green],
                 ),
               ),
               child: Column(
@@ -392,7 +392,7 @@ class _ManagerDetailScreenState extends State<ManagerDetailScreen>
                         ),
                         decoration: BoxDecoration(
                           color: _manager!.isActive
-                              ? AppColors.green4
+                              ? AppColors.green6
                               : AppColors.red8,
                           borderRadius:
                               BorderRadius.circular(SizeConfig.scale(20)),
@@ -444,7 +444,7 @@ class _ManagerDetailScreenState extends State<ManagerDetailScreen>
                             'Created',
                             _manager!.createdCount.toString(),
                             Icons.person_add,
-                            AppColors.green3,
+                            AppColors.green,
                           ),
                         ),
                       ],
@@ -478,21 +478,21 @@ class _ManagerDetailScreenState extends State<ManagerDetailScreen>
                       icon: Icons.badge,
                       label: 'Role',
                       value: _manager!.role,
-                      iconColor: AppColors.green3,
+                      iconColor: AppColors.green,
                     ),
                     SizedBox(height: SizeConfig.scale(12)),
                     _buildInfoCard(
                       icon: Icons.business,
                       label: 'Company ID',
                       value: _manager!.companyId,
-                      iconColor: AppColors.green3,
+                      iconColor: AppColors.green,
                     ),
                     SizedBox(height: SizeConfig.scale(12)),
                     _buildInfoCard(
                       icon: Icons.calendar_today,
                       label: 'Joined Date',
                       value: _formatDate(_manager!.createdAt),
-                      iconColor: AppColors.green3,
+                      iconColor: AppColors.green,
                     ),
                     SizedBox(height: SizeConfig.heightPercent(3)),
                   ],

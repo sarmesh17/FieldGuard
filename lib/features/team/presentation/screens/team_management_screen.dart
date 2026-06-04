@@ -15,9 +15,9 @@ import 'package:flutter/material.dart';
 import 'package:fieldguard/core/theme/app_colors.dart';
 
 // ─── Brand palette (consistent with Profile / Login) ────────────────────────
-const _kDark = AppColors.green8;
+const _kDark = AppColors.green;
 const _kPrimary = AppColors.green;
-const _kMid = AppColors.green3;
+const _kMid = AppColors.green;
 const _kSurface = AppColors.white;
 const _kBorder = AppColors.grey3;
 const _kMuted = AppColors.grey;
@@ -925,7 +925,7 @@ class _TeamManagementScreenState extends State<TeamManagementScreen>
             width: _s(6),
             height: _s(6),
             decoration: const BoxDecoration(
-              color: AppColors.green9,
+              color: AppColors.green5,
               shape: BoxShape.circle,
             ),
           ),
@@ -934,7 +934,7 @@ class _TeamManagementScreenState extends State<TeamManagementScreen>
             'Live',
             style: TextStyle(
               fontSize: _sf(11),
-              color: AppColors.green9,
+              color: AppColors.green5,
               fontWeight: FontWeight.w700,
             ),
           ),

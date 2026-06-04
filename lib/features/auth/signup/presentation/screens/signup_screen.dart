@@ -13,8 +13,8 @@ import 'package:go_router/go_router.dart';
 import 'package:fieldguard/core/theme/app_colors.dart';
 
 // ─── Brand colours ─────────────────────────────────────────────────────────────
-const _kDark = AppColors.green10;
-const _kPrimary = AppColors.green12;
+const _kDark = AppColors.green;
+const _kPrimary = AppColors.green;
 const _kMid = AppColors.gradientStart;
 const _kLight = AppColors.gradientEnd;
 const _kFieldFocus = AppColors.green6;
@@ -1359,7 +1359,7 @@ class _PasswordStrengthBar extends StatelessWidget {
       case 3:
         return Colors.amber.shade600;
       default:
-        return AppColors.green24;
+        return AppColors.green5;
     }
   }
 

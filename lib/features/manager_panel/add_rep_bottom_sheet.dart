@@ -152,7 +152,7 @@ class AddRepBottomSheet extends StatelessWidget {
                     child: ElevatedButton(
                       onPressed: () {},
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.green13,
+                        backgroundColor: AppColors.green,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(width * .03),

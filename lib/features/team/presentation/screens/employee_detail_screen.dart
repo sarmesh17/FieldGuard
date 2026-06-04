@@ -324,9 +324,9 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen>
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    AppColors.green17,
                     AppColors.green,
-                    AppColors.green26,
+                    AppColors.green,
+                    AppColors.green5,
                   ],
                 ),
               ),
@@ -418,7 +418,7 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen>
                         ),
                         decoration: BoxDecoration(
                           color: _employee!.isActive
-                              ? AppColors.green4
+                              ? AppColors.green6
                               : AppColors.red8,
                           borderRadius: BorderRadius.circular(
                             SizeConfig.scale(20),
@@ -575,7 +575,7 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen>
     final img = _employee!.profileImage;
 
     final fallback = Container(
-      color: AppColors.green31,
+      color: AppColors.green6,
       alignment: Alignment.center,
       child: Text(
         _initials(),

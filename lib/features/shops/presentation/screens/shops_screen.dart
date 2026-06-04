@@ -13,9 +13,9 @@ import 'package:go_router/go_router.dart';
 import 'package:fieldguard/core/theme/app_colors.dart';
 
 // ─── Brand palette (consistent with Team / Routes / Profile) ────────────────
-const _kDark = AppColors.green8;
+const _kDark = AppColors.green;
 const _kPrimary = AppColors.green;
-const _kMid = AppColors.green3;
+const _kMid = AppColors.green;
 const _kSurface = AppColors.white;
 const _kBorder = AppColors.grey3;
 const _kMuted = AppColors.grey;

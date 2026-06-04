@@ -368,7 +368,7 @@ class _TasksAppBar extends StatelessWidget {
     return SliverAppBar(
       expandedHeight: 140,
       pinned: true,
-      backgroundColor: AppColors.green2,
+      backgroundColor: AppColors.green,
       elevation: 0,
       surfaceTintColor: Colors.transparent,
       automaticallyImplyLeading: false,
@@ -381,7 +381,7 @@ class _TasksAppBar extends StatelessWidget {
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [AppColors.green21, AppColors.green7],
+                    colors: [AppColors.green, AppColors.green],
                   ),
                 ),
               ),
@@ -520,7 +520,7 @@ class _AdminManagerPickerBar extends StatelessWidget {
                 width: 20,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: AppColors.green2,
+                  color: AppColors.green,
                 ),
               ),
             )
@@ -547,7 +547,7 @@ class _AdminManagerPickerBar extends StatelessWidget {
                   _FilterChip(
                     label: 'All',
                     selected: selected == null,
-                    color: AppColors.green2,
+                    color: AppColors.green,
                     icon: null,
                     onTap: () => onChanged(null),
                   ),
@@ -557,7 +557,7 @@ class _AdminManagerPickerBar extends StatelessWidget {
                       child: _FilterChip(
                         label: m.fullName,
                         selected: selected?.id == m.id,
-                        color: AppColors.green2,
+                        color: AppColors.green,
                         icon: null,
                         onTap: () => onChanged(selected?.id == m.id ? null : m),
                       ),
@@ -602,7 +602,7 @@ class _TeamFilterBar extends StatelessWidget {
             label: 'Created by',
             options: const ['MINE'],
             selected: onlyMine ? 'MINE' : null,
-            colorOf: (_) => AppColors.green2,
+            colorOf: (_) => AppColors.green,
             labelOf: (_) => 'Me',
             iconOf: (_) => null,
             onChanged: (v) => onOnlyMineChanged(v == 'MINE'),
@@ -613,7 +613,7 @@ class _TeamFilterBar extends StatelessWidget {
             label: 'Assignee',
             options: const ['MANAGER', 'EMPLOYEE'],
             selected: assigneeRole,
-            colorOf: (_) => AppColors.green2,
+            colorOf: (_) => AppColors.green,
             labelOf: _capitalise,
             iconOf: (_) => null,
             onChanged: onAssigneeRoleChanged,
@@ -730,7 +730,7 @@ class _ChipRow extends StatelessWidget {
             _FilterChip(
               label: 'All',
               selected: selected == null,
-              color: AppColors.green2,
+              color: AppColors.green,
               icon: null,
               onTap: () => onChanged(null),
             ),
@@ -876,7 +876,7 @@ class _PaginatedTaskListState extends State<_PaginatedTaskList> {
 
     return RefreshIndicator(
       onRefresh: widget.onRefresh,
-      color: AppColors.green2,
+      color: AppColors.green,
       child: ListView.builder(
         controller: _controller,
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 110),
@@ -906,7 +906,7 @@ class _LoadMoreFooter extends StatelessWidget {
           width: 22,
           child: CircularProgressIndicator(
             strokeWidth: 2.4,
-            color: AppColors.green2,
+            color: AppColors.green,
           ),
         ),
       ),
@@ -1306,12 +1306,12 @@ class _CreateFAB extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 22),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
-            colors: [AppColors.green2, AppColors.green7],
+            colors: [AppColors.green, AppColors.green],
           ),
           borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
-              color: AppColors.green2.withValues(alpha: 0.45),
+              color: AppColors.green.withValues(alpha: 0.45),
               blurRadius: 16,
               offset: const Offset(0, 6),
             ),
@@ -1369,12 +1369,12 @@ class _EmptyView extends StatelessWidget {
                 gradient: const LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [AppColors.green31, AppColors.green30],
+                  colors: [AppColors.green6, AppColors.green6],
                 ),
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.green2.withValues(alpha: 0.12),
+                    color: AppColors.green.withValues(alpha: 0.12),
                     blurRadius: 20,
                     offset: const Offset(0, 8),
                   ),
@@ -1383,7 +1383,7 @@ class _EmptyView extends StatelessWidget {
               child: const Icon(
                 Icons.task_alt_rounded,
                 size: 44,
-                color: AppColors.green2,
+                color: AppColors.green,
               ),
             ),
             const SizedBox(height: 24),
@@ -1460,7 +1460,7 @@ class _ErrorView extends StatelessWidget {
               icon: const Icon(Icons.refresh_rounded, size: 18),
               label: const Text('Try Again'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.green2,
+                backgroundColor: AppColors.green,
                 foregroundColor: Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
@@ -1488,7 +1488,7 @@ class _ErrorView extends StatelessWidget {
 Color _statusColor(String status) => switch (status.toUpperCase()) {
   'PENDING' => AppColors.orange2,
   'IN_PROGRESS' => AppColors.blue3,
-  'COMPLETED' => AppColors.green2,
+  'COMPLETED' => AppColors.green,
   'CANCELLED' => AppColors.red5,
   _ => AppColors.grey,
 };

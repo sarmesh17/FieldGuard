@@ -16,9 +16,9 @@ import 'package:intl/intl.dart';
 import 'package:fieldguard/core/theme/app_colors.dart';
 
 // ─── Brand palette (consistent with Team / Routes / Shops / Profile) ─────────
-const _kDark = AppColors.green8;
+const _kDark = AppColors.green;
 const _kPrimary = AppColors.green;
-const _kMid = AppColors.green3;
+const _kMid = AppColors.green;
 const _kSurface = AppColors.background;
 
 class Dashboard extends ConsumerWidget {
@@ -270,7 +270,7 @@ class _HeroProgressRings extends ConsumerWidget {
               label: 'Overall',
               completed: overall?.completedTasks ?? 0,
               total: overall?.totalTasks ?? 0,
-              gradient: const [AppColors.green29, AppColors.white16],
+              gradient: const [AppColors.gradientEnd, AppColors.white16],
             ),
           ),
         ],
@@ -682,7 +682,7 @@ class _QuickActionsSection extends ConsumerWidget {
             icon: Icons.add_task_rounded,
             label: 'New Task',
             color: AppColors.green6,
-            iconColor: AppColors.green9,
+            iconColor: AppColors.green5,
             onTap: () => context.push(AppRoutes.tasks),
           ),
           const SizedBox(width: 12),
@@ -908,10 +908,10 @@ class _TaskSummarySection extends ConsumerWidget {
             child: _TaskStatCard(
               icon: Icons.check_circle_outline_rounded,
               iconBg: AppColors.green6,
-              iconColor: AppColors.green9,
+              iconColor: AppColors.green5,
               value: summary.completedTasks,
               label: 'DONE',
-              valueColor: AppColors.green9,
+              valueColor: AppColors.green5,
             ),
           ),
           const SizedBox(width: 12),
@@ -1123,7 +1123,7 @@ class _TeamStatusSection extends ConsumerWidget {
       data: (team) => Column(
         children: [
           _teamCard(
-            dotColor: AppColors.green28,
+            dotColor: AppColors.green5,
             title: 'Online Now',
             value:
                 '${team.onlineTeam} ${team.onlineTeam == 1 ? 'Rep' : 'Reps'}',
@@ -1265,14 +1265,14 @@ class _ActivityFeedSection extends ConsumerWidget {
 
               if (event.action.toUpperCase().contains('CREATE')) {
                 icon = Icons.add_circle_outline_rounded;
-                color = AppColors.green9;
+                color = AppColors.green5;
               } else if (event.action.toUpperCase().contains('UPDATE') ||
                   event.action.toUpperCase().contains('CHANGE')) {
                 icon = Icons.edit_note_rounded;
                 color = AppColors.orange3;
               } else if (event.action.toUpperCase().contains('COMPLETE')) {
                 icon = Icons.check_circle_outline_rounded;
-                color = AppColors.green9;
+                color = AppColors.green5;
               }
 
               // Format date (e.g., "10:30 AM")

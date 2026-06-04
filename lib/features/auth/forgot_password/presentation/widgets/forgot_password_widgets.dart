@@ -4,8 +4,8 @@ import 'package:flutter/services.dart';
 import 'package:fieldguard/core/theme/app_colors.dart';
 
 // ─── Brand colours (shared with the login screen) ────────────────────────────
-const kFpDark = AppColors.green10;
-const kFpPrimary = AppColors.green12;
+const kFpDark = AppColors.green;
+const kFpPrimary = AppColors.green;
 const kFpMid = AppColors.gradientStart;
 const kFpLight = AppColors.gradientEnd;
 const kFpFocus = AppColors.green6;
@@ -223,7 +223,7 @@ class _FpPillFieldState extends State<FpPillField> {
                             ? [kFpMid, kFpDark]
                             : [
                                 AppColors.grey15,
-                                AppColors.green14,
+                                AppColors.green6,
                               ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,

@@ -252,7 +252,7 @@ class _LiveMapScreenState extends State<LiveMapScreen> {
               child: LinearProgressIndicator(
                 minHeight: 3,
                 color: _green,
-                backgroundColor: AppColors.green4,
+                backgroundColor: AppColors.green6,
               ),
             ),
 

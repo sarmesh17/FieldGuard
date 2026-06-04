@@ -5,8 +5,6 @@ class AppColors {
   AppColors._();
 
   // ─── Brand ────────────────────────────────────────────────────────────────
-  static const Color primary = Color(0xFF1F5E3B);
-  static const Color primaryDark = Color(0xFF1A4F32);
 
   // ─── Gradient ─────────────────────────────────────────────────────────────
   static const Color gradientStart = Color(0xFF2E6F4F);
@@ -31,36 +29,9 @@ class AppColors {
 
   // green
   static const Color green = Color(0xFF0E5A3B); // ×192
-  static const Color green2 = Color(0xFF005C33); // ×17
-  static const Color green3 = Color(0xFF1D7A51); // ×13
-  static const Color green4 = Color(0xFFDDF5E0); // ×11
   static const Color green5 = Color(0xFF22C55E); // ×8
   static const Color green6 = Color(0xFFF0FDF4); // ×14
-  static const Color green7 = Color(0xFF00874C); // ×7
-  static const Color green8 = Color(0xFF072A1C); // ×7
-  static const Color green9 = Color(0xFF16A34A); // ×7
-  static const Color green10 = Color(0xFF1A4731); // ×7
-  static const Color green11 = Color(0xFFD1FADF); // ×7
-  static const Color green12 = Color(0xFF165C3D); // ×6
-  static const Color green13 = Color(0xFF1F6B46); // ×5
-  static const Color green14 = Color(0xFFD8E7DE); // ×4
-  static const Color green15 = Color(0xFFDCF5E4); // ×3
-  static const Color green16 = Color(0xFF003D22); // ×2
-  static const Color green17 = Color(0xFF0B4A30); // ×2
-  static const Color green18 = Color(0xFF0B6A3F); // ×2
-  static const Color green19 = Color(0xFF5BC88B); // ×2
   static const Color green20 = Color(0x330E5A3B); // ×1
-  static const Color green21 = Color(0xFF004D2B); // ×1
-  static const Color green22 = Color(0xFF045C38); // ×1
-  static const Color green23 = Color(0xFF0B4E32); // ×1
-  static const Color green24 = Color(0xFF2E7D32); // ×1
-  static const Color green25 = Color(0xFF2E7D52); // ×1
-  static const Color green26 = Color(0xFF2E8B57); // ×1
-  static const Color green27 = Color(0xFF3BA66B); // ×1
-  static const Color green28 = Color(0xFF4CB67A); // ×1
-  static const Color green29 = Color(0xFF6EE7B7); // ×1
-  static const Color green30 = Color(0xFFD0EDE0); // ×1
-  static const Color green31 = Color(0xFFE8F5EE); // ×2
 
   // teal
   static const Color teal = Color(0xFF163B45); // ×1

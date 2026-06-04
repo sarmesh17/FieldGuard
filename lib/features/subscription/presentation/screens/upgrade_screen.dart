@@ -624,7 +624,7 @@ class _ProofPicker extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.circular(SizeConfig.scale(16)),
           border: Border.all(
-            color: uploaded ? kSubPrimary : AppColors.green14,
+            color: uploaded ? kSubPrimary : AppColors.green6,
             width: 1.5,
           ),
         ),
