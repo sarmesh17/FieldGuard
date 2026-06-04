@@ -2,6 +2,7 @@ import 'package:fieldguard/core/responsive/responsive.dart';
 import 'package:fieldguard/features/subscription/presentation/screens/subscription_screen.dart';
 import 'package:fieldguard/features/subscription/presentation/widgets/subscription_widgets.dart';
 import 'package:flutter/material.dart';
+import 'package:fieldguard/core/theme/app_colors.dart';
 
 /// Shown when a create-staff call returns 402 (seat limit reached). Explains
 /// the limit (using the backend's [message]) and offers to open the plans
@@ -38,7 +39,7 @@ Future<void> showSeatLimitDialog(BuildContext context, String message) async {
               style: TextStyle(
                 fontSize: SizeConfig.scaledFontSize(19),
                 fontWeight: FontWeight.w800,
-                color: const Color(0xff111827),
+                color: AppColors.ink,
               ),
             ),
             SizedBox(height: SizeConfig.scale(10)),
@@ -47,7 +48,7 @@ Future<void> showSeatLimitDialog(BuildContext context, String message) async {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: SizeConfig.scaledFontSize(13),
-                color: const Color(0xff667085),
+                color: AppColors.grey,
                 height: 1.45,
               ),
             ),
@@ -61,7 +62,7 @@ Future<void> showSeatLimitDialog(BuildContext context, String message) async {
                       padding: EdgeInsets.symmetric(
                         vertical: SizeConfig.scale(14),
                       ),
-                      foregroundColor: const Color(0xff667085),
+                      foregroundColor: AppColors.grey,
                     ),
                     child: Text(
                       'Not now',

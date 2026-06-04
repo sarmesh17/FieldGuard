@@ -2,8 +2,9 @@ import 'package:fieldguard/core/responsive/responsive.dart';
 import 'package:fieldguard/features/legal/presentation/screens/legal_screen.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:fieldguard/core/theme/app_colors.dart';
 
-const _kPrimary = Color(0xFF165C3D);
+const _kPrimary = AppColors.green12;
 
 /// A checkbox + rich-text line asking the user to accept the Terms & Conditions
 /// and Privacy Policy. The two document names are tappable and open the

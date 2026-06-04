@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fieldguard/core/theme/app_colors.dart';
 
 class SectionCard extends StatelessWidget {
   final String title;
@@ -48,7 +49,7 @@ class SectionCard extends StatelessWidget {
                     height: w * 0.042,
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [Color(0xff6558FF), Color(0xff9B4EFF)],
+                        colors: [AppColors.blue, AppColors.purple2],
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                       ),
@@ -64,8 +65,8 @@ class SectionCard extends StatelessWidget {
                     letterSpacing: 1.4,
                     fontWeight: FontWeight.w700,
                     color: highlighted
-                        ? const Color(0xff635BFF)
-                        : const Color(0xff9CA3AF),
+                        ? AppColors.blue5
+                        : AppColors.grey2,
                   ),
                 ),
               ],
@@ -73,7 +74,7 @@ class SectionCard extends StatelessWidget {
           ),
           Container(
             height: 1,
-            color: const Color(0xffF3F4F6),
+            color: AppColors.white8,
           ),
           // Items with dividers between them
           for (int i = 0; i < items.length; i++) ...[
@@ -81,7 +82,7 @@ class SectionCard extends StatelessWidget {
             if (i < items.length - 1)
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: w * 0.045),
-                child: Container(height: 1, color: const Color(0xffF3F4F6)),
+                child: Container(height: 1, color: AppColors.white8),
               ),
           ],
           SizedBox(height: w * 0.01),

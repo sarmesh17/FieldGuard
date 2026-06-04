@@ -55,7 +55,7 @@ class _CollectPaymentFab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const amber = Color(0xffB45309);
+    const amber = AppColors.brown4;
     return Material(
       color: amber,
       borderRadius: BorderRadius.circular(30),
@@ -153,10 +153,10 @@ class _UpdateTaskSheetState extends ConsumerState<_UpdateTaskSheet> {
   late final ImageUploadService _uploadService;
 
   static const _statuses = [
-    ('PENDING', 'Pending', Color(0xffF59E0B)),
-    ('IN_PROGRESS', 'In Progress', Color(0xff3B82F6)),
-    ('COMPLETED', 'Completed', Color(0xff22C55E)),
-    ('CANCELLED', 'Cancelled', Color(0xff6B7280)),
+    ('PENDING', 'Pending', AppColors.orange2),
+    ('IN_PROGRESS', 'In Progress', AppColors.blue3),
+    ('COMPLETED', 'Completed', AppColors.green5),
+    ('CANCELLED', 'Cancelled', AppColors.grey5),
   ];
 
   @override
@@ -317,7 +317,7 @@ class _UpdateTaskSheetState extends ConsumerState<_UpdateTaskSheet> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: const Color(0xffE0E4EA),
+                  color: AppColors.grey7,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -342,7 +342,7 @@ class _UpdateTaskSheetState extends ConsumerState<_UpdateTaskSheet> {
                   style: TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xff0D1B2A),
+                    color: AppColors.ink2,
                   ),
                 ),
               ],
@@ -355,7 +355,7 @@ class _UpdateTaskSheetState extends ConsumerState<_UpdateTaskSheet> {
               style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xff0D1B2A)),
+                  color: AppColors.ink2),
             ),
             const SizedBox(height: 10),
             Wrap(
@@ -381,7 +381,7 @@ class _UpdateTaskSheetState extends ConsumerState<_UpdateTaskSheet> {
                 style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xff0D1B2A)),
+                    color: AppColors.ink2),
               ),
               const SizedBox(height: 10),
               Wrap(
@@ -392,7 +392,7 @@ class _UpdateTaskSheetState extends ConsumerState<_UpdateTaskSheet> {
                   return _Chip(
                     label: r.chipLabel,
                     selected: selected,
-                    selectedColor: const Color(0xffEF4444),
+                    selectedColor: AppColors.red4,
                     onTap: () => _onReasonTap(r),
                   );
                 }).toList(),
@@ -407,7 +407,7 @@ class _UpdateTaskSheetState extends ConsumerState<_UpdateTaskSheet> {
                   style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xff0D1B2A)),
+                      color: AppColors.ink2),
                 ),
                 const SizedBox(height: 10),
                 _ImagePickerSection(
@@ -428,7 +428,7 @@ class _UpdateTaskSheetState extends ConsumerState<_UpdateTaskSheet> {
                   style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xff0D1B2A)),
+                      color: AppColors.ink2),
                 ),
                 const SizedBox(height: 10),
                 TextField(
@@ -437,9 +437,9 @@ class _UpdateTaskSheetState extends ConsumerState<_UpdateTaskSheet> {
                   decoration: InputDecoration(
                     hintText: 'Describe the reason…',
                     hintStyle: const TextStyle(
-                        fontSize: 13.5, color: Color(0xffB0B7C3)),
+                        fontSize: 13.5, color: AppColors.grey9),
                     filled: true,
-                    fillColor: const Color(0xffF2F4F7),
+                    fillColor: AppColors.white3,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
@@ -460,7 +460,7 @@ class _UpdateTaskSheetState extends ConsumerState<_UpdateTaskSheet> {
                 style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xff0D1B2A)),
+                    color: AppColors.ink2),
               ),
               const SizedBox(height: 10),
               TextField(
@@ -469,9 +469,9 @@ class _UpdateTaskSheetState extends ConsumerState<_UpdateTaskSheet> {
                 decoration: InputDecoration(
                   hintText: 'Why is this task being reopened?',
                   hintStyle: const TextStyle(
-                      fontSize: 13.5, color: Color(0xffB0B7C3)),
+                      fontSize: 13.5, color: AppColors.grey9),
                   filled: true,
-                  fillColor: const Color(0xffF2F4F7),
+                  fillColor: AppColors.white3,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
@@ -489,7 +489,7 @@ class _UpdateTaskSheetState extends ConsumerState<_UpdateTaskSheet> {
               style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xff0D1B2A)),
+                  color: AppColors.ink2),
             ),
             const SizedBox(height: 10),
             TextField(
@@ -498,9 +498,9 @@ class _UpdateTaskSheetState extends ConsumerState<_UpdateTaskSheet> {
               decoration: InputDecoration(
                 hintText: 'Add any remarks…',
                 hintStyle: const TextStyle(
-                    fontSize: 13.5, color: Color(0xffB0B7C3)),
+                    fontSize: 13.5, color: AppColors.grey9),
                 filled: true,
-                fillColor: const Color(0xffF2F4F7),
+                fillColor: AppColors.white3,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -515,7 +515,7 @@ class _UpdateTaskSheetState extends ConsumerState<_UpdateTaskSheet> {
               Text(
                 _errorMessage!,
                 style: const TextStyle(
-                    fontSize: 12.5, color: Color(0xffEF4444)),
+                    fontSize: 12.5, color: AppColors.red4),
               ),
             ],
 
@@ -529,7 +529,7 @@ class _UpdateTaskSheetState extends ConsumerState<_UpdateTaskSheet> {
                         _submitting ? null : () => Navigator.pop(context),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      side: const BorderSide(color: Color(0xffE0E4EA)),
+                      side: const BorderSide(color: AppColors.grey7),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14)),
                     ),
@@ -538,7 +538,7 @@ class _UpdateTaskSheetState extends ConsumerState<_UpdateTaskSheet> {
                       style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xff6B7280)),
+                          color: AppColors.grey5),
                     ),
                   ),
                 ),
@@ -605,9 +605,9 @@ class _Chip extends StatelessWidget {
           borderRadius: BorderRadius.circular(24),
           color: selected
               ? selectedColor
-              : const Color(0xffF2F4F7),
+              : AppColors.white3,
           border: Border.all(
-            color: selected ? selectedColor : const Color(0xffE0E4EA),
+            color: selected ? selectedColor : AppColors.grey7,
           ),
         ),
         child: Row(
@@ -624,7 +624,7 @@ class _Chip extends StatelessWidget {
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color:
-                    selected ? Colors.white : const Color(0xff6B7280),
+                    selected ? Colors.white : AppColors.grey5,
               ),
             ),
           ],
@@ -657,9 +657,9 @@ class _ImagePickerSection extends StatelessWidget {
         height: hasImage ? 160 : 90,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
-          color: const Color(0xffF2F4F7),
+          color: AppColors.white3,
           border: Border.all(
-            color: const Color(0xffE0E4EA),
+            color: AppColors.grey7,
             width: 1.5,
           ),
         ),
@@ -696,7 +696,7 @@ class _ImagePickerSection extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.all(4),
                         decoration: const BoxDecoration(
-                          color: Color(0xff22C55E),
+                          color: AppColors.green5,
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(Icons.check,
@@ -709,12 +709,12 @@ class _ImagePickerSection extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: const [
                   Icon(Icons.add_a_photo_rounded,
-                      size: 26, color: Color(0xffB0B7C3)),
+                      size: 26, color: AppColors.grey9),
                   SizedBox(height: 6),
                   Text(
                     'Attach cancel photo (required)',
                     style: TextStyle(
-                        fontSize: 12.5, color: Color(0xff8A94A6)),
+                        fontSize: 12.5, color: AppColors.grey8),
                   ),
                 ],
               ),

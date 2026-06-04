@@ -7,6 +7,7 @@ import 'package:fieldguard/features/team/data/datasource/team_datasource_impl.da
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart' as geo;
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
+import 'package:fieldguard/core/theme/app_colors.dart';
 
 /// Live team map.
 ///
@@ -29,7 +30,7 @@ class LiveMapScreen extends StatefulWidget {
 }
 
 class _LiveMapScreenState extends State<LiveMapScreen> {
-  static const _green = Color(0xff0E5A3B);
+  static const _green = AppColors.green;
 
   MapboxMap? _map;
   CircleAnnotationManager? _circles;
@@ -221,7 +222,7 @@ class _LiveMapScreenState extends State<LiveMapScreen> {
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               fontWeight: FontWeight.w700,
-                              color: Color(0xff111111),
+                              color: AppColors.black,
                             ),
                           ),
                         ),
@@ -231,7 +232,7 @@ class _LiveMapScreenState extends State<LiveMapScreen> {
                           _statusLabel(),
                           style: const TextStyle(
                             fontSize: 12,
-                            color: Color(0xff667085),
+                            color: AppColors.grey,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -251,7 +252,7 @@ class _LiveMapScreenState extends State<LiveMapScreen> {
               child: LinearProgressIndicator(
                 minHeight: 3,
                 color: _green,
-                backgroundColor: Color(0xffDDF5E0),
+                backgroundColor: AppColors.green4,
               ),
             ),
 
@@ -267,13 +268,13 @@ class _LiveMapScreenState extends State<LiveMapScreen> {
                 child: Row(
                   children: [
                     const Icon(Icons.wifi_off,
-                        size: 18, color: Color(0xff667085)),
+                        size: 18, color: AppColors.grey),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         _snapshotError!,
                         style: const TextStyle(
-                            fontSize: 13, color: Color(0xff667085)),
+                            fontSize: 13, color: AppColors.grey),
                       ),
                     ),
                     GestureDetector(
@@ -326,10 +327,10 @@ class _LiveMapScreenState extends State<LiveMapScreen> {
 
   Widget _statusDot() {
     final color = switch (_socketStatus) {
-      SocketStatus.connected => const Color(0xff22C55E),
+      SocketStatus.connected => AppColors.green5,
       SocketStatus.connecting => Colors.orange,
       SocketStatus.error => Colors.red,
-      _ => const Color(0xff667085),
+      _ => AppColors.grey,
     };
     return Container(
       width: 8,

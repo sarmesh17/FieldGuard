@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart' as geo;
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' hide Size;
+import 'package:fieldguard/core/theme/app_colors.dart';
 
 /// Live map for one task's assignee (Admin / Manager only).
 ///
@@ -47,8 +48,8 @@ class TaskLiveTrackingScreen extends ConsumerStatefulWidget {
 
 class _TaskLiveTrackingScreenState
     extends ConsumerState<TaskLiveTrackingScreen> {
-  static const _green = Color(0xff0E5A3B);
-  static const _dest = Color(0xffFF3B30);
+  static const _green = AppColors.green;
+  static const _dest = AppColors.red12;
 
   final _socket = LiveTrackingSocket.instance;
 
@@ -321,7 +322,7 @@ class _TaskLiveTrackingScreenState
               child: LinearProgressIndicator(
                 minHeight: 3,
                 color: _green,
-                backgroundColor: Color(0xffDDF5E0),
+                backgroundColor: AppColors.green4,
               ),
             ),
 
@@ -350,7 +351,7 @@ class _TaskLiveTrackingScreenState
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               fontWeight: FontWeight.w700,
-                              color: Color(0xff111111),
+                              color: AppColors.black,
                             ),
                           ),
                         ),
@@ -360,7 +361,7 @@ class _TaskLiveTrackingScreenState
                           _statusLabel(),
                           style: const TextStyle(
                             fontSize: 12,
-                            color: Color(0xff667085),
+                            color: AppColors.grey,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -385,13 +386,13 @@ class _TaskLiveTrackingScreenState
                 child: Row(
                   children: [
                     const Icon(Icons.wifi_off,
-                        size: 18, color: Color(0xff667085)),
+                        size: 18, color: AppColors.grey),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         "Couldn't load the initial position",
                         style: const TextStyle(
-                            fontSize: 13, color: Color(0xff667085)),
+                            fontSize: 13, color: AppColors.grey),
                       ),
                     ),
                     GestureDetector(
@@ -462,10 +463,10 @@ class _TaskLiveTrackingScreenState
 
   Widget _statusDot() {
     final color = switch (_socketStatus) {
-      SocketStatus.connected => const Color(0xff22C55E),
+      SocketStatus.connected => AppColors.green5,
       SocketStatus.connecting => Colors.orange,
       SocketStatus.error => Colors.red,
-      _ => const Color(0xff667085),
+      _ => AppColors.grey,
     };
     return Container(
       width: 8,
@@ -547,7 +548,7 @@ class _LiveInfoCard extends StatelessWidget {
             decoration: const BoxDecoration(
               shape: BoxShape.circle,
               gradient: LinearGradient(
-                colors: [Color(0xff0E5A3B), Color(0xff2E6F4F)],
+                colors: [AppColors.green, AppColors.gradientStart],
               ),
             ),
             child: Center(
@@ -571,7 +572,7 @@ class _LiveInfoCard extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xff111111),
+                    color: AppColors.black,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -580,7 +581,7 @@ class _LiveInfoCard extends StatelessWidget {
                 Text(
                   _subtitle,
                   style: const TextStyle(
-                      fontSize: 12.5, color: Color(0xff667085)),
+                      fontSize: 12.5, color: AppColors.grey),
                 ),
                 if (destinationName != null &&
                     destinationName!.isNotEmpty) ...[
@@ -592,7 +593,7 @@ class _LiveInfoCard extends StatelessWidget {
                             ? Icons.directions_car_rounded
                             : Icons.flag_rounded,
                         size: 13,
-                        color: const Color(0xffFF3B30),
+                        color: AppColors.red12,
                       ),
                       const SizedBox(width: 4),
                       Expanded(
@@ -605,7 +606,7 @@ class _LiveInfoCard extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                              fontSize: 12, color: Color(0xff667085)),
+                              fontSize: 12, color: AppColors.grey),
                         ),
                       ),
                     ],
@@ -619,20 +620,20 @@ class _LiveInfoCard extends StatelessWidget {
               padding:
                   const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: const Color(0xffDDF5E0),
+                color: AppColors.green4,
                 borderRadius: BorderRadius.circular(20),
               ),
               child: const Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.circle, size: 8, color: Color(0xff0E5A3B)),
+                  Icon(Icons.circle, size: 8, color: AppColors.green),
                   SizedBox(width: 5),
                   Text(
                     'Tracking',
                     style: TextStyle(
                       fontSize: 11.5,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xff0E5A3B),
+                      color: AppColors.green,
                     ),
                   ),
                 ],
@@ -653,7 +654,7 @@ class _EndedCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isCompleted = status == 'COMPLETED';
     final color =
-        isCompleted ? const Color(0xff0E5A3B) : const Color(0xffFF3347);
+        isCompleted ? AppColors.green : AppColors.red5;
     final label = switch (status) {
       'COMPLETED' => 'Task completed',
       'CANCELLED' => 'Task cancelled',

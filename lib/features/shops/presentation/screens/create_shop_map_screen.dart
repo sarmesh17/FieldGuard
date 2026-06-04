@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart' as geo;
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:fieldguard/core/theme/app_colors.dart';
 
 /// Fullscreen map for creating a new shop.
 ///
@@ -19,7 +20,7 @@ class CreateShopMapScreen extends StatefulWidget {
 }
 
 class _CreateShopMapScreenState extends State<CreateShopMapScreen> {
-  static const _brand = Color(0xff0E5A3B);
+  static const _brand = AppColors.green;
 
   MapboxMap? _mapboxMap;
   bool _isLocating = false;
@@ -147,13 +148,13 @@ class _CreateShopMapScreenState extends State<CreateShopMapScreen> {
               child: LinearProgressIndicator(
                 minHeight: 3,
                 color: _brand,
-                backgroundColor: Color(0xffDDF5E0),
+                backgroundColor: AppColors.green4,
               ),
             ),
 
           if (_mapLoading)
             const ColoredBox(
-              color: Color(0xFFF5F6FA),
+              color: AppColors.white2,
               child: Center(child: CircularProgressIndicator(color: _brand)),
             ),
 
@@ -205,7 +206,7 @@ class _CreateShopMapScreenState extends State<CreateShopMapScreen> {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xff111111),
+                  color: AppColors.black,
                 ),
               ),
             ),
@@ -257,7 +258,7 @@ class _CreateShopMapScreenState extends State<CreateShopMapScreen> {
 class _CenterPin extends StatelessWidget {
   const _CenterPin();
 
-  static const _brand = Color(0xff0E5A3B);
+  static const _brand = AppColors.green;
 
   @override
   Widget build(BuildContext context) {
@@ -319,7 +320,7 @@ class _CircleIconButton extends StatelessWidget {
             ),
           ],
         ),
-        child: Icon(icon, color: const Color(0xff0E5A3B), size: 20),
+        child: Icon(icon, color: AppColors.green, size: 20),
       ),
     );
   }

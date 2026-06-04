@@ -6,12 +6,13 @@ import 'package:fieldguard/core/utils/results.dart';
 import 'package:fieldguard/features/collections/data/dto/create_collection_request.dart';
 import 'package:fieldguard/features/collections/presentation/providers/collection_provider.dart';
 import 'package:fieldguard/features/collections/presentation/screens/collection_success_screen.dart';
+import 'package:fieldguard/core/theme/app_colors.dart';
 
-const _kBrand = Color(0xff0E5A3B);
-const _kBrandLight = Color(0xff00874C);
-const _kInk = Color(0xff0D1B2A);
-const _kMuted = Color(0xff8A94A6);
-const _kBg = Color(0xffF2F4F7);
+const _kBrand = AppColors.green;
+const _kBrandLight = AppColors.green7;
+const _kInk = AppColors.ink2;
+const _kMuted = AppColors.grey8;
+const _kBg = AppColors.white3;
 
 /// Form for `POST /api/v1/collections`. Caller passes the task's shop so the
 /// user never picks it — the screen is opened from a specific task. Server
@@ -285,7 +286,7 @@ class _CollectPaymentScreenState extends ConsumerState<CollectPaymentScreen> {
     return InputDecoration(
       hintText: hint,
       hintStyle:
-          const TextStyle(fontSize: 13.5, color: Color(0xffB0B7C3)),
+          const TextStyle(fontSize: 13.5, color: AppColors.grey9),
       filled: true,
       fillColor: Colors.white,
       counterText: counter,
@@ -293,11 +294,11 @@ class _CollectPaymentScreenState extends ConsumerState<CollectPaymentScreen> {
           const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xffE0E4EA)),
+        borderSide: const BorderSide(color: AppColors.grey7),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xffE0E4EA)),
+        borderSide: const BorderSide(color: AppColors.grey7),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
@@ -305,11 +306,11 @@ class _CollectPaymentScreenState extends ConsumerState<CollectPaymentScreen> {
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xffC0392B)),
+        borderSide: const BorderSide(color: AppColors.red),
       ),
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xffC0392B), width: 1.5),
+        borderSide: const BorderSide(color: AppColors.red, width: 1.5),
       ),
     );
   }
@@ -346,7 +347,7 @@ class _ShopChip extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xffE0E4EA)),
+        border: Border.all(color: AppColors.grey7),
       ),
       child: Row(
         children: [
@@ -460,7 +461,7 @@ class _MethodChip extends StatelessWidget {
                 : null,
             color: selected ? null : Colors.white,
             border: Border.all(
-              color: selected ? Colors.transparent : const Color(0xffE0E4EA),
+              color: selected ? Colors.transparent : AppColors.grey7,
             ),
             boxShadow: selected
                 ? [
@@ -523,7 +524,7 @@ class _DateField extends StatelessWidget {
               const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xffE0E4EA)),
+            border: Border.all(color: AppColors.grey7),
           ),
           child: Row(
             children: [
@@ -535,7 +536,7 @@ class _DateField extends StatelessWidget {
                   formatted ?? 'Pick a date',
                   style: TextStyle(
                     fontSize: 14,
-                    color: formatted == null ? const Color(0xffB0B7C3) : _kInk,
+                    color: formatted == null ? AppColors.grey9 : _kInk,
                     fontWeight: formatted == null
                         ? FontWeight.w500
                         : FontWeight.w700,
@@ -566,22 +567,22 @@ class _ErrorBox extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xffFEE2E2),
+        color: AppColors.red6,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xffFCA5A5)),
+        border: Border.all(color: AppColors.red7),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Icon(Icons.error_outline_rounded,
-              size: 18, color: Color(0xffC0392B)),
+              size: 18, color: AppColors.red),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               message,
               style: const TextStyle(
                 fontSize: 13,
-                color: Color(0xff7A1F1F),
+                color: AppColors.red9,
                 height: 1.4,
               ),
             ),

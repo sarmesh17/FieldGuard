@@ -12,6 +12,7 @@ import 'package:fieldguard/features/subscription/presentation/widgets/seat_limit
 import 'package:fieldguard/features/uploads/image_upload_service.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:fieldguard/core/theme/app_colors.dart';
 
 class CreateManagerScreen extends StatefulWidget {
   const CreateManagerScreen({super.key});
@@ -126,7 +127,7 @@ class _CreateManagerScreenState extends State<CreateManagerScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Image uploaded successfully'),
-            backgroundColor: Color(0xff6558FF),
+            backgroundColor: AppColors.blue,
           ),
         );
       }
@@ -172,7 +173,7 @@ class _CreateManagerScreenState extends State<CreateManagerScreen>
               content: Text(
                 'Manager created successfully! Code: ${response.manager!.managerCode}',
               ),
-              backgroundColor: const Color(0xff6558FF),
+              backgroundColor: AppColors.blue,
               duration: const Duration(seconds: 3),
             ),
           );
@@ -242,19 +243,19 @@ class _CreateManagerScreenState extends State<CreateManagerScreen>
     return ResponsiveBuilder(
       builder: (context, screenType, orientation, constraints) {
         return Scaffold(
-          backgroundColor: const Color(0xFFF8FAF9),
+          backgroundColor: AppColors.white,
           appBar: AppBar(
             backgroundColor: Colors.white,
             elevation: 0,
             leading: IconButton(
               icon: const Icon(Icons.arrow_back_ios_rounded,
-                  color: Color(0xff6558FF)),
+                  color: AppColors.blue),
               onPressed: () => Navigator.pop(context),
             ),
             title: const Text(
               'Create New Manager',
               style: TextStyle(
-                color: Color(0xff111111),
+                color: AppColors.black,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -262,7 +263,7 @@ class _CreateManagerScreenState extends State<CreateManagerScreen>
               preferredSize: const Size.fromHeight(1),
               child: Container(
                 height: 1,
-                color: const Color(0xffE8E3DD),
+                color: AppColors.grey3,
               ),
             ),
           ),
@@ -289,11 +290,11 @@ class _CreateManagerScreenState extends State<CreateManagerScreen>
                                 gradient: _selectedImage != null
                                     ? null
                                     : const LinearGradient(
-                                        colors: [Color(0xff6558FF), Color(0xff8B3DFF)],
+                                        colors: [AppColors.blue, AppColors.purple],
                                       ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: const Color(0xff6558FF)
+                                    color: AppColors.blue
                                         .withValues(alpha: 0.4),
                                     blurRadius: 20,
                                     offset: const Offset(0, 8),
@@ -304,11 +305,11 @@ class _CreateManagerScreenState extends State<CreateManagerScreen>
                                   ? Container(
                                       decoration: const BoxDecoration(
                                         shape: BoxShape.circle,
-                                        color: Color(0xffE5E7EB),
+                                        color: AppColors.grey4,
                                       ),
                                       child: const Center(
                                         child: CircularProgressIndicator(
-                                          color: Color(0xff6558FF),
+                                          color: AppColors.blue,
                                         ),
                                       ),
                                     )
@@ -335,14 +336,14 @@ class _CreateManagerScreenState extends State<CreateManagerScreen>
                                   height: SizeConfig.scale(40),
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
-                                    color: const Color(0xff6558FF),
+                                    color: AppColors.blue,
                                     border: Border.all(
                                       color: Colors.white,
                                       width: 2.5,
                                     ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: const Color(0xff6558FF).withValues(alpha: 0.4),
+                                        color: AppColors.blue.withValues(alpha: 0.4),
                                         blurRadius: 8,
                                         offset: const Offset(0, 3),
                                       ),
@@ -367,8 +368,8 @@ class _CreateManagerScreenState extends State<CreateManagerScreen>
                               : 'Tap camera icon to add profile photo',
                           style: TextStyle(
                             color: _uploadedImageKey != null
-                                ? const Color(0xff6558FF)
-                                : const Color(0xff667085),
+                                ? AppColors.blue
+                                : AppColors.grey,
                             fontSize: SizeConfig.scaledFontSize(12),
                             fontWeight: _uploadedImageKey != null
                                 ? FontWeight.w600
@@ -443,7 +444,7 @@ class _CreateManagerScreenState extends State<CreateManagerScreen>
                             _hidePassword
                                 ? Icons.visibility_off_outlined
                                 : Icons.visibility_outlined,
-                            color: const Color(0xff667085),
+                            color: AppColors.grey,
                           ),
                           onPressed: () =>
                               setState(() => _hidePassword = !_hidePassword),
@@ -482,7 +483,7 @@ class _CreateManagerScreenState extends State<CreateManagerScreen>
         style: TextStyle(
           fontSize: SizeConfig.scaledFontSize(14),
           fontWeight: FontWeight.w600,
-          color: const Color(0xff111111),
+          color: AppColors.black,
         ),
       ),
     );
@@ -503,7 +504,7 @@ class _CreateManagerScreenState extends State<CreateManagerScreen>
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(SizeConfig.scale(12)),
-        border: Border.all(color: const Color(0xffE8E3DD)),
+        border: Border.all(color: AppColors.grey3),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.03),
@@ -522,10 +523,10 @@ class _CreateManagerScreenState extends State<CreateManagerScreen>
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: TextStyle(
-            color: const Color(0xff9CA3AF),
+            color: AppColors.grey2,
             fontSize: SizeConfig.scaledFontSize(14),
           ),
-          prefixIcon: Icon(icon, color: const Color(0xff6558FF)),
+          prefixIcon: Icon(icon, color: AppColors.blue),
           suffixIcon: suffixIcon,
           border: InputBorder.none,
           contentPadding: EdgeInsets.symmetric(
@@ -542,12 +543,12 @@ class _CreateManagerScreenState extends State<CreateManagerScreen>
       height: SizeConfig.scale(56),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xff6558FF), Color(0xff8B3DFF)],
+          colors: [AppColors.blue, AppColors.purple],
         ),
         borderRadius: BorderRadius.circular(SizeConfig.scale(16)),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xff6558FF).withValues(alpha: 0.4),
+            color: AppColors.blue.withValues(alpha: 0.4),
             blurRadius: 16,
             offset: const Offset(0, 8),
           ),

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/responsive/responsive.dart';
+import 'package:fieldguard/core/theme/app_colors.dart';
 
 /// Splash screen — shown on app launch.
 /// Checks authentication state and navigates accordingly.
@@ -88,9 +89,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  Color(0xFF0B4A30),
-                  Color(0xFF2E6F4F),
-                  Color(0xFF5FBF8F),
+                  AppColors.green17,
+                  AppColors.gradientStart,
+                  AppColors.gradientEnd,
                 ],
               ),
             ),

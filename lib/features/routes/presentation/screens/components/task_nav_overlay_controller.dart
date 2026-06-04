@@ -10,6 +10,7 @@ import 'package:fieldguard/features/auto_geofence/config/geofence_config.dart';
 import 'package:fieldguard/features/auto_geofence/service/auto_geofence_service.dart';
 import 'package:fieldguard/features/routes/data/mapbox_directions_service.dart';
 import 'package:fieldguard/features/tasks/data/dto/tasks_list_response.dart';
+import 'package:fieldguard/core/theme/app_colors.dart';
 
 /// Re-route only when the user has drifted at least this far from the origin
 /// of the previous Directions request — stops API spam every metre.
@@ -19,7 +20,7 @@ const _reRouteDistanceMeters = 75.0;
 /// "stuck in traffic, polyline reflects the old plan" case).
 const _reRouteMaxAge = Duration(seconds: 20);
 
-const _kBrand = Color(0xFF0E5A3B);
+const _kBrand = AppColors.green;
 
 /// Encapsulates the destination pin + geofence circle + driving polyline +
 /// camera-fit logic for "navigating to a task". Lives outside the widget tree
@@ -294,7 +295,7 @@ class TaskNavOverlayController {
         textField: task.shop?.name ?? task.title,
         textOffset: [0, -3.5],
         textSize: 13,
-        textColor: const Color(0xFF111827).toARGB32(),
+        textColor: AppColors.ink.toARGB32(),
         textHaloColor: Colors.white.toARGB32(),
         textHaloWidth: 2,
       ),
@@ -430,7 +431,7 @@ class TaskNavOverlayController {
     canvas.drawPath(
       path,
       Paint()
-        ..color = const Color(0xFFDC2626)
+        ..color = AppColors.red16
         ..style = PaintingStyle.fill,
     );
     canvas.drawCircle(

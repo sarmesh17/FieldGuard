@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:fieldguard/core/theme/app_colors.dart';
 
 /// App-wide shimmer skeleton toolkit.
 ///
@@ -8,8 +9,8 @@ import 'package:shimmer/shimmer.dart';
 /// [SkeletonDetail] for detail screens. The card chrome (white background,
 /// border) stays OUTSIDE the shimmer so only the grey placeholder blocks
 /// animate — never the whole card.
-const _baseColor = Color(0xffE7EBEF);
-const _highlightColor = Color(0xffF6F8FA);
+const _baseColor = AppColors.white11;
+const _highlightColor = AppColors.white14;
 
 /// Wraps placeholder boxes in the app's standard shimmer animation.
 class AppShimmer extends StatelessWidget {
@@ -68,7 +69,7 @@ class SkeletonListTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xffE8E3DD)),
+        border: Border.all(color: AppColors.grey3),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.03),
@@ -138,7 +139,7 @@ class SkeletonDetail extends StatelessWidget {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.fromLTRB(20, 56, 20, 28),
-            color: const Color(0xff0E5A3B),
+            color: AppColors.green,
             child: const AppShimmer(
               child: Column(
                 children: [

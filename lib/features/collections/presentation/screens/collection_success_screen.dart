@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:fieldguard/features/collections/data/dto/create_collection_response.dart';
+import 'package:fieldguard/core/theme/app_colors.dart';
 
-const _kBrand = Color(0xff0E5A3B);
-const _kInk = Color(0xff0D1B2A);
-const _kMuted = Color(0xff8A94A6);
-const _kBg = Color(0xffF2F4F7);
+const _kBrand = AppColors.green;
+const _kInk = AppColors.ink2;
+const _kMuted = AppColors.grey8;
+const _kBg = AppColors.white3;
 
 /// Confirmation screen after a successful collection.
 ///
@@ -117,7 +118,7 @@ class _SuccessHero extends StatelessWidget {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [_kBrand, Color(0xff00874C)],
+          colors: [_kBrand, AppColors.green7],
         ),
         boxShadow: [
           BoxShadow(
@@ -245,7 +246,7 @@ class _OutstandingCard extends StatelessWidget {
                   value: snapshot.totalDue,
                   color: _kInk,
                 ),
-                const Divider(height: 18, color: Color(0xffE9EDF1)),
+                const Divider(height: 18, color: AppColors.white9),
                 _AmountRow(
                   label: 'Collected',
                   value: snapshot.collected,
@@ -255,13 +256,13 @@ class _OutstandingCard extends StatelessWidget {
                 _AmountRow(
                   label: 'Pending cheques',
                   value: snapshot.pendingCheques,
-                  color: const Color(0xffB7791F),
+                  color: AppColors.brown,
                 ),
-                const Divider(height: 18, color: Color(0xffE9EDF1)),
+                const Divider(height: 18, color: AppColors.white9),
                 _AmountRow(
                   label: 'Still outstanding',
                   value: snapshot.outstanding,
-                  color: const Color(0xffC0392B),
+                  color: AppColors.red,
                   emphasised: true,
                 ),
               ],
@@ -384,16 +385,16 @@ class _SmsPreviewCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: const Color(0xffF7FAF8),
+              color: AppColors.white27,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xffE5EBE7)),
+              border: Border.all(color: AppColors.grey35),
             ),
             child: Text(
               preview.body,
               style: const TextStyle(
                 fontSize: 13.5,
                 height: 1.5,
-                color: Color(0xff394452),
+                color: AppColors.blue4,
               ),
             ),
           ),
@@ -416,11 +417,11 @@ class _PendingChequeCard extends StatelessWidget {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: const Color(0xffFEF3C7),
+              color: AppColors.yellow2,
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(Icons.hourglass_top_rounded,
-                size: 20, color: Color(0xffB7791F)),
+                size: 20, color: AppColors.brown),
           ),
           const SizedBox(width: 12),
           const Expanded(
@@ -440,7 +441,7 @@ class _PendingChequeCard extends StatelessWidget {
                   'The receipt SMS will be sent to the shop once an admin settles this cheque.',
                   style: TextStyle(
                     fontSize: 13,
-                    color: Color(0xff5A6472),
+                    color: AppColors.grey10,
                     height: 1.4,
                   ),
                 ),
@@ -466,11 +467,11 @@ class _NoSmsCard extends StatelessWidget {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: const Color(0xffFEE2E2),
+              color: AppColors.red6,
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(Icons.sms_failed_outlined,
-                size: 20, color: Color(0xffC0392B)),
+                size: 20, color: AppColors.red),
           ),
           const SizedBox(width: 12),
           const Expanded(
@@ -490,7 +491,7 @@ class _NoSmsCard extends StatelessWidget {
                   "The shop doesn't have a valid contact phone on file, so no receipt SMS could be sent.",
                   style: TextStyle(
                     fontSize: 13,
-                    color: Color(0xff5A6472),
+                    color: AppColors.grey10,
                     height: 1.4,
                   ),
                 ),

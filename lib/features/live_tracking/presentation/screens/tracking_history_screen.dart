@@ -7,11 +7,12 @@ import 'package:fieldguard/features/live_tracking/data/usecase/get_tracking_hist
 import 'package:fieldguard/widgets/app_skeletons.dart';
 import 'package:flutter/material.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
+import 'package:fieldguard/core/theme/app_colors.dart';
 
-const _kBrand = Color(0xff0E5A3B);
-const _kInk = Color(0xff111111);
-const _kMuted = Color(0xff667085);
-const _kEnd = Color(0xffC0392B);
+const _kBrand = AppColors.green;
+const _kInk = AppColors.black;
+const _kMuted = AppColors.grey;
+const _kEnd = AppColors.red;
 
 const _months = [
   'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -172,7 +173,7 @@ class _TrackingHistoryScreenState extends State<TrackingHistoryScreen> {
     return ResponsiveBuilder(
       builder: (context, screenType, orientation, constraints) {
         return Scaffold(
-          backgroundColor: const Color(0xFFF8FAF9),
+          backgroundColor: AppColors.white,
           appBar: AppBar(
             backgroundColor: _kBrand,
             elevation: 0,
@@ -330,7 +331,7 @@ class _SessionCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xffE8EDEA)),
+        border: Border.all(color: AppColors.grey12),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -390,7 +391,7 @@ class _SessionCard extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 9, vertical: 5),
                         decoration: BoxDecoration(
-                          color: const Color(0xffDDF5E0),
+                          color: AppColors.green4,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Row(
@@ -412,7 +413,7 @@ class _SessionCard extends StatelessWidget {
                       )
                     else
                       const Icon(Icons.chevron_right_rounded,
-                          color: Color(0xffAAB2BD)),
+                          color: AppColors.grey11),
                   ],
                 ),
                 const SizedBox(height: 14),
@@ -456,7 +457,7 @@ class _StatChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: const Color(0xffF0F2F5),
+        color: AppColors.white4,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -490,7 +491,7 @@ class _EmptyView extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(Icons.location_off_rounded,
-              size: SizeConfig.scale(56), color: const Color(0xffAAB2BD)),
+              size: SizeConfig.scale(56), color: AppColors.grey11),
           const SizedBox(height: 14),
           const Text(
             'No tracking yet',
@@ -698,7 +699,7 @@ class _SessionRouteScreenState extends State<_SessionRouteScreen> {
     final pts = _points;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAF9),
+      backgroundColor: AppColors.white,
       body: Stack(
         children: [
           MapWidget(
@@ -757,7 +758,7 @@ class _SessionRouteScreenState extends State<_SessionRouteScreen> {
               child: LinearProgressIndicator(
                 minHeight: 3,
                 color: _kBrand,
-                backgroundColor: Color(0xffDDF5E0),
+                backgroundColor: AppColors.green4,
               ),
             )
           else if (pts.isEmpty)

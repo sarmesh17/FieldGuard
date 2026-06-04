@@ -11,10 +11,11 @@ import 'package:fieldguard/features/collections/presentation/providers/collectio
 import 'package:fieldguard/features/collections/presentation/providers/collections_list_state.dart';
 import 'package:fieldguard/features/collections/presentation/screens/collection_success_screen.dart';
 import 'package:fieldguard/features/collections/presentation/screens/components/settle_collection_sheet.dart';
+import 'package:fieldguard/core/theme/app_colors.dart';
 
-const _kBrand = Color(0xff0E5A3B);
-const _kInk = Color(0xff111111);
-const _kMuted = Color(0xff667085);
+const _kBrand = AppColors.green;
+const _kInk = AppColors.black;
+const _kMuted = AppColors.grey;
 
 /// Collections list for a single shop, embedded in the shop detail screen.
 /// `shopId` is fixed; filters here narrow status / method / date range. Lives
@@ -199,7 +200,7 @@ class _BannerShell extends StatelessWidget {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [_kBrand, Color(0xff00874C)],
+          colors: [_kBrand, AppColors.green7],
         ),
         boxShadow: [
           BoxShadow(
@@ -498,7 +499,7 @@ class _FilterBar extends StatelessWidget {
                   color: hasRange ? _kBrand.withValues(alpha: 0.10) : Colors.white,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: hasRange ? _kBrand : const Color(0xffE0E4EA),
+                    color: hasRange ? _kBrand : AppColors.grey7,
                   ),
                 ),
                 child: Row(
@@ -558,7 +559,7 @@ class _Chip extends StatelessWidget {
           color: selected ? _kBrand : Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: selected ? _kBrand : const Color(0xffE0E4EA),
+            color: selected ? _kBrand : AppColors.grey7,
           ),
         ),
         child: Text(
@@ -651,7 +652,7 @@ class _SummaryCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xffE8EDEA)),
+        border: Border.all(color: AppColors.grey12),
       ),
       child: Row(
         children: [
@@ -664,13 +665,13 @@ class _SummaryCard extends StatelessWidget {
           _SummaryCell(
             label: 'Pending',
             value: summary.pending,
-            color: const Color(0xffB7791F),
+            color: AppColors.brown,
           ),
           _divider(),
           _SummaryCell(
             label: 'Bounced',
             value: summary.bounced,
-            color: const Color(0xffC0392B),
+            color: AppColors.red,
           ),
         ],
       ),
@@ -680,7 +681,7 @@ class _SummaryCard extends StatelessWidget {
   Widget _divider() => Container(
         width: 1,
         height: 34,
-        color: const Color(0xffEDF0F2),
+        color: AppColors.white19,
       );
 }
 
@@ -738,8 +739,8 @@ class _CollectionTile extends StatelessWidget {
 
   Color get _statusColor => switch (item.status) {
         'CLEARED' => _kBrand,
-        'PENDING' => const Color(0xffB7791F),
-        'BOUNCED' => const Color(0xffC0392B),
+        'PENDING' => AppColors.brown,
+        'BOUNCED' => AppColors.red,
         _ => _kMuted,
       };
 
@@ -754,7 +755,7 @@ class _CollectionTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xffE8EDEA)),
+        border: Border.all(color: AppColors.grey12),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -806,7 +807,7 @@ class _CollectionTile extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   _fmtDateTime(item.createdAt),
-                  style: const TextStyle(fontSize: 11, color: Color(0xffAAB2BD)),
+                  style: const TextStyle(fontSize: 11, color: AppColors.grey11),
                 ),
                 if (item.notes != null && item.notes!.isNotEmpty) ...[
                   const SizedBox(height: 6),
@@ -814,7 +815,7 @@ class _CollectionTile extends StatelessWidget {
                     item.notes!,
                     style: const TextStyle(
                       fontSize: 12.5,
-                      color: Color(0xff5A6472),
+                      color: AppColors.grey10,
                       height: 1.35,
                     ),
                   ),
@@ -916,11 +917,11 @@ class _EmptyBlock extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xffE8EDEA)),
+        border: Border.all(color: AppColors.grey12),
       ),
       child: const Column(
         children: [
-          Icon(Icons.inbox_rounded, size: 30, color: Color(0xffAAB2BD)),
+          Icon(Icons.inbox_rounded, size: 30, color: AppColors.grey11),
           SizedBox(height: 8),
           Text(
             'No collections match these filters',
@@ -944,16 +945,16 @@ class _ErrorBlock extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xffFEF2F2),
+        color: AppColors.white10,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xffFCA5A5)),
+        border: Border.all(color: AppColors.red7),
       ),
       child: Column(
         children: [
           Text(
             message,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 13, color: Color(0xff7A1F1F)),
+            style: const TextStyle(fontSize: 13, color: AppColors.red9),
           ),
           const SizedBox(height: 12),
           OutlinedButton.icon(
@@ -1087,7 +1088,7 @@ class _SetDueSheetState extends ConsumerState<_SetDueSheet> {
                 height: 4,
                 margin: const EdgeInsets.only(bottom: 18),
                 decoration: BoxDecoration(
-                  color: const Color(0xffD0D5DD),
+                  color: AppColors.blue13,
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),
@@ -1097,13 +1098,13 @@ class _SetDueSheetState extends ConsumerState<_SetDueSheet> {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
-                color: Color(0xff111111),
+                color: AppColors.black,
               ),
             ),
             const SizedBox(height: 4),
             Text(
               'Current total due: NPR ${_fmtAmount(widget.currentDue)}',
-              style: const TextStyle(fontSize: 13, color: Color(0xff667085)),
+              style: const TextStyle(fontSize: 13, color: AppColors.grey),
             ),
             const SizedBox(height: 18),
             const Text(
@@ -1111,7 +1112,7 @@ class _SetDueSheetState extends ConsumerState<_SetDueSheet> {
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
-                color: Color(0xff111111),
+                color: AppColors.black,
                 letterSpacing: 0.2,
               ),
             ),
@@ -1130,21 +1131,21 @@ class _SetDueSheetState extends ConsumerState<_SetDueSheet> {
                 hintText: 'e.g. 50000.00',
                 hintStyle: const TextStyle(
                   fontSize: 13.5,
-                  color: Color(0xffB0B7C3),
+                  color: AppColors.grey9,
                 ),
                 filled: true,
-                fillColor: const Color(0xffF8FAF9),
+                fillColor: AppColors.white,
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 14,
                   vertical: 14,
                 ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Color(0xffE0E4EA)),
+                  borderSide: const BorderSide(color: AppColors.grey7),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Color(0xffE0E4EA)),
+                  borderSide: const BorderSide(color: AppColors.grey7),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -1152,12 +1153,12 @@ class _SetDueSheetState extends ConsumerState<_SetDueSheet> {
                 ),
                 errorBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Color(0xffC0392B)),
+                  borderSide: const BorderSide(color: AppColors.red),
                 ),
                 focusedErrorBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide:
-                      const BorderSide(color: Color(0xffC0392B), width: 1.5),
+                      const BorderSide(color: AppColors.red, width: 1.5),
                 ),
               ),
               validator: (v) {
@@ -1174,21 +1175,21 @@ class _SetDueSheetState extends ConsumerState<_SetDueSheet> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xffFEE2E2),
+                  color: AppColors.red6,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xffFCA5A5)),
+                  border: Border.all(color: AppColors.red7),
                 ),
                 child: Row(
                   children: [
                     const Icon(Icons.error_outline_rounded,
-                        size: 16, color: Color(0xffC0392B)),
+                        size: 16, color: AppColors.red),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         _error!,
                         style: const TextStyle(
                           fontSize: 12.5,
-                          color: Color(0xff7A1F1F),
+                          color: AppColors.red9,
                         ),
                       ),
                     ),

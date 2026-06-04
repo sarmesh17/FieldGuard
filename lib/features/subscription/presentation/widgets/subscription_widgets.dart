@@ -1,13 +1,14 @@
 import 'package:fieldguard/core/responsive/responsive.dart';
 import 'package:fieldguard/features/subscription/data/dto/subscription_response.dart';
 import 'package:flutter/material.dart';
+import 'package:fieldguard/core/theme/app_colors.dart';
 
 // ─── Palette (matches the admin profile green) ───────────────────────────────
-const kSubDark = Color(0xFF072A1C);
-const kSubPrimary = Color(0xFF0E5A3B);
-const kSubMid = Color(0xFF1D7A51);
-const kSubLight = Color(0xFF2E6F4F);
-const kSubAccent = Color(0xFF6558FF); // PRO highlight
+const kSubDark = AppColors.green8;
+const kSubPrimary = AppColors.green;
+const kSubMid = AppColors.green3;
+const kSubLight = AppColors.gradientStart;
+const kSubAccent = AppColors.blue; // PRO highlight
 
 /// "Unlimited" for a null limit (ENTERPRISE), else the number.
 String planLimitLabel(int? value) => value == null ? 'Unlimited' : '$value';
@@ -54,7 +55,7 @@ class SeatUsageCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: SizeConfig.scaledFontSize(14),
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xff111827),
+                  color: AppColors.ink,
                 ),
               ),
               const Spacer(),
@@ -63,7 +64,7 @@ class SeatUsageCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: SizeConfig.scaledFontSize(14),
                   fontWeight: FontWeight.w800,
-                  color: full ? const Color(0xffE53935) : kSubPrimary,
+                  color: full ? AppColors.red3 : kSubPrimary,
                 ),
               ),
             ],
@@ -74,9 +75,9 @@ class SeatUsageCard extends StatelessWidget {
             child: LinearProgressIndicator(
               value: unlimited ? null : fraction,
               minHeight: SizeConfig.scale(8),
-              backgroundColor: const Color(0xffEAEFEC),
+              backgroundColor: AppColors.white12,
               valueColor: AlwaysStoppedAnimation(
-                full ? const Color(0xffE53935) : kSubMid,
+                full ? AppColors.red3 : kSubMid,
               ),
             ),
           ),
@@ -89,7 +90,7 @@ class SeatUsageCard extends StatelessWidget {
                     : '${subscription.staffRemaining ?? 0} seat(s) remaining.',
             style: TextStyle(
               fontSize: SizeConfig.scaledFontSize(12),
-              color: full ? const Color(0xffE53935) : const Color(0xff6B7280),
+              color: full ? AppColors.red3 : AppColors.grey5,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -135,7 +136,7 @@ class PlanCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(SizeConfig.scale(20)),
         border: Border.all(
-          color: isCurrent ? accent : const Color(0xffE8E3DD),
+          color: isCurrent ? accent : AppColors.grey3,
           width: isCurrent ? 2 : 1,
         ),
         boxShadow: [
@@ -156,7 +157,7 @@ class PlanCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: SizeConfig.scaledFontSize(18),
                   fontWeight: FontWeight.w800,
-                  color: const Color(0xff111827),
+                  color: AppColors.ink,
                   letterSpacing: 0.3,
                 ),
               ),
@@ -181,7 +182,7 @@ class PlanCard extends StatelessWidget {
                       'per month',
                       style: TextStyle(
                         fontSize: SizeConfig.scaledFontSize(10),
-                        color: const Color(0xff9CA3AF),
+                        color: AppColors.grey2,
                       ),
                     ),
                 ],
@@ -247,14 +248,14 @@ class PlanCard extends StatelessWidget {
   Widget _feature(IconData icon, String text) {
     return Row(
       children: [
-        Icon(icon, size: SizeConfig.scale(16), color: const Color(0xff6B7280)),
+        Icon(icon, size: SizeConfig.scale(16), color: AppColors.grey5),
         SizedBox(width: SizeConfig.scale(8)),
         Expanded(
           child: Text(
             text,
             style: TextStyle(
               fontSize: SizeConfig.scaledFontSize(13),
-              color: const Color(0xff374151),
+              color: AppColors.blue2,
               fontWeight: FontWeight.w500,
             ),
           ),

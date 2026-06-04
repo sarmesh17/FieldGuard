@@ -13,6 +13,7 @@ import 'package:fieldguard/features/uploads/image_upload_service.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fieldguard/core/theme/app_colors.dart';
 
 /// Screen C — pay-by-QR upgrade. The admin picks a duration, pays the shown
 /// amount via the backend-provided QR, uploads the payment screenshot, and
@@ -140,7 +141,7 @@ class _UpgradeScreenState extends ConsumerState<UpgradeScreen> {
     return ResponsiveBuilder(
       builder: (context, screenType, orientation, constraints) {
         return Scaffold(
-          backgroundColor: const Color(0xFFF5F6FA),
+          backgroundColor: AppColors.white2,
           appBar: AppBar(
             backgroundColor: Colors.white,
             elevation: 0,
@@ -151,7 +152,7 @@ class _UpgradeScreenState extends ConsumerState<UpgradeScreen> {
             title: Text(
               'Upgrade to ${widget.plan.code}',
               style: const TextStyle(
-                color: Color(0xff111111),
+                color: AppColors.black,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -230,7 +231,7 @@ class _UpgradeScreenState extends ConsumerState<UpgradeScreen> {
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: SizeConfig.scaledFontSize(11),
-                          color: const Color(0xff9CA3AF),
+                          color: AppColors.grey2,
                           height: 1.4,
                         ),
                       ),
@@ -272,7 +273,7 @@ class _UpgradeScreenState extends ConsumerState<UpgradeScreen> {
           style: TextStyle(
             fontSize: SizeConfig.scaledFontSize(15),
             fontWeight: FontWeight.w800,
-            color: const Color(0xff111827),
+            color: AppColors.ink,
           ),
         ),
       ],
@@ -310,14 +311,14 @@ class _DurationSelector extends StatelessWidget {
               color: isSel ? kSubPrimary : Colors.white,
               borderRadius: BorderRadius.circular(SizeConfig.scale(12)),
               border: Border.all(
-                color: isSel ? kSubPrimary : const Color(0xffE8E3DD),
+                color: isSel ? kSubPrimary : AppColors.grey3,
                 width: 1.5,
               ),
             ),
             child: Text(
               m == 1 ? '1 month' : '$m months',
               style: TextStyle(
-                color: isSel ? Colors.white : const Color(0xff374151),
+                color: isSel ? Colors.white : AppColors.blue2,
                 fontWeight: FontWeight.w700,
                 fontSize: SizeConfig.scaledFontSize(13),
               ),
@@ -350,7 +351,7 @@ class _AmountCard extends StatelessWidget {
             'Amount to pay',
             style: TextStyle(
               fontSize: SizeConfig.scaledFontSize(13),
-              color: const Color(0xff374151),
+              color: AppColors.blue2,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -414,7 +415,7 @@ class _QrCard extends StatelessWidget {
                   width: qrSize,
                   height: qrSize,
                   decoration: BoxDecoration(
-                    color: const Color(0xffF4F6F9),
+                    color: AppColors.white7,
                     borderRadius: BorderRadius.circular(SizeConfig.scale(14)),
                   ),
                   clipBehavior: Clip.antiAlias,
@@ -475,7 +476,7 @@ class _QrCard extends StatelessWidget {
               'Tap the QR to enlarge for scanning',
               style: TextStyle(
                 fontSize: SizeConfig.scaledFontSize(11),
-                color: const Color(0xff9CA3AF),
+                color: AppColors.grey2,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -488,7 +489,7 @@ class _QrCard extends StatelessWidget {
                 vertical: SizeConfig.scale(10),
               ),
               decoration: BoxDecoration(
-                color: const Color(0xffF4F6F9),
+                color: AppColors.white7,
                 borderRadius: BorderRadius.circular(SizeConfig.scale(12)),
               ),
               child: Row(
@@ -501,7 +502,7 @@ class _QrCard extends StatelessWidget {
                       note!,
                       style: TextStyle(
                         fontSize: SizeConfig.scaledFontSize(12),
-                        color: const Color(0xff374151),
+                        color: AppColors.blue2,
                         fontWeight: FontWeight.w500,
                         height: 1.35,
                       ),
@@ -528,13 +529,13 @@ class _QrPlaceholder extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: SizeConfig.scale(40), color: const Color(0xff9CA3AF)),
+          Icon(icon, size: SizeConfig.scale(40), color: AppColors.grey2),
           SizedBox(height: SizeConfig.scale(8)),
           Text(
             text,
             style: TextStyle(
               fontSize: SizeConfig.scaledFontSize(12),
-              color: const Color(0xff9CA3AF),
+              color: AppColors.grey2,
             ),
           ),
         ],
@@ -557,13 +558,13 @@ class _FullScreenQrViewer extends StatelessWidget {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.close_rounded, color: Color(0xff111111)),
+          icon: const Icon(Icons.close_rounded, color: AppColors.black),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           'Scan to pay',
           style: TextStyle(
-            color: Color(0xff111111),
+            color: AppColors.black,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -623,7 +624,7 @@ class _ProofPicker extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.circular(SizeConfig.scale(16)),
           border: Border.all(
-            color: uploaded ? kSubPrimary : const Color(0xffD8E7DE),
+            color: uploaded ? kSubPrimary : AppColors.green14,
             width: 1.5,
           ),
         ),
@@ -633,7 +634,7 @@ class _ProofPicker extends StatelessWidget {
               width: SizeConfig.scale(56),
               height: SizeConfig.scale(56),
               decoration: BoxDecoration(
-                color: const Color(0xffF4F6F9),
+                color: AppColors.white7,
                 borderRadius: BorderRadius.circular(SizeConfig.scale(12)),
               ),
               clipBehavior: Clip.antiAlias,
@@ -660,7 +661,7 @@ class _ProofPicker extends StatelessWidget {
                       fontWeight: FontWeight.w700,
                       color: uploaded
                           ? kSubPrimary
-                          : const Color(0xff374151),
+                          : AppColors.blue2,
                     ),
                   ),
                   SizedBox(height: SizeConfig.scale(4)),
@@ -670,7 +671,7 @@ class _ProofPicker extends StatelessWidget {
                       child: LinearProgressIndicator(
                         value: progress == 0 ? null : progress,
                         minHeight: SizeConfig.scale(5),
-                        backgroundColor: const Color(0xffEAEFEC),
+                        backgroundColor: AppColors.white12,
                         valueColor: const AlwaysStoppedAnimation(kSubMid),
                       ),
                     )
@@ -681,7 +682,7 @@ class _ProofPicker extends StatelessWidget {
                           : 'JPG / PNG of your payment',
                       style: TextStyle(
                         fontSize: SizeConfig.scaledFontSize(11),
-                        color: const Color(0xff9CA3AF),
+                        color: AppColors.grey2,
                       ),
                     ),
                 ],
@@ -689,7 +690,7 @@ class _ProofPicker extends StatelessWidget {
             ),
             Icon(
               uploaded ? Icons.check_circle_rounded : Icons.chevron_right_rounded,
-              color: uploaded ? kSubPrimary : const Color(0xff9CA3AF),
+              color: uploaded ? kSubPrimary : AppColors.grey2,
               size: SizeConfig.scale(22),
             ),
           ],

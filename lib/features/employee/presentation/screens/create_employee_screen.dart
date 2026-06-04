@@ -15,6 +15,7 @@ import 'package:fieldguard/features/team/data/dto/managers_list_response.dart';
 import 'package:fieldguard/features/uploads/image_upload_service.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:fieldguard/core/theme/app_colors.dart';
 
 class CreateEmployeeScreen extends StatefulWidget {
   const CreateEmployeeScreen({super.key});
@@ -163,7 +164,7 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Image uploaded successfully'),
-            backgroundColor: Color(0xff0E5A3B),
+            backgroundColor: AppColors.green,
           ),
         );
       }
@@ -210,7 +211,7 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen>
               content: Text(
                 'Employee created successfully! Code: ${response.employee!.employeeCode}',
               ),
-              backgroundColor: const Color(0xff0E5A3B),
+              backgroundColor: AppColors.green,
               duration: const Duration(seconds: 3),
             ),
           );
@@ -283,19 +284,19 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen>
     return ResponsiveBuilder(
       builder: (context, screenType, orientation, constraints) {
         return Scaffold(
-          backgroundColor: const Color(0xFFF8FAF9),
+          backgroundColor: AppColors.white,
           appBar: AppBar(
             backgroundColor: Colors.white,
             elevation: 0,
             leading: IconButton(
               icon: const Icon(Icons.arrow_back_ios_rounded,
-                  color: Color(0xff0E5A3B)),
+                  color: AppColors.green),
               onPressed: () => Navigator.pop(context),
             ),
             title: const Text(
               'Create New Employee',
               style: TextStyle(
-                color: Color(0xff111111),
+                color: AppColors.black,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -303,7 +304,7 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen>
               preferredSize: const Size.fromHeight(1),
               child: Container(
                 height: 1,
-                color: const Color(0xffE8E3DD),
+                color: AppColors.grey3,
               ),
             ),
           ),
@@ -330,11 +331,11 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen>
                                 gradient: _selectedImage != null
                                     ? null
                                     : const LinearGradient(
-                                        colors: [Color(0xff0E5A3B), Color(0xff2E6F4F)],
+                                        colors: [AppColors.green, AppColors.gradientStart],
                                       ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: const Color(0xff0E5A3B)
+                                    color: AppColors.green
                                         .withValues(alpha: 0.3),
                                     blurRadius: 20,
                                     offset: const Offset(0, 8),
@@ -345,11 +346,11 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen>
                                   ? Container(
                                       decoration: const BoxDecoration(
                                         shape: BoxShape.circle,
-                                        color: Color(0xffE5E7EB),
+                                        color: AppColors.grey4,
                                       ),
                                       child: const Center(
                                         child: CircularProgressIndicator(
-                                          color: Color(0xff0E5A3B),
+                                          color: AppColors.green,
                                         ),
                                       ),
                                     )
@@ -376,14 +377,14 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen>
                                   height: SizeConfig.scale(40),
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
-                                    color: const Color(0xff0E5A3B),
+                                    color: AppColors.green,
                                     border: Border.all(
                                       color: Colors.white,
                                       width: 2.5,
                                     ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: const Color(0xff0E5A3B).withValues(alpha: 0.4),
+                                        color: AppColors.green.withValues(alpha: 0.4),
                                         blurRadius: 8,
                                         offset: const Offset(0, 3),
                                       ),
@@ -408,8 +409,8 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen>
                               : 'Tap camera icon to add profile photo',
                           style: TextStyle(
                             color: _uploadedImageKey != null
-                                ? const Color(0xff0E5A3B)
-                                : const Color(0xff667085),
+                                ? AppColors.green
+                                : AppColors.grey,
                             fontSize: SizeConfig.scaledFontSize(12),
                             fontWeight: _uploadedImageKey != null
                                 ? FontWeight.w600
@@ -484,7 +485,7 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen>
                             _hidePassword
                                 ? Icons.visibility_off_outlined
                                 : Icons.visibility_outlined,
-                            color: const Color(0xff667085),
+                            color: AppColors.grey,
                           ),
                           onPressed: () =>
                               setState(() => _hidePassword = !_hidePassword),
@@ -509,7 +510,7 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen>
                         Text(
                           'Choose a manager, or leave as "No manager" (ADMIN only)',
                           style: TextStyle(
-                            color: const Color(0xff667085),
+                            color: AppColors.grey,
                             fontSize: SizeConfig.scaledFontSize(11),
                             fontStyle: FontStyle.italic,
                           ),
@@ -540,7 +541,7 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen>
         style: TextStyle(
           fontSize: SizeConfig.scaledFontSize(14),
           fontWeight: FontWeight.w600,
-          color: const Color(0xff111111),
+          color: AppColors.black,
         ),
       ),
     );
@@ -561,7 +562,7 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen>
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(SizeConfig.scale(12)),
-        border: Border.all(color: const Color(0xffE8E3DD)),
+        border: Border.all(color: AppColors.grey3),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.03),
@@ -580,10 +581,10 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen>
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: TextStyle(
-            color: const Color(0xff9CA3AF),
+            color: AppColors.grey2,
             fontSize: SizeConfig.scaledFontSize(14),
           ),
-          prefixIcon: Icon(icon, color: const Color(0xff0E5A3B)),
+          prefixIcon: Icon(icon, color: AppColors.green),
           suffixIcon: suffixIcon,
           border: InputBorder.none,
           contentPadding: EdgeInsets.symmetric(
@@ -604,7 +605,7 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen>
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(SizeConfig.scale(12)),
-        border: Border.all(color: const Color(0xffE8E3DD)),
+        border: Border.all(color: AppColors.grey3),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.03),
@@ -616,7 +617,7 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen>
       child: Row(
         children: [
           const Icon(Icons.supervisor_account_outlined,
-              color: Color(0xff0E5A3B)),
+              color: AppColors.green),
           SizedBox(width: SizeConfig.scale(12)),
           Expanded(
             child: DropdownButtonHideUnderline(
@@ -630,11 +631,11 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen>
                         height: 16,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: Color(0xff0E5A3B),
+                          color: AppColors.green,
                         ),
                       )
                     : const Icon(Icons.arrow_drop_down_rounded,
-                        color: Color(0xff0E5A3B)),
+                        color: AppColors.green),
                 items: [
                   DropdownMenuItem<String?>(
                     value: null,
@@ -642,7 +643,7 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen>
                       'No manager',
                       style: TextStyle(
                         fontSize: SizeConfig.scaledFontSize(14),
-                        color: const Color(0xff667085),
+                        color: AppColors.grey,
                       ),
                     ),
                   ),
@@ -656,7 +657,7 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen>
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontSize: SizeConfig.scaledFontSize(14),
-                          color: const Color(0xff111111),
+                          color: AppColors.black,
                         ),
                       ),
                     ),
@@ -676,12 +677,12 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen>
       height: SizeConfig.scale(56),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xff0E5A3B), Color(0xff2E6F4F)],
+          colors: [AppColors.green, AppColors.gradientStart],
         ),
         borderRadius: BorderRadius.circular(SizeConfig.scale(16)),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xff0E5A3B).withValues(alpha: 0.4),
+            color: AppColors.green.withValues(alpha: 0.4),
             blurRadius: 16,
             offset: const Offset(0, 8),
           ),

@@ -9,13 +9,14 @@ import '../../../../legal/presentation/providers/legal_version_provider.dart';
 import '../../../../legal/presentation/widgets/legal_consent_checkbox.dart';
 import '../providers/login_provider.dart';
 import '../providers/login_state.dart';
+import 'package:fieldguard/core/theme/app_colors.dart';
 
 // ─── Brand colours ─────────────────────────────────────────────────────────────
-const _kDark = Color(0xFF1A4731);
-const _kPrimary = Color(0xFF165C3D);
-const _kMid = Color(0xFF2E6F4F);
-const _kLight = Color(0xFF5FBF8F);
-const _kFocus = Color(0xFFF0FAF5);
+const _kDark = AppColors.green10;
+const _kPrimary = AppColors.green12;
+const _kMid = AppColors.gradientStart;
+const _kLight = AppColors.gradientEnd;
+const _kFocus = AppColors.white6;
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -251,8 +252,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                                                   gradient:
                                                       const LinearGradient(
                                                         colors: [
-                                                          Color(0xFF2E7D52),
-                                                          Color(0xFF1A4731),
+                                                          AppColors.green25,
+                                                          AppColors.green10,
                                                         ],
                                                         begin:
                                                             Alignment.topLeft,
@@ -862,7 +863,7 @@ class _ModernFieldState extends State<_ModernField> {
         curve: Curves.easeOut,
         height: SizeConfig.scale(56),
         decoration: BoxDecoration(
-          color: _focused ? _kFocus : const Color(0xFFF4F6F9),
+          color: _focused ? _kFocus : AppColors.white7,
           borderRadius: BorderRadius.circular(SizeConfig.scale(16)),
           border: Border.all(
             color: _focused ? _kMid : Colors.transparent,
@@ -892,7 +893,7 @@ class _ModernFieldState extends State<_ModernField> {
                   gradient: LinearGradient(
                     colors: _focused
                         ? [_kMid, _kDark]
-                        : [const Color(0xFFE4EDE8), const Color(0xFFD8E7DE)],
+                        : [AppColors.grey15, AppColors.green14],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -974,7 +975,7 @@ class _ModernPasswordFieldState extends State<_ModernPasswordField> {
         curve: Curves.easeOut,
         height: SizeConfig.scale(56),
         decoration: BoxDecoration(
-          color: _focused ? _kFocus : const Color(0xFFF4F6F9),
+          color: _focused ? _kFocus : AppColors.white7,
           borderRadius: BorderRadius.circular(SizeConfig.scale(16)),
           border: Border.all(
             color: _focused ? _kMid : Colors.transparent,
@@ -1007,7 +1008,7 @@ class _ModernPasswordFieldState extends State<_ModernPasswordField> {
                   gradient: LinearGradient(
                     colors: _focused
                         ? [_kMid, _kDark]
-                        : [const Color(0xFFE4EDE8), const Color(0xFFD8E7DE)],
+                        : [AppColors.grey15, AppColors.green14],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
