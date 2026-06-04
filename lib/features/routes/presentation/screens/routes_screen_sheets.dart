@@ -67,7 +67,7 @@ class _ShopPickerSheetState extends State<_ShopPickerSheet> {
               hintText: 'Search shops…',
               prefixIcon: const Icon(Icons.search, color: AppColors.grey2),
               filled: true,
-              fillColor: AppColors.white3,
+              fillColor: AppColors.white2,
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 14,
                 vertical: 12,

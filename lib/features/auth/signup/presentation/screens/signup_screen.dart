@@ -17,7 +17,7 @@ const _kDark = AppColors.green10;
 const _kPrimary = AppColors.green12;
 const _kMid = AppColors.gradientStart;
 const _kLight = AppColors.gradientEnd;
-const _kFieldFocus = AppColors.white6;
+const _kFieldFocus = AppColors.green6;
 
 class SignupScreen extends ConsumerStatefulWidget {
   const SignupScreen({super.key});

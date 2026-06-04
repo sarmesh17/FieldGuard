@@ -7,7 +7,7 @@ import 'package:fieldguard/core/theme/app_colors.dart';
 const _kBrand = AppColors.green;
 const _kInk = AppColors.ink2;
 const _kMuted = AppColors.grey8;
-const _kBg = AppColors.white3;
+const _kBg = AppColors.white2;
 
 /// Confirmation screen after a successful collection.
 ///
@@ -385,16 +385,16 @@ class _SmsPreviewCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: AppColors.white27,
+              color: AppColors.white,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.grey35),
+              border: Border.all(color: AppColors.grey12),
             ),
             child: Text(
               preview.body,
               style: const TextStyle(
                 fontSize: 13.5,
                 height: 1.5,
-                color: AppColors.blue4,
+                color: AppColors.blue2,
               ),
             ),
           ),

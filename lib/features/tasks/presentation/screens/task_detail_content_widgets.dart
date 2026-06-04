@@ -640,7 +640,7 @@ class _ChecklistItem extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 14,
                 height: 1.4,
-                color: AppColors.blue4,
+                color: AppColors.blue2,
               ),
             ),
           ),
@@ -841,8 +841,8 @@ class _LoadingSkeleton extends StatelessWidget {
         ),
         Expanded(
           child: Shimmer.fromColors(
-            baseColor: AppColors.white11,
-            highlightColor: AppColors.white14,
+            baseColor: AppColors.white9,
+            highlightColor: AppColors.white,
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
               children: [

@@ -448,7 +448,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   Container(
                     padding: EdgeInsets.all(w * 0.04),
                     decoration: BoxDecoration(
-                      color: AppColors.white6,
+                      color: AppColors.green6,
                       borderRadius: BorderRadius.circular(w * 0.03),
                       border: Border.all(
                         color: AppColors.green.withValues(alpha: 0.2),

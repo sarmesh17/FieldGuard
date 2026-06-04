@@ -1095,10 +1095,10 @@ class SectionTile extends StatelessWidget {
 
     final Color effectiveIconBg =
         iconBg ??
-        (selected ? AppColors.blue7 : AppColors.white8);
+        (selected ? AppColors.blue7 : AppColors.white4);
     final Color effectiveIconColor =
         iconColor ??
-        (selected ? AppColors.blue5 : AppColors.grey5);
+        (selected ? AppColors.blue : AppColors.grey5);
 
     return Material(
       color: Colors.transparent,
@@ -1147,7 +1147,7 @@ class SectionTile extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: isAction
                       ? effectiveIconColor.withValues(alpha: 0.1)
-                      : AppColors.white8,
+                      : AppColors.white4,
                   borderRadius: BorderRadius.circular(w * 0.022),
                 ),
                 child: Icon(

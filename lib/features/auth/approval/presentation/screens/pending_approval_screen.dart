@@ -68,7 +68,7 @@ class _PendingApprovalScreenState extends ConsumerState<PendingApprovalScreen> {
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: [AppColors.white6, Colors.white],
+                    colors: [AppColors.green6, Colors.white],
                   ),
                 ),
               ),

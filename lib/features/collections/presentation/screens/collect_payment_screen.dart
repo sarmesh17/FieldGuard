@@ -12,7 +12,7 @@ const _kBrand = AppColors.green;
 const _kBrandLight = AppColors.green7;
 const _kInk = AppColors.ink2;
 const _kMuted = AppColors.grey8;
-const _kBg = AppColors.white3;
+const _kBg = AppColors.white2;
 
 /// Form for `POST /api/v1/collections`. Caller passes the task's shop so the
 /// user never picks it — the screen is opened from a specific task. Server

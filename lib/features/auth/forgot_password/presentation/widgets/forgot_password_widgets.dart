@@ -8,7 +8,7 @@ const kFpDark = AppColors.green10;
 const kFpPrimary = AppColors.green12;
 const kFpMid = AppColors.gradientStart;
 const kFpLight = AppColors.gradientEnd;
-const kFpFocus = AppColors.white6;
+const kFpFocus = AppColors.green6;
 
 /// Full-screen gradient backdrop with decorative orbs, matching the login
 /// screen so the reset flow feels like part of the same surface.
@@ -184,7 +184,7 @@ class _FpPillFieldState extends State<FpPillField> {
             curve: Curves.easeOut,
             height: SizeConfig.scale(56),
             decoration: BoxDecoration(
-              color: _focused ? kFpFocus : AppColors.white7,
+              color: _focused ? kFpFocus : AppColors.white2,
               borderRadius: BorderRadius.circular(SizeConfig.scale(16)),
               border: Border.all(
                 color: hasError

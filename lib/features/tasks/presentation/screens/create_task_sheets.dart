@@ -119,7 +119,7 @@ class _PersonSelectorBottomSheetState extends State<_PersonSelectorBottomSheet> 
                           )
                         : null,
                     filled: true,
-                    fillColor: AppColors.white5,
+                    fillColor: AppColors.white,
                     contentPadding: EdgeInsets.symmetric(
                       horizontal: SizeConfig.scale(16),
                       vertical: SizeConfig.scale(12),
@@ -441,7 +441,7 @@ class _ShopSelectorBottomSheetState extends State<_ShopSelectorBottomSheet> {
                           )
                         : null,
                     filled: true,
-                    fillColor: AppColors.white5,
+                    fillColor: AppColors.white,
                     contentPadding: EdgeInsets.symmetric(
                       horizontal: SizeConfig.scale(16),
                       vertical: SizeConfig.scale(12),

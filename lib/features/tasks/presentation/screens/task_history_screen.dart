@@ -9,7 +9,7 @@ import 'package:fieldguard/core/theme/app_colors.dart';
 const _kBrand = AppColors.green2;
 const _kInk = AppColors.ink2;
 const _kMuted = AppColors.grey8;
-const _kBg = AppColors.white3;
+const _kBg = AppColors.white2;
 
 /// Full-screen task audit feed (`GET /api/v1/tasks/history`).
 ///

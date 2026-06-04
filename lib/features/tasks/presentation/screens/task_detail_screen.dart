@@ -29,7 +29,7 @@ const _kBrand = AppColors.green2;
 const _kBrandLight = AppColors.green7;
 const _kInk = AppColors.ink2;
 const _kMuted = AppColors.grey8;
-const _kBg = AppColors.white3;
+const _kBg = AppColors.white2;
 
 /// Full task view. The list screen only has summary data, so on tap we
 /// fetch the complete record from `GET /api/v1/tasks/:id` via
@@ -248,7 +248,7 @@ class _TaskDetailBodyState extends ConsumerState<_TaskDetailBody>
           child: Text(
             task.description,
             style: const TextStyle(
-                fontSize: 14, height: 1.55, color: AppColors.blue4),
+                fontSize: 14, height: 1.55, color: AppColors.blue2),
           ),
         ),
         const SizedBox(height: 14),
@@ -317,7 +317,7 @@ class _TaskDetailBodyState extends ConsumerState<_TaskDetailBody>
           child: Text(
             task.remarks!,
             style: const TextStyle(
-                fontSize: 14, height: 1.55, color: AppColors.blue4),
+                fontSize: 14, height: 1.55, color: AppColors.blue2),
           ),
         ),
       ],

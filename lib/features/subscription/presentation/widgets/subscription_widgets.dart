@@ -75,7 +75,7 @@ class SeatUsageCard extends StatelessWidget {
             child: LinearProgressIndicator(
               value: unlimited ? null : fraction,
               minHeight: SizeConfig.scale(8),
-              backgroundColor: AppColors.white12,
+              backgroundColor: AppColors.backgroundAlt,
               valueColor: AlwaysStoppedAnimation(
                 full ? AppColors.red3 : kSubMid,
               ),

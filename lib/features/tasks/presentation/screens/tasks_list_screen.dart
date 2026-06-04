@@ -114,13 +114,13 @@ class _TasksListScreenState extends ConsumerState<TasksListScreen>
 
     if (loginState is! LoginSuccess || _tabController == null) {
       return const Scaffold(
-        backgroundColor: AppColors.white3,
+        backgroundColor: AppColors.white2,
         body: SkeletonList(),
       );
     }
 
     return Scaffold(
-      backgroundColor: AppColors.white3,
+      backgroundColor: AppColors.white2,
       floatingActionButton: _CreateFAB(onPressed: _openCreateTask),
       body: NestedScrollView(
         headerSliverBuilder: (context, _) => [
@@ -532,7 +532,7 @@ class _AdminManagerPickerBar extends StatelessWidget {
                   const Icon(
                     Icons.person_pin_circle_outlined,
                     size: 15,
-                    color: AppColors.grey6,
+                    color: AppColors.grey,
                   ),
                   const SizedBox(width: 6),
                   Text(
@@ -540,7 +540,7 @@ class _AdminManagerPickerBar extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.grey6,
+                      color: AppColors.grey,
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -716,14 +716,14 @@ class _ChipRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Row(
           children: [
-            Icon(icon, size: 15, color: AppColors.grey6),
+            Icon(icon, size: 15, color: AppColors.grey),
             const SizedBox(width: 6),
             Text(
               '$label:',
               style: const TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: AppColors.grey6,
+                color: AppColors.grey,
               ),
             ),
             const SizedBox(width: 10),
@@ -777,7 +777,7 @@ class _FilterChip extends StatelessWidget {
         curve: Curves.easeOut,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
         decoration: BoxDecoration(
-          color: selected ? color : AppColors.white13,
+          color: selected ? color : AppColors.white2,
           borderRadius: BorderRadius.circular(24),
           boxShadow: selected
               ? [
@@ -796,7 +796,7 @@ class _FilterChip extends StatelessWidget {
               Icon(
                 icon,
                 size: 12,
-                color: selected ? Colors.white : AppColors.grey6,
+                color: selected ? Colors.white : AppColors.grey,
               ),
               const SizedBox(width: 4),
             ],
@@ -805,7 +805,7 @@ class _FilterChip extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: selected ? Colors.white : AppColors.grey6,
+                color: selected ? Colors.white : AppColors.grey,
               ),
             ),
           ],
@@ -1059,7 +1059,7 @@ class _TaskCard extends StatelessWidget {
                                 vertical: 5,
                               ),
                               decoration: BoxDecoration(
-                                color: AppColors.white13,
+                                color: AppColors.white2,
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: Row(
@@ -1068,7 +1068,7 @@ class _TaskCard extends StatelessWidget {
                                   const Icon(
                                     Icons.schedule_rounded,
                                     size: 12,
-                                    color: AppColors.grey6,
+                                    color: AppColors.grey,
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
@@ -1076,7 +1076,7 @@ class _TaskCard extends StatelessWidget {
                                     style: const TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w600,
-                                      color: AppColors.grey6,
+                                      color: AppColors.grey,
                                     ),
                                   ),
                                 ],
@@ -1120,7 +1120,7 @@ class _CreatorChip extends StatelessWidget {
           Icon(
             isAdmin ? Icons.shield_outlined : Icons.supervisor_account_outlined,
             size: 12,
-            color: AppColors.grey6,
+            color: AppColors.grey,
           ),
           const SizedBox(width: 4),
           Flexible(
@@ -1131,7 +1131,7 @@ class _CreatorChip extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: AppColors.grey6,
+                color: AppColors.grey,
               ),
             ),
           ),
@@ -1490,7 +1490,7 @@ Color _statusColor(String status) => switch (status.toUpperCase()) {
   'IN_PROGRESS' => AppColors.blue3,
   'COMPLETED' => AppColors.green2,
   'CANCELLED' => AppColors.red5,
-  _ => AppColors.grey6,
+  _ => AppColors.grey,
 };
 
 IconData? _statusIcon(String status) => switch (status.toUpperCase()) {
@@ -1510,7 +1510,7 @@ Color _priorityColor(String priority) => switch (priority.toUpperCase()) {
   'HIGH' => AppColors.red4,
   'MEDIUM' => AppColors.orange2,
   'LOW' => AppColors.blue3,
-  _ => AppColors.grey6,
+  _ => AppColors.grey,
 };
 
 String _capitalise(String s) =>

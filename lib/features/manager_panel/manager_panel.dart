@@ -16,7 +16,7 @@ class ManageRepsScreen extends StatelessWidget {
         double hp(double v) => h * v;
 
         return Scaffold(
-          backgroundColor: AppColors.white26,
+          backgroundColor: AppColors.background,
           body: SafeArea(
             child: Stack(
               children: [
@@ -30,7 +30,7 @@ class ManageRepsScreen extends StatelessWidget {
                       decoration: const BoxDecoration(
                         color: Colors.white,
                         border: Border(
-                          bottom: BorderSide(color: AppColors.grey36),
+                          bottom: BorderSide(color: AppColors.orange),
                         ),
                       ),
                       child: Row(
@@ -89,7 +89,7 @@ class ManageRepsScreen extends StatelessWidget {
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(wp(.04)),
                                 border: Border.all(
-                                  color: AppColors.grey33,
+                                  color: AppColors.grey32,
                                 ),
                                 boxShadow: [
                                   BoxShadow(
@@ -193,7 +193,7 @@ class FilterChipWidget extends StatelessWidget {
         color: active
             ? activeColor
             : outlinedRed
-            ? AppColors.red21
+            ? AppColors.white10
             : Colors.white,
         borderRadius: BorderRadius.circular(width * .08),
         border: Border.all(

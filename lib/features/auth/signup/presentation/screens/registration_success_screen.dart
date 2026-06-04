@@ -32,7 +32,7 @@ class RegistrationSuccessScreen extends StatelessWidget {
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: [AppColors.white6, Colors.white],
+                    colors: [AppColors.green6, Colors.white],
                   ),
                 ),
               ),

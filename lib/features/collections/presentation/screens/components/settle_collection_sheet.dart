@@ -207,7 +207,7 @@ class _SettleCollectionSheetState
                 hintStyle:
                     const TextStyle(fontSize: 13.5, color: AppColors.grey9),
                 filled: true,
-                fillColor: AppColors.white3,
+                fillColor: AppColors.white2,
                 counterText: '',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),

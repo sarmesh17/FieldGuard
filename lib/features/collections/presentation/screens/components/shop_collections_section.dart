@@ -681,7 +681,7 @@ class _SummaryCard extends StatelessWidget {
   Widget _divider() => Container(
         width: 1,
         height: 34,
-        color: AppColors.white19,
+        color: AppColors.white4,
       );
 }
 

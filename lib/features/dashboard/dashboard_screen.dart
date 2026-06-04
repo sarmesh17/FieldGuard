@@ -19,7 +19,7 @@ import 'package:fieldguard/core/theme/app_colors.dart';
 const _kDark = AppColors.green8;
 const _kPrimary = AppColors.green;
 const _kMid = AppColors.green3;
-const _kSurface = AppColors.white15;
+const _kSurface = AppColors.background;
 
 class Dashboard extends ConsumerWidget {
   const Dashboard({super.key});
@@ -409,7 +409,7 @@ class _SectionLabel extends StatelessWidget {
     return Text(
       text,
       style: const TextStyle(
-        color: AppColors.grey6,
+        color: AppColors.grey,
         letterSpacing: 1,
         fontSize: 13,
         fontWeight: FontWeight.w600,
@@ -1000,7 +1000,7 @@ class _TaskStatCard extends StatelessWidget {
               textAlign: TextAlign.center,
               maxLines: 1,
               style: const TextStyle(
-                color: AppColors.grey6,
+                color: AppColors.grey,
                 fontSize: 11,
                 letterSpacing: 0.4,
                 fontWeight: FontWeight.w600,
@@ -1068,13 +1068,13 @@ class TaskCardsError extends StatelessWidget {
         children: [
           const Icon(
             Icons.cloud_off_outlined,
-            color: AppColors.grey6,
+            color: AppColors.grey,
             size: 32,
           ),
           const SizedBox(height: 8),
           const Text(
             'Could not load tasks',
-            style: TextStyle(color: AppColors.grey6, fontSize: 14),
+            style: TextStyle(color: AppColors.grey, fontSize: 14),
           ),
           const SizedBox(height: 10),
           TextButton(
@@ -1114,10 +1114,10 @@ class _TeamStatusSection extends ConsumerWidget {
       error: (e, stack) => GestureDetector(
         onTap: () => ref.invalidate(dashboardSummaryProvider),
         child: _teamCard(
-          dotColor: AppColors.grey6,
+          dotColor: AppColors.grey,
           title: 'Could not load — tap to retry',
           value: '',
-          valueColor: AppColors.grey6,
+          valueColor: AppColors.grey,
         ),
       ),
       data: (team) => Column(
@@ -1243,7 +1243,7 @@ class _ActivityFeedSection extends ConsumerWidget {
               padding: EdgeInsets.all(20),
               child: Text(
                 'No recent activity',
-                style: TextStyle(color: AppColors.grey6),
+                style: TextStyle(color: AppColors.grey),
               ),
             ),
           );
@@ -1314,7 +1314,7 @@ class _ActivityFeedSection extends ConsumerWidget {
                                 : 'Task ID: ${event.task.id}'),
                         style: const TextStyle(
                           fontSize: 12,
-                          color: AppColors.grey6,
+                          color: AppColors.grey,
                         ),
                       ),
                     ),
