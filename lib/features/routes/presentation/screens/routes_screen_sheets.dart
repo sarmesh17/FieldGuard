@@ -46,7 +46,7 @@ class _ShopPickerSheetState extends State<_ShopPickerSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.grey7,
+                color: AppColors.grey4,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -67,7 +67,7 @@ class _ShopPickerSheetState extends State<_ShopPickerSheet> {
               hintText: 'Search shops…',
               prefixIcon: const Icon(Icons.search, color: AppColors.grey2),
               filled: true,
-              fillColor: AppColors.white2,
+              fillColor: AppColors.white,
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 14,
                 vertical: 12,
@@ -95,7 +95,7 @@ class _ShopPickerSheetState extends State<_ShopPickerSheet> {
                 shrinkWrap: true,
                 itemCount: filtered.length,
                 separatorBuilder: (_, _) =>
-                    const Divider(height: 1, color: AppColors.white4),
+                    const Divider(height: 1, color: AppColors.white),
                 itemBuilder: (_, i) {
                   final s = filtered[i];
                   final hasCoords =
@@ -207,7 +207,7 @@ class _MapLoadingOverlayState extends State<_MapLoadingOverlay>
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: AppColors.white2,
+      color: AppColors.white,
       child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,

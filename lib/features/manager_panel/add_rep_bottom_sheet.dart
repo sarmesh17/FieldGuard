@@ -28,7 +28,7 @@ class AddRepBottomSheet extends StatelessWidget {
             width: width * .12,
             height: width * .015,
             decoration: BoxDecoration(
-              color: AppColors.grey30,
+              color: AppColors.grey4,
               borderRadius: BorderRadius.circular(width),
             ),
           ),
@@ -62,7 +62,7 @@ class AddRepBottomSheet extends StatelessWidget {
                   child: Icon(
                     Icons.close,
                     size: width * .08,
-                    color: AppColors.grey16,
+                    color: AppColors.grey13,
                   ),
                 ),
               ],
@@ -89,7 +89,7 @@ class AddRepBottomSheet extends StatelessWidget {
                         height: width * .16,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(width * .03),
-                          border: Border.all(color: AppColors.grey14),
+                          border: Border.all(color: AppColors.grey3),
                         ),
                         child: Center(
                           child: Text(

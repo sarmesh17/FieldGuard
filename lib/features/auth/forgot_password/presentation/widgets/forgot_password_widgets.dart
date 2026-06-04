@@ -184,7 +184,7 @@ class _FpPillFieldState extends State<FpPillField> {
             curve: Curves.easeOut,
             height: SizeConfig.scale(56),
             decoration: BoxDecoration(
-              color: _focused ? kFpFocus : AppColors.white2,
+              color: _focused ? kFpFocus : AppColors.white,
               borderRadius: BorderRadius.circular(SizeConfig.scale(16)),
               border: Border.all(
                 color: hasError
@@ -222,7 +222,7 @@ class _FpPillFieldState extends State<FpPillField> {
                         colors: _focused
                             ? [kFpMid, kFpDark]
                             : [
-                                AppColors.grey15,
+                                AppColors.grey4,
                                 AppColors.green6,
                               ],
                         begin: Alignment.topLeft,

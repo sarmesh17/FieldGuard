@@ -49,7 +49,7 @@ class TaskLiveTrackingScreen extends ConsumerStatefulWidget {
 class _TaskLiveTrackingScreenState
     extends ConsumerState<TaskLiveTrackingScreen> {
   static const _green = AppColors.green;
-  static const _dest = AppColors.red12;
+  static const _dest = AppColors.red2;
 
   final _socket = LiveTrackingSocket.instance;
 
@@ -593,7 +593,7 @@ class _LiveInfoCard extends StatelessWidget {
                             ? Icons.directions_car_rounded
                             : Icons.flag_rounded,
                         size: 13,
-                        color: AppColors.red12,
+                        color: AppColors.red2,
                       ),
                       const SizedBox(width: 4),
                       Expanded(
@@ -654,7 +654,7 @@ class _EndedCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isCompleted = status == 'COMPLETED';
     final color =
-        isCompleted ? AppColors.green : AppColors.red5;
+        isCompleted ? AppColors.green : AppColors.red2;
     final label = switch (status) {
       'COMPLETED' => 'Task completed',
       'CANCELLED' => 'Task cancelled',

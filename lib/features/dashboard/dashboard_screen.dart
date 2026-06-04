@@ -257,7 +257,7 @@ class _HeroProgressRings extends ConsumerWidget {
               label: 'Today',
               completed: today?.completedTasks ?? 0,
               total: today?.totalTasks ?? 0,
-              gradient: const [AppColors.yellow, AppColors.orange6],
+              gradient: const [AppColors.yellow, AppColors.orange2],
             ),
           ),
           Container(
@@ -270,7 +270,7 @@ class _HeroProgressRings extends ConsumerWidget {
               label: 'Overall',
               completed: overall?.completedTasks ?? 0,
               total: overall?.totalTasks ?? 0,
-              gradient: const [AppColors.gradientEnd, AppColors.white16],
+              gradient: const [AppColors.gradientEnd, AppColors.white],
             ),
           ),
         ],
@@ -518,7 +518,7 @@ class _LiveTrackingCard extends ConsumerWidget {
               ),
               icon: const Icon(
                 Icons.warning_amber_rounded,
-                color: AppColors.orange3,
+                color: AppColors.orange2,
                 size: 36,
               ),
               title: const Text('Task in progress'),
@@ -536,7 +536,7 @@ class _LiveTrackingCard extends ConsumerWidget {
                 TextButton(
                   onPressed: () => Navigator.pop(ctx, true),
                   style: TextButton.styleFrom(
-                    foregroundColor: AppColors.red3,
+                    foregroundColor: AppColors.red2,
                   ),
                   child: const Text('Turn off'),
                 ),
@@ -576,7 +576,7 @@ class _LiveTrackingCard extends ConsumerWidget {
             color: active ? null : Colors.white,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: active ? Colors.transparent : AppColors.orange,
+              color: active ? Colors.transparent : AppColors.grey3,
             ),
             boxShadow: [
               BoxShadow(
@@ -628,7 +628,7 @@ class _LiveTrackingCard extends ConsumerWidget {
                         fontSize: 12.5,
                         color: active
                             ? Colors.white.withValues(alpha: 0.8)
-                            : AppColors.grey5,
+                            : AppColors.grey,
                       ),
                     ),
                   ],
@@ -689,7 +689,7 @@ class _QuickActionsSection extends ConsumerWidget {
           _ActionButton(
             icon: Icons.person_add_alt_1_rounded,
             label: 'Add Employee',
-            color: AppColors.blue8,
+            color: AppColors.blue7,
             iconColor: AppColors.blue3,
             onTap: () {
               Navigator.push(
@@ -703,7 +703,7 @@ class _QuickActionsSection extends ConsumerWidget {
             _ActionButton(
               icon: Icons.manage_accounts_rounded,
               label: 'Add Manager',
-              color: AppColors.white28,
+              color: AppColors.white,
               iconColor: AppColors.pink,
               onTap: () {
                 Navigator.push(
@@ -719,8 +719,8 @@ class _QuickActionsSection extends ConsumerWidget {
           _ActionButton(
             icon: Icons.campaign_rounded,
             label: 'Broadcast',
-            color: AppColors.white10,
-            iconColor: AppColors.red4,
+            color: AppColors.white,
+            iconColor: AppColors.red2,
             onTap: () {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Broadcast feature coming soon')),
@@ -757,7 +757,7 @@ class _ActionButton extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.orange),
+          border: Border.all(color: AppColors.grey3),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.02),
@@ -816,7 +816,7 @@ class _UrgentTasksSection extends ConsumerWidget {
                 margin: const EdgeInsets.only(bottom: 12),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppColors.white10,
+                  color: AppColors.white,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: AppColors.red7),
                 ),
@@ -830,7 +830,7 @@ class _UrgentTasksSection extends ConsumerWidget {
                       ),
                       child: const Icon(
                         Icons.warning_amber_rounded,
-                        color: AppColors.red4,
+                        color: AppColors.red2,
                         size: 20,
                       ),
                     ),
@@ -844,7 +844,7 @@ class _UrgentTasksSection extends ConsumerWidget {
                             style: const TextStyle(
                               fontWeight: FontWeight.w700,
                               fontSize: 15,
-                              color: AppColors.red13,
+                              color: AppColors.red,
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -852,7 +852,7 @@ class _UrgentTasksSection extends ConsumerWidget {
                             'High Priority • Assignee: ${task.assignee.fullName}',
                             style: const TextStyle(
                               fontSize: 12,
-                              color: AppColors.red10,
+                              color: AppColors.red,
                             ),
                           ),
                         ],
@@ -860,7 +860,7 @@ class _UrgentTasksSection extends ConsumerWidget {
                     ),
                     Icon(
                       Icons.chevron_right_rounded,
-                      color: AppColors.red4.withValues(alpha: 0.5),
+                      color: AppColors.red2.withValues(alpha: 0.5),
                     ),
                   ],
                 ),
@@ -896,11 +896,11 @@ class _TaskSummarySection extends ConsumerWidget {
           Expanded(
             child: _TaskStatCard(
               icon: Icons.hourglass_top_rounded,
-              iconBg: AppColors.orange9,
-              iconColor: AppColors.orange3,
+              iconBg: AppColors.orange8,
+              iconColor: AppColors.orange2,
               value: summary.pendingTasks,
               label: 'PENDING',
-              valueColor: AppColors.orange3,
+              valueColor: AppColors.orange2,
             ),
           ),
           const SizedBox(width: 12),
@@ -918,7 +918,7 @@ class _TaskSummarySection extends ConsumerWidget {
           Expanded(
             child: _TaskStatCard(
               icon: Icons.autorenew_rounded,
-              iconBg: AppColors.blue8,
+              iconBg: AppColors.blue7,
               iconColor: AppColors.blue3,
               value: summary.inProgressTasks,
               label: 'IN PROGRESS',
@@ -955,7 +955,7 @@ class _TaskStatCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.orange),
+        border: Border.all(color: AppColors.grey3),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.03),
@@ -1028,7 +1028,7 @@ class TaskCardsSkeleton extends StatelessWidget {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppColors.orange),
+                border: Border.all(color: AppColors.grey3),
               ),
               child: const AppShimmer(
                 child: Column(
@@ -1062,7 +1062,7 @@ class TaskCardsError extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.orange),
+        border: Border.all(color: AppColors.grey3),
       ),
       child: Column(
         children: [
@@ -1131,11 +1131,11 @@ class _TeamStatusSection extends ConsumerWidget {
           ),
           const SizedBox(height: 14),
           _teamCard(
-            dotColor: AppColors.blue12,
+            dotColor: AppColors.blue13,
             title: 'Offline',
             value:
                 '${team.offlineTeam} ${team.offlineTeam == 1 ? 'Rep' : 'Reps'}',
-            valueColor: AppColors.grey25,
+            valueColor: AppColors.grey,
           ),
         ],
       ),
@@ -1154,7 +1154,7 @@ class _TeamStatusSection extends ConsumerWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.orange),
+        border: Border.all(color: AppColors.grey3),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
@@ -1208,7 +1208,7 @@ class _TeamStatusSkeletonCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.orange),
+        border: Border.all(color: AppColors.grey3),
       ),
       child: const AppShimmer(
         child: Row(
@@ -1253,7 +1253,7 @@ class _ActivityFeedSection extends ConsumerWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: AppColors.orange),
+            border: Border.all(color: AppColors.grey3),
           ),
           child: Column(
             children: response.history.map((event) {
@@ -1269,7 +1269,7 @@ class _ActivityFeedSection extends ConsumerWidget {
               } else if (event.action.toUpperCase().contains('UPDATE') ||
                   event.action.toUpperCase().contains('CHANGE')) {
                 icon = Icons.edit_note_rounded;
-                color = AppColors.orange3;
+                color = AppColors.orange2;
               } else if (event.action.toUpperCase().contains('COMPLETE')) {
                 icon = Icons.check_circle_outline_rounded;
                 color = AppColors.green5;

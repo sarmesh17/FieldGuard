@@ -348,7 +348,7 @@ class _ShopsScreenState extends ConsumerState<ShopsScreen> {
               child: Icon(
                 Icons.error_outline_rounded,
                 size: _s(46),
-                color: AppColors.red4,
+                color: AppColors.red2,
               ),
             ),
             SizedBox(height: SizeConfig.heightPercent(2)),
@@ -658,7 +658,7 @@ class _ShopsScreenState extends ConsumerState<ShopsScreen> {
                                   style: TextStyle(
                                     fontSize: _sf(13),
                                     fontWeight: FontWeight.w700,
-                                    color: AppColors.blue6,
+                                    color: AppColors.blue2,
                                   ),
                                 ),
                                 Text(
@@ -864,7 +864,7 @@ class _ShopsScreenState extends ConsumerState<ShopsScreen> {
   Color _getRoleColor(String role) {
     switch (role) {
       case 'Admin':
-        return AppColors.red18;
+        return AppColors.red2;
       case 'Manager':
         return AppColors.blue;
       case 'Employee':

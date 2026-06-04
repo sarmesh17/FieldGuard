@@ -48,7 +48,7 @@ class _LegalScreenState extends State<LegalScreen>
     SizeConfig.init(context);
 
     return Scaffold(
-      backgroundColor: AppColors.white2,
+      backgroundColor: AppColors.white,
       body: Column(
         children: [
           _Header(tabController: _tabController),
@@ -189,7 +189,7 @@ class _DocumentView extends StatelessWidget {
           intro,
           style: TextStyle(
             fontSize: SizeConfig.scaledFontSize(14),
-            color: AppColors.grey24,
+            color: AppColors.grey,
             height: 1.5,
           ),
         ),
@@ -317,7 +317,7 @@ class _Disclaimer extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.orange8,
         borderRadius: BorderRadius.circular(SizeConfig.scale(12)),
-        border: Border.all(color: AppColors.orange7),
+        border: Border.all(color: AppColors.orange8),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -335,7 +335,7 @@ class _Disclaimer extends StatelessWidget {
               'not legal advice.',
               style: TextStyle(
                 fontSize: SizeConfig.scaledFontSize(11.5),
-                color: AppColors.brown2,
+                color: AppColors.brown,
                 height: 1.5,
               ),
             ),

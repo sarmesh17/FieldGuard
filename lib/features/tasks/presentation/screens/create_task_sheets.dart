@@ -306,7 +306,7 @@ class _PersonSelectorBottomSheetState extends State<_PersonSelectorBottomSheet> 
                   vertical: SizeConfig.scale(4),
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.red8,
+                  color: AppColors.red6,
                   borderRadius: BorderRadius.circular(SizeConfig.scale(4)),
                 ),
                 child: Text(
@@ -629,7 +629,7 @@ class _ShopSelectorBottomSheetState extends State<_ShopSelectorBottomSheet> {
                   vertical: SizeConfig.scale(4),
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.red8,
+                  color: AppColors.red6,
                   borderRadius: BorderRadius.circular(SizeConfig.scale(4)),
                 ),
                 child: Text(

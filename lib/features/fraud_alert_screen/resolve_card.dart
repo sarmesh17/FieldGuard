@@ -109,7 +109,7 @@ class AlertCard extends StatelessWidget {
                       Icon(
                         Icons.person_outline,
                         size: width * .045,
-                        color: AppColors.grey17,
+                        color: AppColors.grey,
                       ),
                       SizedBox(width: width * .01),
                       Text(
@@ -123,13 +123,13 @@ class AlertCard extends StatelessWidget {
                       Icon(
                         Icons.arrow_forward,
                         size: width * .045,
-                        color: AppColors.grey27,
+                        color: AppColors.grey2,
                       ),
                       SizedBox(width: width * .025),
                       Icon(
                         Icons.storefront_outlined,
                         size: width * .045,
-                        color: AppColors.grey17,
+                        color: AppColors.grey,
                       ),
                       SizedBox(width: width * .01),
                       Expanded(
@@ -216,7 +216,7 @@ class AlertCard extends StatelessWidget {
                       child: Text(
                         'Warn Rep',
                         style: TextStyle(
-                          color: AppColors.brown3,
+                          color: AppColors.brown,
                           fontSize: width * .048,
                           fontWeight: FontWeight.w500,
                         ),

@@ -9,7 +9,7 @@ import 'package:fieldguard/core/theme/app_colors.dart';
 
 const _kBrand = AppColors.green;
 const _kInk = AppColors.ink2;
-const _kMuted = AppColors.grey8;
+const _kMuted = AppColors.grey2;
 
 /// Settle sheet for a PENDING cheque. CLEARED / BOUNCED toggle + optional
 /// notes. On success pops with the [CreateCollectionResponse] so the caller
@@ -92,7 +92,7 @@ class _SettleCollectionSheetState
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.grey7,
+                  color: AppColors.grey4,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -207,7 +207,7 @@ class _SettleCollectionSheetState
                 hintStyle:
                     const TextStyle(fontSize: 13.5, color: AppColors.grey9),
                 filled: true,
-                fillColor: AppColors.white2,
+                fillColor: AppColors.white,
                 counterText: '',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -255,7 +255,7 @@ class _SettleCollectionSheetState
                         _submitting ? null : () => Navigator.of(context).pop(),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      side: const BorderSide(color: AppColors.grey7),
+                      side: const BorderSide(color: AppColors.grey4),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
                       ),
@@ -265,7 +265,7 @@ class _SettleCollectionSheetState
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.grey5,
+                        color: AppColors.grey,
                       ),
                     ),
                   ),
@@ -342,7 +342,7 @@ class _OutcomeChip extends StatelessWidget {
             borderRadius: BorderRadius.circular(14),
             color: selected ? color : Colors.white,
             border: Border.all(
-              color: selected ? color : AppColors.grey7,
+              color: selected ? color : AppColors.grey4,
             ),
           ),
           child: Row(

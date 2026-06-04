@@ -361,7 +361,7 @@ class _CreateGeofenceFormState extends State<CreateGeofenceForm> {
                 const SizedBox(height: 4),
                 const Text(
                   'Fill in the shop details for this location.',
-                  style: TextStyle(fontSize: 13, color: AppColors.grey5),
+                  style: TextStyle(fontSize: 13, color: AppColors.grey),
                 ),
                 const SizedBox(height: 20),
                 Container(
@@ -735,7 +735,7 @@ class _CreateGeofenceFormState extends State<CreateGeofenceForm> {
                   fontSize: 14,
                   color: selected > 0
                       ? AppColors.ink
-                      : AppColors.grey5,
+                      : AppColors.grey,
                   fontWeight:
                       selected > 0 ? FontWeight.w600 : FontWeight.w400,
                 ),
@@ -930,7 +930,7 @@ class _VisibilityPickerState extends State<_VisibilityPicker> {
                   '${_selected.length} selected',
                   style: const TextStyle(
                     fontSize: 13,
-                    color: AppColors.grey5,
+                    color: AppColors.grey,
                   ),
                 ),
               ),
@@ -976,7 +976,7 @@ class _VisibilityPickerState extends State<_VisibilityPicker> {
                           'No matches found',
                           style: TextStyle(
                             fontSize: 14,
-                            color: AppColors.grey5,
+                            color: AppColors.grey,
                           ),
                         ),
                       )
@@ -1160,7 +1160,7 @@ class _PickerTile extends StatelessWidget {
                     code,
                     style: const TextStyle(
                       fontSize: 12,
-                      color: AppColors.grey5,
+                      color: AppColors.grey,
                     ),
                   ),
                 ],

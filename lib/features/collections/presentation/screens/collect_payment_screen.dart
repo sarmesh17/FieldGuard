@@ -11,8 +11,8 @@ import 'package:fieldguard/core/theme/app_colors.dart';
 const _kBrand = AppColors.green;
 const _kBrandLight = AppColors.green;
 const _kInk = AppColors.ink2;
-const _kMuted = AppColors.grey8;
-const _kBg = AppColors.white2;
+const _kMuted = AppColors.grey2;
+const _kBg = AppColors.white;
 
 /// Form for `POST /api/v1/collections`. Caller passes the task's shop so the
 /// user never picks it — the screen is opened from a specific task. Server
@@ -294,11 +294,11 @@ class _CollectPaymentScreenState extends ConsumerState<CollectPaymentScreen> {
           const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.grey7),
+        borderSide: const BorderSide(color: AppColors.grey4),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.grey7),
+        borderSide: const BorderSide(color: AppColors.grey4),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
@@ -347,7 +347,7 @@ class _ShopChip extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.grey7),
+        border: Border.all(color: AppColors.grey4),
       ),
       child: Row(
         children: [
@@ -461,7 +461,7 @@ class _MethodChip extends StatelessWidget {
                 : null,
             color: selected ? null : Colors.white,
             border: Border.all(
-              color: selected ? Colors.transparent : AppColors.grey7,
+              color: selected ? Colors.transparent : AppColors.grey4,
             ),
             boxShadow: selected
                 ? [
@@ -524,7 +524,7 @@ class _DateField extends StatelessWidget {
               const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.grey7),
+            border: Border.all(color: AppColors.grey4),
           ),
           child: Row(
             children: [

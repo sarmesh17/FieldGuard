@@ -393,7 +393,7 @@ class _ManagerDetailScreenState extends State<ManagerDetailScreen>
                         decoration: BoxDecoration(
                           color: _manager!.isActive
                               ? AppColors.green6
-                              : AppColors.red8,
+                              : AppColors.red6,
                           borderRadius:
                               BorderRadius.circular(SizeConfig.scale(20)),
                         ),

@@ -64,7 +64,7 @@ class SeatUsageCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: SizeConfig.scaledFontSize(14),
                   fontWeight: FontWeight.w800,
-                  color: full ? AppColors.red3 : kSubPrimary,
+                  color: full ? AppColors.red2 : kSubPrimary,
                 ),
               ),
             ],
@@ -77,7 +77,7 @@ class SeatUsageCard extends StatelessWidget {
               minHeight: SizeConfig.scale(8),
               backgroundColor: AppColors.backgroundAlt,
               valueColor: AlwaysStoppedAnimation(
-                full ? AppColors.red3 : kSubMid,
+                full ? AppColors.red2 : kSubMid,
               ),
             ),
           ),
@@ -90,7 +90,7 @@ class SeatUsageCard extends StatelessWidget {
                     : '${subscription.staffRemaining ?? 0} seat(s) remaining.',
             style: TextStyle(
               fontSize: SizeConfig.scaledFontSize(12),
-              color: full ? AppColors.red3 : AppColors.grey5,
+              color: full ? AppColors.red2 : AppColors.grey,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -248,7 +248,7 @@ class PlanCard extends StatelessWidget {
   Widget _feature(IconData icon, String text) {
     return Row(
       children: [
-        Icon(icon, size: SizeConfig.scale(16), color: AppColors.grey5),
+        Icon(icon, size: SizeConfig.scale(16), color: AppColors.grey),
         SizedBox(width: SizeConfig.scale(8)),
         Expanded(
           child: Text(

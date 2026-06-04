@@ -30,7 +30,7 @@ class ManageRepsScreen extends StatelessWidget {
                       decoration: const BoxDecoration(
                         color: Colors.white,
                         border: Border(
-                          bottom: BorderSide(color: AppColors.orange),
+                          bottom: BorderSide(color: AppColors.grey3),
                         ),
                       ),
                       child: Row(
@@ -38,7 +38,7 @@ class ManageRepsScreen extends StatelessWidget {
                           Icon(
                             Icons.arrow_back,
                             size: wp(.085),
-                            color: AppColors.grey23,
+                            color: AppColors.grey13,
                           ),
                           SizedBox(width: wp(.04)),
                           Expanded(
@@ -89,7 +89,7 @@ class ManageRepsScreen extends StatelessWidget {
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(wp(.04)),
                                 border: Border.all(
-                                  color: AppColors.grey32,
+                                  color: AppColors.grey3,
                                 ),
                                 boxShadow: [
                                   BoxShadow(
@@ -104,7 +104,7 @@ class ManageRepsScreen extends StatelessWidget {
                                   Icon(
                                     Icons.search,
                                     size: wp(.085),
-                                    color: AppColors.grey5,
+                                    color: AppColors.grey,
                                   ),
                                   SizedBox(width: wp(.03)),
                                   Expanded(
@@ -112,7 +112,7 @@ class ManageRepsScreen extends StatelessWidget {
                                       'Search reps by name, phone, or zone',
                                       style: TextStyle(
                                         fontSize: wp(.05),
-                                        color: AppColors.grey5,
+                                        color: AppColors.grey,
                                       ),
                                     ),
                                   ),
@@ -128,7 +128,7 @@ class ManageRepsScreen extends StatelessWidget {
                                     width: w,
                                     title: 'All',
                                     active: true,
-                                    activeColor: AppColors.blue10,
+                                    activeColor: AppColors.blue,
                                   ),
                                   FilterChipWidget(width: w, title: 'Active'),
                                   FilterChipWidget(width: w, title: 'Inactive'),
@@ -193,13 +193,13 @@ class FilterChipWidget extends StatelessWidget {
         color: active
             ? activeColor
             : outlinedRed
-            ? AppColors.white10
+            ? AppColors.white
             : Colors.white,
         borderRadius: BorderRadius.circular(width * .08),
         border: Border.all(
           color: outlinedRed
-              ? AppColors.red17
-              : AppColors.grey14,
+              ? AppColors.red7
+              : AppColors.grey3,
         ),
       ),
       child: Row(
@@ -208,7 +208,7 @@ class FilterChipWidget extends StatelessWidget {
             Icon(
               icon,
               size: width * .045,
-              color: outlinedRed ? AppColors.red11 : Colors.white,
+              color: outlinedRed ? AppColors.red : Colors.white,
             ),
             SizedBox(width: width * .015),
           ],
@@ -220,8 +220,8 @@ class FilterChipWidget extends StatelessWidget {
               color: active
                   ? Colors.white
                   : outlinedRed
-                  ? AppColors.red11
-                  : AppColors.grey21,
+                  ? AppColors.red
+                  : AppColors.grey13,
             ),
           ),
         ],
@@ -254,7 +254,7 @@ class RepCard extends StatelessWidget {
           Container(
             width: width * .012,
             decoration: BoxDecoration(
-              color: AppColors.blue11,
+              color: AppColors.blue,
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(width * .05),
                 bottomLeft: Radius.circular(width * .05),
@@ -336,7 +336,7 @@ class RepCard extends StatelessWidget {
                       Icon(
                         Icons.keyboard_arrow_up,
                         size: width * .07,
-                        color: AppColors.grey28,
+                        color: AppColors.grey2,
                       ),
                     ],
                   ),
@@ -415,7 +415,7 @@ class InputLabel extends StatelessWidget {
       style: const TextStyle(
         fontSize: 14,
         letterSpacing: 1,
-        color: AppColors.grey19,
+        color: AppColors.grey13,
         fontWeight: FontWeight.w500,
       ),
     );
@@ -441,7 +441,7 @@ class InputField extends StatelessWidget {
       padding: EdgeInsets.symmetric(horizontal: width * .04),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(width * .03),
-        border: Border.all(color: AppColors.grey14),
+        border: Border.all(color: AppColors.grey3),
       ),
       child: Row(
         children: [
@@ -450,12 +450,12 @@ class InputField extends StatelessWidget {
               hint,
               style: TextStyle(
                 fontSize: width * .05,
-                color: AppColors.grey5,
+                color: AppColors.grey,
               ),
             ),
           ),
           if (suffix != null)
-            Icon(suffix, size: width * .06, color: AppColors.grey5),
+            Icon(suffix, size: width * .06, color: AppColors.grey),
         ],
       ),
     );

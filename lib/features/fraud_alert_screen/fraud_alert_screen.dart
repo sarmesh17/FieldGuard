@@ -47,13 +47,13 @@ class FraudAlertsScreen extends StatelessWidget {
                           vertical: hp(.008),
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.red8,
+                          color: AppColors.red6,
                           borderRadius: BorderRadius.circular(wp(.08)),
                         ),
                         child: Text(
                           '3 Unresolved',
                           style: TextStyle(
-                            color: AppColors.red4,
+                            color: AppColors.red2,
                             fontSize: wp(.038),
                             fontWeight: FontWeight.w500,
                           ),
@@ -90,8 +90,8 @@ class FraudAlertsScreen extends StatelessWidget {
                         width: w,
                         height: h,
                         level: 'High',
-                        levelColor: AppColors.red4,
-                        borderColor: AppColors.red4,
+                        levelColor: AppColors.red2,
+                        borderColor: AppColors.red2,
                         title: 'Payment Amount Disputed',
                         person: 'Raj Kumar',
                         shop: 'Mehta Traders',
@@ -106,8 +106,8 @@ class FraudAlertsScreen extends StatelessWidget {
                         width: w,
                         height: h,
                         level: 'Med',
-                        levelColor: AppColors.brown5,
-                        borderColor: AppColors.orange4,
+                        levelColor: AppColors.brown,
+                        borderColor: AppColors.orange2,
                         title: 'Visit Duration Too Short',
                         person: 'Amit Singh',
                         shop: 'Sharma Kirana',
@@ -151,7 +151,7 @@ class TopTab extends StatelessWidget {
         Text(
           text,
           style: TextStyle(
-            color: selected ? AppColors.green : AppColors.grey5,
+            color: selected ? AppColors.green : AppColors.grey,
             fontSize: width * .042,
             fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
           ),
@@ -190,33 +190,33 @@ class SummarySection extends StatelessWidget {
         children: [
           Text(
             '3 High\nRisk',
-            style: textStyle.copyWith(color: AppColors.red4),
+            style: textStyle.copyWith(color: AppColors.red2),
           ),
           SizedBox(width: width * .04),
           Text(
             '·',
             style: TextStyle(
               fontSize: width * .07,
-              color: AppColors.grey18,
+              color: AppColors.grey9,
             ),
           ),
           SizedBox(width: width * .04),
           Text(
             '5\nMedium',
-            style: textStyle.copyWith(color: AppColors.orange4),
+            style: textStyle.copyWith(color: AppColors.orange2),
           ),
           SizedBox(width: width * .04),
           Text(
             '·',
             style: TextStyle(
               fontSize: width * .07,
-              color: AppColors.grey18,
+              color: AppColors.grey9,
             ),
           ),
           SizedBox(width: width * .04),
           Text(
             '2 Resolved\nToday',
-            style: textStyle.copyWith(color: AppColors.grey5),
+            style: textStyle.copyWith(color: AppColors.grey),
           ),
         ],
       ),
@@ -248,18 +248,18 @@ class ActionChipWidget extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.background,
         borderRadius: BorderRadius.circular(width * .06),
-        border: Border.all(color: AppColors.grey32),
+        border: Border.all(color: AppColors.grey3),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: width * .045, color: AppColors.grey16),
+          Icon(icon, size: width * .045, color: AppColors.grey13),
           SizedBox(width: width * .015),
           Text(
             text,
             style: TextStyle(
               fontSize: width * .04,
-              color: AppColors.grey16,
+              color: AppColors.grey13,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -284,7 +284,7 @@ class ResolvedCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(width * .06),
-          border: Border.all(color: AppColors.grey34),
+          border: Border.all(color: AppColors.grey4),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

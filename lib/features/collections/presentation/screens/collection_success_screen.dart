@@ -6,8 +6,8 @@ import 'package:fieldguard/core/theme/app_colors.dart';
 
 const _kBrand = AppColors.green;
 const _kInk = AppColors.ink2;
-const _kMuted = AppColors.grey8;
-const _kBg = AppColors.white2;
+const _kMuted = AppColors.grey2;
+const _kBg = AppColors.white;
 
 /// Confirmation screen after a successful collection.
 ///
@@ -246,7 +246,7 @@ class _OutstandingCard extends StatelessWidget {
                   value: snapshot.totalDue,
                   color: _kInk,
                 ),
-                const Divider(height: 18, color: AppColors.white9),
+                const Divider(height: 18, color: AppColors.grey4),
                 _AmountRow(
                   label: 'Collected',
                   value: snapshot.collected,
@@ -258,7 +258,7 @@ class _OutstandingCard extends StatelessWidget {
                   value: snapshot.pendingCheques,
                   color: AppColors.brown,
                 ),
-                const Divider(height: 18, color: AppColors.white9),
+                const Divider(height: 18, color: AppColors.grey4),
                 _AmountRow(
                   label: 'Still outstanding',
                   value: snapshot.outstanding,
@@ -387,7 +387,7 @@ class _SmsPreviewCard extends StatelessWidget {
             decoration: BoxDecoration(
               color: AppColors.white,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.grey12),
+              border: Border.all(color: AppColors.grey4),
             ),
             child: Text(
               preview.body,
@@ -441,7 +441,7 @@ class _PendingChequeCard extends StatelessWidget {
                   'The receipt SMS will be sent to the shop once an admin settles this cheque.',
                   style: TextStyle(
                     fontSize: 13,
-                    color: AppColors.grey10,
+                    color: AppColors.grey,
                     height: 1.4,
                   ),
                 ),
@@ -491,7 +491,7 @@ class _NoSmsCard extends StatelessWidget {
                   "The shop doesn't have a valid contact phone on file, so no receipt SMS could be sent.",
                   style: TextStyle(
                     fontSize: 13,
-                    color: AppColors.grey10,
+                    color: AppColors.grey,
                     height: 1.4,
                   ),
                 ),
