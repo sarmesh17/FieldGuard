@@ -402,7 +402,7 @@ class _StepNode extends StatelessWidget {
                           colors: [_kBrand, _kBrandLight],
                         )
                       : null,
-                  color: reached ? null : AppColors.white20,
+                  color: reached ? null : AppColors.white4,
                   border: Border.all(
                     color: reached
                         ? Colors.transparent

@@ -16,7 +16,7 @@ class FraudAlertsScreen extends StatelessWidget {
         double hp(double v) => h * v;
 
         return Scaffold(
-          backgroundColor: AppColors.white15,
+          backgroundColor: AppColors.background,
           body: SafeArea(
             child: Column(
               children: [
@@ -47,7 +47,7 @@ class FraudAlertsScreen extends StatelessWidget {
                           vertical: hp(.008),
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.red20,
+                          color: AppColors.red8,
                           borderRadius: BorderRadius.circular(wp(.08)),
                         ),
                         child: Text(
@@ -246,7 +246,7 @@ class ActionChipWidget extends StatelessWidget {
         vertical: height * .012,
       ),
       decoration: BoxDecoration(
-        color: AppColors.white25,
+        color: AppColors.background,
         borderRadius: BorderRadius.circular(width * .06),
         border: Border.all(color: AppColors.grey32),
       ),
@@ -343,7 +343,7 @@ class ResolvedCard extends StatelessWidget {
                     vertical: height * .012,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.white23,
+                    color: AppColors.background,
                     borderRadius: BorderRadius.circular(width * .025),
                   ),
                   child: Text(

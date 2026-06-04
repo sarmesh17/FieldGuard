@@ -39,7 +39,7 @@ class AddRepBottomSheet extends StatelessWidget {
               children: [
                 Icon(
                   Icons.person_add_alt_1_outlined,
-                  color: AppColors.blue5,
+                  color: AppColors.blue,
                   size: width * .08,
                 ),
                 SizedBox(width: width * .03),
@@ -56,13 +56,13 @@ class AddRepBottomSheet extends StatelessWidget {
                   width: width * .12,
                   height: width * .12,
                   decoration: const BoxDecoration(
-                    color: AppColors.white24,
+                    color: AppColors.background,
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     Icons.close,
                     size: width * .08,
-                    color: AppColors.grey22,
+                    color: AppColors.grey16,
                   ),
                 ),
               ],
@@ -96,7 +96,7 @@ class AddRepBottomSheet extends StatelessWidget {
                             '+977',
                             style: TextStyle(
                               fontSize: width * .06,
-                              color: AppColors.grey20,
+                              color: AppColors.grey13,
                             ),
                           ),
                         ),

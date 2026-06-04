@@ -575,7 +575,7 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen>
     final img = _employee!.profileImage;
 
     final fallback = Container(
-      color: AppColors.white18,
+      color: AppColors.green31,
       alignment: Alignment.center,
       child: Text(
         _initials(),

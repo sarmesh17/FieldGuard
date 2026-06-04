@@ -948,7 +948,7 @@ class _UpdateShopScreenState extends ConsumerState<UpdateShopScreen> {
         width: double.infinity,
         height: 120,
         decoration: BoxDecoration(
-          color: AppColors.white5,
+          color: AppColors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: AppColors.grey4),
         ),
@@ -992,7 +992,7 @@ class _UpdateShopScreenState extends ConsumerState<UpdateShopScreen> {
         prefixIcon:
             Icon(icon, color: AppColors.grey2, size: 20),
         filled: true,
-        fillColor: AppColors.white5,
+        fillColor: AppColors.white,
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         counterText: '',

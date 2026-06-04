@@ -415,7 +415,7 @@ class _QrCard extends StatelessWidget {
                   width: qrSize,
                   height: qrSize,
                   decoration: BoxDecoration(
-                    color: AppColors.white7,
+                    color: AppColors.white2,
                     borderRadius: BorderRadius.circular(SizeConfig.scale(14)),
                   ),
                   clipBehavior: Clip.antiAlias,
@@ -489,7 +489,7 @@ class _QrCard extends StatelessWidget {
                 vertical: SizeConfig.scale(10),
               ),
               decoration: BoxDecoration(
-                color: AppColors.white7,
+                color: AppColors.white2,
                 borderRadius: BorderRadius.circular(SizeConfig.scale(12)),
               ),
               child: Row(
@@ -634,7 +634,7 @@ class _ProofPicker extends StatelessWidget {
               width: SizeConfig.scale(56),
               height: SizeConfig.scale(56),
               decoration: BoxDecoration(
-                color: AppColors.white7,
+                color: AppColors.white2,
                 borderRadius: BorderRadius.circular(SizeConfig.scale(12)),
               ),
               clipBehavior: Clip.antiAlias,
@@ -671,7 +671,7 @@ class _ProofPicker extends StatelessWidget {
                       child: LinearProgressIndicator(
                         value: progress == 0 ? null : progress,
                         minHeight: SizeConfig.scale(5),
-                        backgroundColor: AppColors.white12,
+                        backgroundColor: AppColors.backgroundAlt,
                         valueColor: const AlwaysStoppedAnimation(kSubMid),
                       ),
                     )

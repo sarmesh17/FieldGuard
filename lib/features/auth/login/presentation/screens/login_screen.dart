@@ -16,7 +16,7 @@ const _kDark = AppColors.green10;
 const _kPrimary = AppColors.green12;
 const _kMid = AppColors.gradientStart;
 const _kLight = AppColors.gradientEnd;
-const _kFocus = AppColors.white6;
+const _kFocus = AppColors.green6;
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -863,7 +863,7 @@ class _ModernFieldState extends State<_ModernField> {
         curve: Curves.easeOut,
         height: SizeConfig.scale(56),
         decoration: BoxDecoration(
-          color: _focused ? _kFocus : AppColors.white7,
+          color: _focused ? _kFocus : AppColors.white2,
           borderRadius: BorderRadius.circular(SizeConfig.scale(16)),
           border: Border.all(
             color: _focused ? _kMid : Colors.transparent,
@@ -975,7 +975,7 @@ class _ModernPasswordFieldState extends State<_ModernPasswordField> {
         curve: Curves.easeOut,
         height: SizeConfig.scale(56),
         decoration: BoxDecoration(
-          color: _focused ? _kFocus : AppColors.white7,
+          color: _focused ? _kFocus : AppColors.white2,
           borderRadius: BorderRadius.circular(SizeConfig.scale(16)),
           border: Border.all(
             color: _focused ? _kMid : Colors.transparent,

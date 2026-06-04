@@ -65,7 +65,7 @@ class SectionCard extends StatelessWidget {
                     letterSpacing: 1.4,
                     fontWeight: FontWeight.w700,
                     color: highlighted
-                        ? AppColors.blue5
+                        ? AppColors.blue
                         : AppColors.grey2,
                   ),
                 ),
@@ -74,7 +74,7 @@ class SectionCard extends StatelessWidget {
           ),
           Container(
             height: 1,
-            color: AppColors.white8,
+            color: AppColors.white4,
           ),
           // Items with dividers between them
           for (int i = 0; i < items.length; i++) ...[
@@ -82,7 +82,7 @@ class SectionCard extends StatelessWidget {
             if (i < items.length - 1)
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: w * 0.045),
-                child: Container(height: 1, color: AppColors.white8),
+                child: Container(height: 1, color: AppColors.white4),
               ),
           ],
           SizedBox(height: w * 0.01),

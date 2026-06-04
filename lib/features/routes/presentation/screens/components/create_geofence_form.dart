@@ -678,7 +678,7 @@ class _CreateGeofenceFormState extends State<CreateGeofenceForm> {
         width: double.infinity,
         height: 120,
         decoration: BoxDecoration(
-          color: AppColors.white5,
+          color: AppColors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: AppColors.grey4),
         ),
@@ -719,7 +719,7 @@ class _CreateGeofenceFormState extends State<CreateGeofenceForm> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         decoration: BoxDecoration(
-          color: AppColors.white5,
+          color: AppColors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: AppColors.grey4),
         ),
@@ -783,7 +783,7 @@ class _CreateGeofenceFormState extends State<CreateGeofenceForm> {
         prefixIcon:
             Icon(icon, color: AppColors.grey2, size: 20),
         filled: true,
-        fillColor: AppColors.white5,
+        fillColor: AppColors.white,
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         counterText: '',
@@ -948,7 +948,7 @@ class _VisibilityPickerState extends State<_VisibilityPicker> {
                     prefixIcon: const Icon(Icons.search,
                         color: AppColors.grey2, size: 20),
                     filled: true,
-                    fillColor: AppColors.white5,
+                    fillColor: AppColors.white,
                     contentPadding:
                         const EdgeInsets.symmetric(vertical: 12),
                     border: OutlineInputBorder(
@@ -1172,7 +1172,7 @@ class _PickerTile extends StatelessWidget {
                   : Icons.radio_button_unchecked,
               color: selected
                   ? AppColors.green
-                  : AppColors.grey29,
+                  : AppColors.blue13,
               size: 22,
             ),
           ],

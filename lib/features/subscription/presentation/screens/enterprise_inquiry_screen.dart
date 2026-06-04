@@ -666,7 +666,7 @@ class _DetailCard extends StatelessWidget {
 
   Widget _divider() => Padding(
         padding: EdgeInsets.symmetric(vertical: SizeConfig.scale(12)),
-        child: const Divider(height: 1, color: AppColors.white21),
+        child: const Divider(height: 1, color: AppColors.white4),
       );
 
   Widget _row(IconData icon, String label, String value) {

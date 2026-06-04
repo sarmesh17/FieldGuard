@@ -439,7 +439,7 @@ class _UpdateTaskSheetState extends ConsumerState<_UpdateTaskSheet> {
                     hintStyle: const TextStyle(
                         fontSize: 13.5, color: AppColors.grey9),
                     filled: true,
-                    fillColor: AppColors.white3,
+                    fillColor: AppColors.white2,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
@@ -471,7 +471,7 @@ class _UpdateTaskSheetState extends ConsumerState<_UpdateTaskSheet> {
                   hintStyle: const TextStyle(
                       fontSize: 13.5, color: AppColors.grey9),
                   filled: true,
-                  fillColor: AppColors.white3,
+                  fillColor: AppColors.white2,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
@@ -500,7 +500,7 @@ class _UpdateTaskSheetState extends ConsumerState<_UpdateTaskSheet> {
                 hintStyle: const TextStyle(
                     fontSize: 13.5, color: AppColors.grey9),
                 filled: true,
-                fillColor: AppColors.white3,
+                fillColor: AppColors.white2,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -605,7 +605,7 @@ class _Chip extends StatelessWidget {
           borderRadius: BorderRadius.circular(24),
           color: selected
               ? selectedColor
-              : AppColors.white3,
+              : AppColors.white2,
           border: Border.all(
             color: selected ? selectedColor : AppColors.grey7,
           ),
@@ -657,7 +657,7 @@ class _ImagePickerSection extends StatelessWidget {
         height: hasImage ? 160 : 90,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
-          color: AppColors.white3,
+          color: AppColors.white2,
           border: Border.all(
             color: AppColors.grey7,
             width: 1.5,
