@@ -10,14 +10,15 @@ import 'package:fieldguard/widgets/app_skeletons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:fieldguard/core/theme/app_colors.dart';
 
 // ─── Brand palette (consistent with Team / Routes / Profile) ────────────────
-const _kDark = Color(0xff072A1C);
-const _kPrimary = Color(0xff0E5A3B);
-const _kMid = Color(0xff1D7A51);
-const _kSurface = Color(0xFFF8FAF9);
-const _kBorder = Color(0xffE8E3DD);
-const _kMuted = Color(0xff667085);
+const _kDark = AppColors.green8;
+const _kPrimary = AppColors.green;
+const _kMid = AppColors.green3;
+const _kSurface = AppColors.white;
+const _kBorder = AppColors.grey3;
+const _kMuted = AppColors.grey;
 
 // Cap content to a comfortable phone width so cards don't stretch on
 // wide / landscape screens.
@@ -341,13 +342,13 @@ class _ShopsScreenState extends ConsumerState<ShopsScreen> {
               width: _s(96),
               height: _s(96),
               decoration: BoxDecoration(
-                color: const Color(0xFFFEE2E2),
+                color: AppColors.red6,
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 Icons.error_outline_rounded,
                 size: _s(46),
-                color: const Color(0xffEF4444),
+                color: AppColors.red4,
               ),
             ),
             SizedBox(height: SizeConfig.heightPercent(2)),
@@ -610,7 +611,7 @@ class _ShopsScreenState extends ConsumerState<ShopsScreen> {
                               style: TextStyle(
                                 fontSize: _sf(16.5),
                                 fontWeight: FontWeight.w800,
-                                color: const Color(0xff111111),
+                                color: AppColors.black,
                                 letterSpacing: -0.2,
                               ),
                             ),
@@ -657,7 +658,7 @@ class _ShopsScreenState extends ConsumerState<ShopsScreen> {
                                   style: TextStyle(
                                     fontSize: _sf(13),
                                     fontWeight: FontWeight.w700,
-                                    color: const Color(0xff1F2937),
+                                    color: AppColors.blue6,
                                   ),
                                 ),
                                 Text(
@@ -749,7 +750,7 @@ class _ShopsScreenState extends ConsumerState<ShopsScreen> {
   }
 
   Widget _statusPill(bool active) {
-    final color = active ? _kPrimary : const Color(0xffFF3B3B);
+    final color = active ? _kPrimary : AppColors.red2;
     return Container(
       padding: EdgeInsets.symmetric(horizontal: _s(9), vertical: _s(4)),
       decoration: BoxDecoration(
@@ -800,7 +801,7 @@ class _ShopsScreenState extends ConsumerState<ShopsScreen> {
         width: _s(32),
         height: _s(32),
         decoration: BoxDecoration(
-          color: const Color(0xFFF0FDF4),
+          color: AppColors.green6,
           borderRadius: BorderRadius.circular(_s(10)),
         ),
         child: Icon(Icons.edit_outlined, size: _s(16), color: _kPrimary),
@@ -863,13 +864,13 @@ class _ShopsScreenState extends ConsumerState<ShopsScreen> {
   Color _getRoleColor(String role) {
     switch (role) {
       case 'Admin':
-        return const Color(0xffFF6B6B);
+        return AppColors.red18;
       case 'Manager':
-        return const Color(0xff6558FF);
+        return AppColors.blue;
       case 'Employee':
-        return const Color(0xff0E5A3B);
+        return AppColors.green;
       default:
-        return const Color(0xff667085);
+        return AppColors.grey;
     }
   }
 
@@ -906,7 +907,7 @@ class _ShopsScreenState extends ConsumerState<ShopsScreen> {
                 style: TextStyle(
                   fontSize: _sf(15),
                   fontWeight: FontWeight.w600,
-                  color: const Color(0xff111111),
+                  color: AppColors.black,
                 ),
               ),
             ),

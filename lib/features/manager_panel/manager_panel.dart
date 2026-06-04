@@ -1,5 +1,6 @@
 import 'package:fieldguard/features/manager_panel/add_rep_bottom_sheet.dart';
 import 'package:flutter/material.dart';
+import 'package:fieldguard/core/theme/app_colors.dart';
 
 class ManageRepsScreen extends StatelessWidget {
   const ManageRepsScreen({super.key});
@@ -15,7 +16,7 @@ class ManageRepsScreen extends StatelessWidget {
         double hp(double v) => h * v;
 
         return Scaffold(
-          backgroundColor: const Color(0xffF6F4EF),
+          backgroundColor: AppColors.white26,
           body: SafeArea(
             child: Stack(
               children: [
@@ -29,7 +30,7 @@ class ManageRepsScreen extends StatelessWidget {
                       decoration: const BoxDecoration(
                         color: Colors.white,
                         border: Border(
-                          bottom: BorderSide(color: Color(0xffE6E2DA)),
+                          bottom: BorderSide(color: AppColors.grey36),
                         ),
                       ),
                       child: Row(
@@ -37,7 +38,7 @@ class ManageRepsScreen extends StatelessWidget {
                           Icon(
                             Icons.arrow_back,
                             size: wp(.085),
-                            color: const Color(0xff4B4B4B),
+                            color: AppColors.grey23,
                           ),
                           SizedBox(width: wp(.04)),
                           Expanded(
@@ -46,7 +47,7 @@ class ManageRepsScreen extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: wp(.08),
                                 fontWeight: FontWeight.w700,
-                                color: const Color(0xff0B4E32),
+                                color: AppColors.green23,
                               ),
                             ),
                           ),
@@ -55,7 +56,7 @@ class ManageRepsScreen extends StatelessWidget {
                               Icon(
                                 Icons.add,
                                 size: wp(.08),
-                                color: const Color(0xff1F6B46),
+                                color: AppColors.green13,
                               ),
                               SizedBox(width: wp(.015)),
                               Text(
@@ -63,7 +64,7 @@ class ManageRepsScreen extends StatelessWidget {
                                 style: TextStyle(
                                   fontSize: wp(.055),
                                   fontWeight: FontWeight.w600,
-                                  color: const Color(0xff1F6B46),
+                                  color: AppColors.green13,
                                 ),
                               ),
                             ],
@@ -88,7 +89,7 @@ class ManageRepsScreen extends StatelessWidget {
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(wp(.04)),
                                 border: Border.all(
-                                  color: const Color(0xffE1DDD6),
+                                  color: AppColors.grey33,
                                 ),
                                 boxShadow: [
                                   BoxShadow(
@@ -103,7 +104,7 @@ class ManageRepsScreen extends StatelessWidget {
                                   Icon(
                                     Icons.search,
                                     size: wp(.085),
-                                    color: const Color(0xff6B7280),
+                                    color: AppColors.grey5,
                                   ),
                                   SizedBox(width: wp(.03)),
                                   Expanded(
@@ -111,7 +112,7 @@ class ManageRepsScreen extends StatelessWidget {
                                       'Search reps by name, phone, or zone',
                                       style: TextStyle(
                                         fontSize: wp(.05),
-                                        color: const Color(0xff6B7280),
+                                        color: AppColors.grey5,
                                       ),
                                     ),
                                   ),
@@ -127,7 +128,7 @@ class ManageRepsScreen extends StatelessWidget {
                                     width: w,
                                     title: 'All',
                                     active: true,
-                                    activeColor: const Color(0xff5751C9),
+                                    activeColor: AppColors.blue10,
                                   ),
                                   FilterChipWidget(width: w, title: 'Active'),
                                   FilterChipWidget(width: w, title: 'Inactive'),
@@ -177,7 +178,7 @@ class FilterChipWidget extends StatelessWidget {
     this.active = false,
     this.outlinedRed = false,
     this.icon,
-    this.activeColor = const Color(0xff1F6B46),
+    this.activeColor = AppColors.green13,
   });
 
   @override
@@ -192,13 +193,13 @@ class FilterChipWidget extends StatelessWidget {
         color: active
             ? activeColor
             : outlinedRed
-            ? const Color(0xffFFF1F1)
+            ? AppColors.red21
             : Colors.white,
         borderRadius: BorderRadius.circular(width * .08),
         border: Border.all(
           color: outlinedRed
-              ? const Color(0xffE7B1B1)
-              : const Color(0xffDDD8D1),
+              ? AppColors.red17
+              : AppColors.grey14,
         ),
       ),
       child: Row(
@@ -207,7 +208,7 @@ class FilterChipWidget extends StatelessWidget {
             Icon(
               icon,
               size: width * .045,
-              color: outlinedRed ? const Color(0xffB93A3A) : Colors.white,
+              color: outlinedRed ? AppColors.red11 : Colors.white,
             ),
             SizedBox(width: width * .015),
           ],
@@ -219,8 +220,8 @@ class FilterChipWidget extends StatelessWidget {
               color: active
                   ? Colors.white
                   : outlinedRed
-                  ? const Color(0xffB93A3A)
-                  : const Color(0xff3B3B3B),
+                  ? AppColors.red11
+                  : AppColors.grey21,
             ),
           ),
         ],
@@ -253,7 +254,7 @@ class RepCard extends StatelessWidget {
           Container(
             width: width * .012,
             decoration: BoxDecoration(
-              color: const Color(0xff5A56E8),
+              color: AppColors.blue11,
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(width * .05),
                 bottomLeft: Radius.circular(width * .05),
@@ -289,7 +290,7 @@ class RepCard extends StatelessWidget {
                               width: width * .05,
                               height: width * .05,
                               decoration: BoxDecoration(
-                                color: const Color(0xff3BA66B),
+                                color: AppColors.green27,
                                 shape: BoxShape.circle,
                                 border: Border.all(
                                   color: Colors.white,
@@ -317,7 +318,7 @@ class RepCard extends StatelessWidget {
                               'Kat...  ·  Joined Oct \'23',
                               style: TextStyle(
                                 fontSize: width * .045,
-                                color: const Color(0xff667085),
+                                color: AppColors.grey,
                               ),
                             ),
                           ],
@@ -328,14 +329,14 @@ class RepCard extends StatelessWidget {
                         child: Switch(
                           value: true,
                           activeColor: Colors.white,
-                          activeTrackColor: const Color(0xff1F6B46),
+                          activeTrackColor: AppColors.green13,
                           onChanged: (_) {},
                         ),
                       ),
                       Icon(
                         Icons.keyboard_arrow_up,
                         size: width * .07,
-                        color: const Color(0xff9AA09B),
+                        color: AppColors.grey28,
                       ),
                     ],
                   ),
@@ -353,7 +354,7 @@ class RepCard extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: width * .04,
                                 letterSpacing: 1,
-                                color: const Color(0xff667085),
+                                color: AppColors.grey,
                               ),
                             ),
                             SizedBox(height: width * .02),
@@ -376,7 +377,7 @@ class RepCard extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: width * .04,
                                 letterSpacing: 1,
-                                color: const Color(0xff667085),
+                                color: AppColors.grey,
                               ),
                             ),
                             SizedBox(height: width * .02),
@@ -414,7 +415,7 @@ class InputLabel extends StatelessWidget {
       style: const TextStyle(
         fontSize: 14,
         letterSpacing: 1,
-        color: Color(0xff1E2A20),
+        color: AppColors.grey19,
         fontWeight: FontWeight.w500,
       ),
     );
@@ -440,7 +441,7 @@ class InputField extends StatelessWidget {
       padding: EdgeInsets.symmetric(horizontal: width * .04),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(width * .03),
-        border: Border.all(color: const Color(0xffDDD8D1)),
+        border: Border.all(color: AppColors.grey14),
       ),
       child: Row(
         children: [
@@ -449,12 +450,12 @@ class InputField extends StatelessWidget {
               hint,
               style: TextStyle(
                 fontSize: width * .05,
-                color: const Color(0xff6B7280),
+                color: AppColors.grey5,
               ),
             ),
           ),
           if (suffix != null)
-            Icon(suffix, size: width * .06, color: const Color(0xff6B7280)),
+            Icon(suffix, size: width * .06, color: AppColors.grey5),
         ],
       ),
     );

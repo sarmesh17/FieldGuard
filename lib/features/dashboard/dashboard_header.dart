@@ -3,6 +3,7 @@ import 'package:fieldguard/features/auth/login/presentation/providers/login_stat
 import 'package:fieldguard/features/dashboard/dashboard_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fieldguard/core/theme/app_colors.dart';
 
 /// Top row of the dashboard's gradient hero: avatar + greeting + name + role
 /// badge + notification bell. Rendered white-on-gradient.
@@ -183,7 +184,7 @@ class ManagerHeaderSection extends ConsumerWidget {
 
   Widget _initialsWidget(String name) {
     return Container(
-      color: const Color(0xff163B45),
+      color: AppColors.teal,
       alignment: Alignment.center,
       child: Text(
         name.isNotEmpty ? name[0].toUpperCase() : '?',

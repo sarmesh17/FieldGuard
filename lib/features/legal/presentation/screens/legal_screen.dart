@@ -1,11 +1,12 @@
 import 'package:fieldguard/core/responsive/responsive.dart';
 import 'package:fieldguard/features/legal/legal_content.dart';
 import 'package:flutter/material.dart';
+import 'package:fieldguard/core/theme/app_colors.dart';
 
 // ─── Brand colours (match the app's green palette) ───────────────────────────
-const _kDark = Color(0xff072A1C);
-const _kPrimary = Color(0xff0E5A3B);
-const _kMid = Color(0xff1D7A51);
+const _kDark = AppColors.green8;
+const _kPrimary = AppColors.green;
+const _kMid = AppColors.green3;
 
 /// Which document the [LegalScreen] should open on.
 enum LegalTab { terms, privacy }
@@ -47,7 +48,7 @@ class _LegalScreenState extends State<LegalScreen>
     SizeConfig.init(context);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F6FA),
+      backgroundColor: AppColors.white2,
       body: Column(
         children: [
           _Header(tabController: _tabController),
@@ -93,7 +94,7 @@ class _Header extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: Color(0x330E5A3B),
+            color: AppColors.green20,
             blurRadius: 16,
             offset: Offset(0, 6),
           ),
@@ -179,7 +180,7 @@ class _DocumentView extends StatelessWidget {
           'Last updated: $kLegalLastUpdated',
           style: TextStyle(
             fontSize: SizeConfig.scaledFontSize(12),
-            color: const Color(0xff9CA3AF),
+            color: AppColors.grey2,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -188,7 +189,7 @@ class _DocumentView extends StatelessWidget {
           intro,
           style: TextStyle(
             fontSize: SizeConfig.scaledFontSize(14),
-            color: const Color(0xff4B5563),
+            color: AppColors.grey24,
             height: 1.5,
           ),
         ),
@@ -237,7 +238,7 @@ class _SectionTitle extends StatelessWidget {
             style: TextStyle(
               fontSize: SizeConfig.scaledFontSize(16),
               fontWeight: FontWeight.w800,
-              color: const Color(0xff111827),
+              color: AppColors.ink,
               letterSpacing: -0.2,
             ),
           ),
@@ -259,7 +260,7 @@ class _LegalNodeView extends StatelessWidget {
         node.text,
         style: TextStyle(
           fontSize: SizeConfig.scaledFontSize(13.5),
-          color: const Color(0xff374151),
+          color: AppColors.blue2,
           height: 1.6,
         ),
       );
@@ -291,7 +292,7 @@ class _LegalNodeView extends StatelessWidget {
                       item,
                       style: TextStyle(
                         fontSize: SizeConfig.scaledFontSize(13.5),
-                        color: const Color(0xff374151),
+                        color: AppColors.blue2,
                         height: 1.6,
                       ),
                     ),
@@ -314,16 +315,16 @@ class _Disclaimer extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(SizeConfig.scale(14)),
       decoration: BoxDecoration(
-        color: const Color(0xffFFF7E6),
+        color: AppColors.orange8,
         borderRadius: BorderRadius.circular(SizeConfig.scale(12)),
-        border: Border.all(color: const Color(0xffFFE0A3)),
+        border: Border.all(color: AppColors.orange7),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(
             Icons.info_outline_rounded,
-            color: const Color(0xffB7791F),
+            color: AppColors.brown,
             size: SizeConfig.scale(18),
           ),
           SizedBox(width: SizeConfig.scale(10)),
@@ -334,7 +335,7 @@ class _Disclaimer extends StatelessWidget {
               'not legal advice.',
               style: TextStyle(
                 fontSize: SizeConfig.scaledFontSize(11.5),
-                color: const Color(0xff92722A),
+                color: AppColors.brown2,
                 height: 1.5,
               ),
             ),

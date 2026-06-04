@@ -5,10 +5,11 @@ import 'package:fieldguard/core/utils/results.dart';
 import 'package:fieldguard/features/collections/data/dto/create_collection_response.dart';
 import 'package:fieldguard/features/collections/data/dto/settle_collection_request.dart';
 import 'package:fieldguard/features/collections/presentation/providers/collection_provider.dart';
+import 'package:fieldguard/core/theme/app_colors.dart';
 
-const _kBrand = Color(0xff0E5A3B);
-const _kInk = Color(0xff0D1B2A);
-const _kMuted = Color(0xff8A94A6);
+const _kBrand = AppColors.green;
+const _kInk = AppColors.ink2;
+const _kMuted = AppColors.grey8;
 
 /// Settle sheet for a PENDING cheque. CLEARED / BOUNCED toggle + optional
 /// notes. On success pops with the [CreateCollectionResponse] so the caller
@@ -91,7 +92,7 @@ class _SettleCollectionSheetState
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: const Color(0xffE0E4EA),
+                  color: AppColors.grey7,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -166,7 +167,7 @@ class _SettleCollectionSheetState
                   child: _OutcomeChip(
                     label: 'Bounced',
                     icon: Icons.cancel_rounded,
-                    color: const Color(0xffC0392B),
+                    color: AppColors.red,
                     selected: _status == SettleStatus.bounced,
                     onTap: () => setState(() {
                       _status = SettleStatus.bounced;
@@ -204,9 +205,9 @@ class _SettleCollectionSheetState
               decoration: InputDecoration(
                 hintText: 'e.g. Cleared at bank counter',
                 hintStyle:
-                    const TextStyle(fontSize: 13.5, color: Color(0xffB0B7C3)),
+                    const TextStyle(fontSize: 13.5, color: AppColors.grey9),
                 filled: true,
-                fillColor: const Color(0xffF2F4F7),
+                fillColor: AppColors.white3,
                 counterText: '',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -221,22 +222,22 @@ class _SettleCollectionSheetState
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xffFEE2E2),
+                  color: AppColors.red6,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xffFCA5A5)),
+                  border: Border.all(color: AppColors.red7),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Icon(Icons.error_outline_rounded,
-                        size: 18, color: Color(0xffC0392B)),
+                        size: 18, color: AppColors.red),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         _errorMessage!,
                         style: const TextStyle(
                           fontSize: 13,
-                          color: Color(0xff7A1F1F),
+                          color: AppColors.red9,
                           height: 1.4,
                         ),
                       ),
@@ -254,7 +255,7 @@ class _SettleCollectionSheetState
                         _submitting ? null : () => Navigator.of(context).pop(),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      side: const BorderSide(color: Color(0xffE0E4EA)),
+                      side: const BorderSide(color: AppColors.grey7),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
                       ),
@@ -264,7 +265,7 @@ class _SettleCollectionSheetState
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xff6B7280),
+                        color: AppColors.grey5,
                       ),
                     ),
                   ),
@@ -341,7 +342,7 @@ class _OutcomeChip extends StatelessWidget {
             borderRadius: BorderRadius.circular(14),
             color: selected ? color : Colors.white,
             border: Border.all(
-              color: selected ? color : const Color(0xffE0E4EA),
+              color: selected ? color : AppColors.grey7,
             ),
           ),
           child: Row(

@@ -1,5 +1,6 @@
 import 'package:fieldguard/features/fraud_alert_screen/resolve_card.dart';
 import 'package:flutter/material.dart';
+import 'package:fieldguard/core/theme/app_colors.dart';
 
 class FraudAlertsScreen extends StatelessWidget {
   const FraudAlertsScreen({super.key});
@@ -15,7 +16,7 @@ class FraudAlertsScreen extends StatelessWidget {
         double hp(double v) => h * v;
 
         return Scaffold(
-          backgroundColor: const Color(0xffF7F5F2),
+          backgroundColor: AppColors.white15,
           body: SafeArea(
             child: Column(
               children: [
@@ -46,13 +47,13 @@ class FraudAlertsScreen extends StatelessWidget {
                           vertical: hp(.008),
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xffFFE6E6),
+                          color: AppColors.red20,
                           borderRadius: BorderRadius.circular(wp(.08)),
                         ),
                         child: Text(
                           '3 Unresolved',
                           style: TextStyle(
-                            color: const Color(0xffEF4444),
+                            color: AppColors.red4,
                             fontSize: wp(.038),
                             fontWeight: FontWeight.w500,
                           ),
@@ -89,8 +90,8 @@ class FraudAlertsScreen extends StatelessWidget {
                         width: w,
                         height: h,
                         level: 'High',
-                        levelColor: const Color(0xffEF4444),
-                        borderColor: const Color(0xffEF4444),
+                        levelColor: AppColors.red4,
+                        borderColor: AppColors.red4,
                         title: 'Payment Amount Disputed',
                         person: 'Raj Kumar',
                         shop: 'Mehta Traders',
@@ -105,8 +106,8 @@ class FraudAlertsScreen extends StatelessWidget {
                         width: w,
                         height: h,
                         level: 'Med',
-                        levelColor: const Color(0xffB96A11),
-                        borderColor: const Color(0xffF2A14A),
+                        levelColor: AppColors.brown5,
+                        borderColor: AppColors.orange4,
                         title: 'Visit Duration Too Short',
                         person: 'Amit Singh',
                         shop: 'Sharma Kirana',
@@ -150,7 +151,7 @@ class TopTab extends StatelessWidget {
         Text(
           text,
           style: TextStyle(
-            color: selected ? const Color(0xff0B6A3F) : const Color(0xff6B7280),
+            color: selected ? AppColors.green18 : AppColors.grey5,
             fontSize: width * .042,
             fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
           ),
@@ -161,7 +162,7 @@ class TopTab extends StatelessWidget {
           width: selected ? width * .11 : 0,
           height: width * .008,
           decoration: BoxDecoration(
-            color: const Color(0xff0B6A3F),
+            color: AppColors.green18,
             borderRadius: BorderRadius.circular(width * .02),
           ),
         ),
@@ -189,33 +190,33 @@ class SummarySection extends StatelessWidget {
         children: [
           Text(
             '3 High\nRisk',
-            style: textStyle.copyWith(color: const Color(0xffEF4444)),
+            style: textStyle.copyWith(color: AppColors.red4),
           ),
           SizedBox(width: width * .04),
           Text(
             '·',
             style: TextStyle(
               fontSize: width * .07,
-              color: const Color(0xffBDBDBD),
+              color: AppColors.grey18,
             ),
           ),
           SizedBox(width: width * .04),
           Text(
             '5\nMedium',
-            style: textStyle.copyWith(color: const Color(0xffF2A14A)),
+            style: textStyle.copyWith(color: AppColors.orange4),
           ),
           SizedBox(width: width * .04),
           Text(
             '·',
             style: TextStyle(
               fontSize: width * .07,
-              color: const Color(0xffBDBDBD),
+              color: AppColors.grey18,
             ),
           ),
           SizedBox(width: width * .04),
           Text(
             '2 Resolved\nToday',
-            style: textStyle.copyWith(color: const Color(0xff6B7280)),
+            style: textStyle.copyWith(color: AppColors.grey5),
           ),
         ],
       ),
@@ -245,20 +246,20 @@ class ActionChipWidget extends StatelessWidget {
         vertical: height * .012,
       ),
       decoration: BoxDecoration(
-        color: const Color(0xffF5F4F0),
+        color: AppColors.white25,
         borderRadius: BorderRadius.circular(width * .06),
-        border: Border.all(color: const Color(0xffDFDDD8)),
+        border: Border.all(color: AppColors.grey32),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: width * .045, color: const Color(0xff424242)),
+          Icon(icon, size: width * .045, color: AppColors.grey16),
           SizedBox(width: width * .015),
           Text(
             text,
             style: TextStyle(
               fontSize: width * .04,
-              color: const Color(0xff424242),
+              color: AppColors.grey16,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -283,7 +284,7 @@ class ResolvedCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(width * .06),
-          border: Border.all(color: const Color(0xffE5E5E5)),
+          border: Border.all(color: AppColors.grey34),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -307,14 +308,14 @@ class ResolvedCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: const Color(0xff5BC88B),
+                      color: AppColors.green19,
                       width: width * .004,
                     ),
                   ),
                   child: Icon(
                     Icons.check,
                     size: width * .045,
-                    color: const Color(0xff5BC88B),
+                    color: AppColors.green19,
                   ),
                 ),
               ],
@@ -342,7 +343,7 @@ class ResolvedCard extends StatelessWidget {
                     vertical: height * .012,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xffF1F1F1),
+                    color: AppColors.white23,
                     borderRadius: BorderRadius.circular(width * .025),
                   ),
                   child: Text(

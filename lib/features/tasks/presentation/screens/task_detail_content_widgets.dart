@@ -164,7 +164,7 @@ class _ShopBody extends StatelessWidget {
                     shop.address!,
                     style: const TextStyle(
                       fontSize: 12.5,
-                      color: Color(0xff5A6472),
+                      color: AppColors.grey10,
                       height: 1.35,
                     ),
                   ),
@@ -329,7 +329,7 @@ class _VisitRow extends StatelessWidget {
               child: VerticalDivider(
                 width: 2,
                 thickness: 2,
-                color: Color(0xffD7DDE4),
+                color: AppColors.blue14,
               ),
             ),
           ),
@@ -450,14 +450,14 @@ class _DurationPill extends StatelessWidget {
 class _ApproxBadge extends StatelessWidget {
   const _ApproxBadge();
 
-  static const _amber = Color(0xffB7791F);
+  static const _amber = AppColors.brown;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: const Color(0xffF59E0B).withValues(alpha: 0.14),
+        color: AppColors.orange2.withValues(alpha: 0.14),
         borderRadius: BorderRadius.circular(20),
       ),
       child: const Row(
@@ -640,7 +640,7 @@ class _ChecklistItem extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 14,
                 height: 1.4,
-                color: Color(0xff394452),
+                color: AppColors.blue4,
               ),
             ),
           ),
@@ -720,7 +720,7 @@ class _PersonRow extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
-                color: Color(0xff5A6472),
+                color: AppColors.grey10,
               ),
             ),
           ),
@@ -825,7 +825,7 @@ class _LoadingSkeleton extends StatelessWidget {
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [Color(0xff003D22), _kBrandLight],
+              colors: [AppColors.green16, _kBrandLight],
             ),
           ),
           child: const SafeArea(
@@ -841,8 +841,8 @@ class _LoadingSkeleton extends StatelessWidget {
         ),
         Expanded(
           child: Shimmer.fromColors(
-            baseColor: const Color(0xffE7EBEF),
-            highlightColor: const Color(0xffF6F8FA),
+            baseColor: AppColors.white11,
+            highlightColor: AppColors.white14,
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
               children: [
@@ -879,11 +879,11 @@ class _ErrorView extends StatelessWidget {
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: const Color(0xffFF3347).withValues(alpha: 0.08),
+                color: AppColors.red5.withValues(alpha: 0.08),
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.error_outline_rounded,
-                  size: 38, color: Color(0xffFF3347)),
+                  size: 38, color: AppColors.red5),
             ),
             const SizedBox(height: 20),
             const Text(
@@ -928,11 +928,11 @@ class _ErrorView extends StatelessWidget {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 Color _statusColor(String status) => switch (status.toUpperCase()) {
-      'PENDING' => const Color(0xffF59E0B),
-      'IN_PROGRESS' => const Color(0xff3B82F6),
-      'COMPLETED' => const Color(0xff22C55E),
-      'CANCELLED' => const Color(0xffFF3347),
-      _ => const Color(0xffB0B7C3),
+      'PENDING' => AppColors.orange2,
+      'IN_PROGRESS' => AppColors.blue3,
+      'COMPLETED' => AppColors.green5,
+      'CANCELLED' => AppColors.red5,
+      _ => AppColors.grey9,
     };
 
 IconData _statusIcon(String status) => switch (status.toUpperCase()) {

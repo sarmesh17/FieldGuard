@@ -8,6 +8,7 @@ import 'package:fieldguard/features/subscription/presentation/providers/subscrip
 import 'package:fieldguard/features/subscription/presentation/widgets/subscription_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fieldguard/core/theme/app_colors.dart';
 
 /// Waiting screen — polls the upgrade requests (newest first) and reflects the
 /// latest one's status: PENDING (verifying), APPROVED (done), or REJECTED
@@ -83,7 +84,7 @@ class _SubscriptionStatusScreenState
     return ResponsiveBuilder(
       builder: (context, screenType, orientation, constraints) {
         return Scaffold(
-          backgroundColor: const Color(0xFFF5F6FA),
+          backgroundColor: AppColors.white2,
           appBar: AppBar(
             backgroundColor: Colors.white,
             elevation: 0,
@@ -94,7 +95,7 @@ class _SubscriptionStatusScreenState
             title: const Text(
               'Upgrade Status',
               style: TextStyle(
-                color: Color(0xff111111),
+                color: AppColors.black,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -122,7 +123,7 @@ class _SubscriptionStatusScreenState
     if (_error != null && _latest == null) {
       return _StatusView(
         icon: Icons.wifi_off_rounded,
-        iconColor: const Color(0xffE53935),
+        iconColor: AppColors.red3,
         title: 'Couldn\'t check status',
         message: _error!,
         primaryLabel: 'Retry',
@@ -137,7 +138,7 @@ class _SubscriptionStatusScreenState
     if (latest == null) {
       return _StatusView(
         icon: Icons.inbox_outlined,
-        iconColor: const Color(0xff9CA3AF),
+        iconColor: AppColors.grey2,
         title: 'No upgrade requests',
         message:
             'You have not submitted any upgrade requests yet. Pick a plan to '
@@ -174,7 +175,7 @@ class _SubscriptionStatusScreenState
       case SubscriptionRequestStatus.rejected:
         return _StatusView(
           icon: Icons.cancel_rounded,
-          iconColor: const Color(0xffE53935),
+          iconColor: AppColors.red3,
           title: 'Request rejected',
           message: latest.rejectionReason?.isNotEmpty == true
               ? latest.rejectionReason!
@@ -247,7 +248,7 @@ class _StatusView extends StatelessWidget {
           style: TextStyle(
             fontSize: SizeConfig.scaledFontSize(20),
             fontWeight: FontWeight.w800,
-            color: const Color(0xff111827),
+            color: AppColors.ink,
           ),
         ),
         SizedBox(height: SizeConfig.scale(10)),
@@ -256,7 +257,7 @@ class _StatusView extends StatelessWidget {
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: SizeConfig.scaledFontSize(13),
-            color: const Color(0xff667085),
+            color: AppColors.grey,
             height: 1.5,
           ),
         ),

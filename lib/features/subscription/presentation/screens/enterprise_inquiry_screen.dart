@@ -7,6 +7,7 @@ import 'package:fieldguard/features/subscription/presentation/widgets/subscripti
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fieldguard/core/theme/app_colors.dart';
 
 /// ENTERPRISE "Talk to us" — captures a call-back lead. On open it checks for an
 /// existing PENDING request: if one is open it shows the "we'll call you" state,
@@ -125,7 +126,7 @@ class _EnterpriseInquiryScreenState
     return ResponsiveBuilder(
       builder: (context, screenType, orientation, constraints) {
         return Scaffold(
-          backgroundColor: const Color(0xFFF5F6FA),
+          backgroundColor: AppColors.white2,
           appBar: AppBar(
             backgroundColor: Colors.white,
             elevation: 0,
@@ -136,7 +137,7 @@ class _EnterpriseInquiryScreenState
             title: const Text(
               'Talk to us',
               style: TextStyle(
-                color: Color(0xff111111),
+                color: AppColors.black,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -260,7 +261,7 @@ class _EnterpriseInquiryScreenState
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: SizeConfig.scaledFontSize(11),
-              color: const Color(0xff9CA3AF),
+              color: AppColors.grey2,
               height: 1.4,
             ),
           ),
@@ -277,7 +278,7 @@ class _EnterpriseInquiryScreenState
     return InputDecoration(
       hintText: hint,
       hintStyle: TextStyle(
-        color: const Color(0xff9CA3AF),
+        color: AppColors.grey2,
         fontSize: SizeConfig.scaledFontSize(13),
       ),
       prefixIcon: icon == null
@@ -291,7 +292,7 @@ class _EnterpriseInquiryScreenState
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(SizeConfig.scale(14)),
-        borderSide: const BorderSide(color: Color(0xffE8E3DD), width: 1.5),
+        borderSide: const BorderSide(color: AppColors.grey3, width: 1.5),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(SizeConfig.scale(14)),
@@ -390,7 +391,7 @@ class _FieldLabel extends StatelessWidget {
           style: TextStyle(
             fontSize: SizeConfig.scaledFontSize(14),
             fontWeight: FontWeight.w700,
-            color: const Color(0xff111827),
+            color: AppColors.ink,
           ),
         ),
         if (required)
@@ -445,7 +446,7 @@ class _PreviousStatusBanner extends StatelessWidget {
                   style: TextStyle(
                     fontSize: SizeConfig.scaledFontSize(13),
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xff111827),
+                    color: AppColors.ink,
                   ),
                 ),
                 SizedBox(height: SizeConfig.scale(3)),
@@ -453,7 +454,7 @@ class _PreviousStatusBanner extends StatelessWidget {
                   detail,
                   style: TextStyle(
                     fontSize: SizeConfig.scaledFontSize(12),
-                    color: const Color(0xff667085),
+                    color: AppColors.grey,
                     height: 1.35,
                   ),
                 ),
@@ -476,13 +477,13 @@ class _LoadErrorNote extends StatelessWidget {
     return Row(
       children: [
         Icon(Icons.info_outline_rounded,
-            color: const Color(0xff9CA3AF), size: SizeConfig.scale(16)),
+            color: AppColors.grey2, size: SizeConfig.scale(16)),
         SizedBox(width: SizeConfig.scale(6)),
         Expanded(
           child: Text(
             message,
             style: TextStyle(
-              color: const Color(0xff9CA3AF),
+              color: AppColors.grey2,
               fontSize: SizeConfig.scaledFontSize(11),
             ),
           ),
@@ -585,7 +586,7 @@ class _PendingView extends StatelessWidget {
             style: TextStyle(
               fontSize: SizeConfig.scaledFontSize(20),
               fontWeight: FontWeight.w800,
-              color: const Color(0xff111827),
+              color: AppColors.ink,
             ),
           ),
           SizedBox(height: SizeConfig.scale(10)),
@@ -595,7 +596,7 @@ class _PendingView extends StatelessWidget {
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: SizeConfig.scaledFontSize(13),
-              color: const Color(0xff667085),
+              color: AppColors.grey,
               height: 1.5,
             ),
           ),
@@ -665,7 +666,7 @@ class _DetailCard extends StatelessWidget {
 
   Widget _divider() => Padding(
         padding: EdgeInsets.symmetric(vertical: SizeConfig.scale(12)),
-        child: const Divider(height: 1, color: Color(0xffEEF0F4)),
+        child: const Divider(height: 1, color: AppColors.white21),
       );
 
   Widget _row(IconData icon, String label, String value) {
@@ -682,7 +683,7 @@ class _DetailCard extends StatelessWidget {
                 label,
                 style: TextStyle(
                   fontSize: SizeConfig.scaledFontSize(11),
-                  color: const Color(0xff9CA3AF),
+                  color: AppColors.grey2,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -691,7 +692,7 @@ class _DetailCard extends StatelessWidget {
                 value,
                 style: TextStyle(
                   fontSize: SizeConfig.scaledFontSize(14),
-                  color: const Color(0xff111827),
+                  color: AppColors.ink,
                   fontWeight: FontWeight.w600,
                   height: 1.35,
                 ),

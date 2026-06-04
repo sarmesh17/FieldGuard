@@ -10,6 +10,7 @@ import 'package:fieldguard/features/employee/data/dto/update_employee_request.da
 import 'package:fieldguard/features/uploads/image_upload_service.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:fieldguard/core/theme/app_colors.dart';
 
 class EditEmployeeScreen extends StatefulWidget {
   final int employeeId;
@@ -105,7 +106,7 @@ class _EditEmployeeScreenState extends State<EditEmployeeScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Image uploaded successfully'),
-            backgroundColor: Color(0xff0E5A3B),
+            backgroundColor: AppColors.green,
           ),
         );
       }
@@ -153,7 +154,7 @@ class _EditEmployeeScreenState extends State<EditEmployeeScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Employee updated successfully'),
-            backgroundColor: Color(0xff0E5A3B),
+            backgroundColor: AppColors.green,
           ),
         );
         Navigator.pop(context, true); // Return true to indicate success
@@ -206,9 +207,9 @@ class _EditEmployeeScreenState extends State<EditEmployeeScreen> {
     return ResponsiveBuilder(
       builder: (context, screenType, orientation, constraints) {
         return Scaffold(
-          backgroundColor: const Color(0xFFF8FAF9),
+          backgroundColor: AppColors.white,
           appBar: AppBar(
-            backgroundColor: const Color(0xff0E5A3B),
+            backgroundColor: AppColors.green,
             elevation: 0,
             leading: IconButton(
               icon: const Icon(Icons.arrow_back, color: Colors.white),
@@ -241,12 +242,12 @@ class _EditEmployeeScreenState extends State<EditEmployeeScreen> {
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: const Color(0xff0E5A3B),
+                              color: AppColors.green,
                               width: 3,
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xff0E5A3B).withValues(alpha: 0.2),
+                                color: AppColors.green.withValues(alpha: 0.2),
                                 blurRadius: 20,
                                 offset: const Offset(0, 10),
                               ),
@@ -255,10 +256,10 @@ class _EditEmployeeScreenState extends State<EditEmployeeScreen> {
                           child: ClipOval(
                             child: _isUploadingImage
                                 ? Container(
-                                    color: const Color(0xffE5E7EB),
+                                    color: AppColors.grey4,
                                     child: const Center(
                                       child: CircularProgressIndicator(
-                                        color: Color(0xff0E5A3B),
+                                        color: AppColors.green,
                                       ),
                                     ),
                                   )
@@ -275,21 +276,21 @@ class _EditEmployeeScreenState extends State<EditEmployeeScreen> {
                                             fit: BoxFit.cover,
                                             errorBuilder: (context, error, stackTrace) {
                                               return Container(
-                                                color: const Color(0xffE5E7EB),
+                                                color: AppColors.grey4,
                                                 child: Icon(
                                                   Icons.person_rounded,
                                                   size: SizeConfig.scale(50),
-                                                  color: const Color(0xff9CA3AF),
+                                                  color: AppColors.grey2,
                                                 ),
                                               );
                                             },
                                           )
                                         : Container(
-                                            color: const Color(0xffE5E7EB),
+                                            color: AppColors.grey4,
                                             child: Icon(
                                               Icons.person_rounded,
                                               size: SizeConfig.scale(50),
-                                              color: const Color(0xff9CA3AF),
+                                              color: AppColors.grey2,
                                             ),
                                           ),
                           ),
@@ -304,14 +305,14 @@ class _EditEmployeeScreenState extends State<EditEmployeeScreen> {
                               height: SizeConfig.scale(40),
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: const Color(0xff0E5A3B),
+                                color: AppColors.green,
                                 border: Border.all(
                                   color: Colors.white,
                                   width: 2.5,
                                 ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: const Color(0xff0E5A3B).withValues(alpha: 0.4),
+                                    color: AppColors.green.withValues(alpha: 0.4),
                                     blurRadius: 8,
                                     offset: const Offset(0, 3),
                                   ),
@@ -395,7 +396,7 @@ class _EditEmployeeScreenState extends State<EditEmployeeScreen> {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(SizeConfig.scale(12)),
-                      border: Border.all(color: const Color(0xffE8E3DD)),
+                      border: Border.all(color: AppColors.grey3),
                     ),
                     child: Row(
                       children: [
@@ -403,12 +404,12 @@ class _EditEmployeeScreenState extends State<EditEmployeeScreen> {
                           width: SizeConfig.scale(48),
                           height: SizeConfig.scale(48),
                           decoration: BoxDecoration(
-                            color: const Color(0xff0E5A3B).withValues(alpha: 0.1),
+                            color: AppColors.green.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(SizeConfig.scale(12)),
                           ),
                           child: Icon(
                             Icons.toggle_on,
-                            color: const Color(0xff0E5A3B),
+                            color: AppColors.green,
                             size: SizeConfig.scale(24),
                           ),
                         ),
@@ -422,7 +423,7 @@ class _EditEmployeeScreenState extends State<EditEmployeeScreen> {
                                 style: TextStyle(
                                   fontSize: SizeConfig.scaledFontSize(16),
                                   fontWeight: FontWeight.w600,
-                                  color: const Color(0xff111111),
+                                  color: AppColors.black,
                                 ),
                               ),
                               SizedBox(height: SizeConfig.scale(4)),
@@ -430,7 +431,7 @@ class _EditEmployeeScreenState extends State<EditEmployeeScreen> {
                                 _isActive ? 'Employee is active' : 'Employee is inactive',
                                 style: TextStyle(
                                   fontSize: SizeConfig.scaledFontSize(13),
-                                  color: const Color(0xff667085),
+                                  color: AppColors.grey,
                                 ),
                               ),
                             ],
@@ -441,7 +442,7 @@ class _EditEmployeeScreenState extends State<EditEmployeeScreen> {
                           onChanged: (value) {
                             setState(() => _isActive = value);
                           },
-                          activeColor: const Color(0xff0E5A3B),
+                          activeColor: AppColors.green,
                         ),
                       ],
                     ),
@@ -452,7 +453,7 @@ class _EditEmployeeScreenState extends State<EditEmployeeScreen> {
                   ElevatedButton(
                     onPressed: _isLoading ? null : _updateEmployee,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xff0E5A3B),
+                      backgroundColor: AppColors.green,
                       padding: EdgeInsets.symmetric(
                         vertical: SizeConfig.scale(16),
                       ),
@@ -505,18 +506,18 @@ class _EditEmployeeScreenState extends State<EditEmployeeScreen> {
       onChanged: onChanged,
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: Icon(icon, color: const Color(0xff0E5A3B)),
+        prefixIcon: Icon(icon, color: AppColors.green),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(SizeConfig.scale(12)),
-          borderSide: const BorderSide(color: Color(0xffE8E3DD)),
+          borderSide: const BorderSide(color: AppColors.grey3),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(SizeConfig.scale(12)),
-          borderSide: const BorderSide(color: Color(0xffE8E3DD)),
+          borderSide: const BorderSide(color: AppColors.grey3),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(SizeConfig.scale(12)),
-          borderSide: const BorderSide(color: Color(0xff0E5A3B), width: 2),
+          borderSide: const BorderSide(color: AppColors.green, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(SizeConfig.scale(12)),

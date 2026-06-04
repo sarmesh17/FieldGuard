@@ -12,14 +12,15 @@ import 'package:fieldguard/features/team/presentation/screens/employee_detail_sc
 import 'package:fieldguard/features/team/presentation/screens/manager_detail_screen.dart';
 import 'package:fieldguard/widgets/app_skeletons.dart';
 import 'package:flutter/material.dart';
+import 'package:fieldguard/core/theme/app_colors.dart';
 
 // ─── Brand palette (consistent with Profile / Login) ────────────────────────
-const _kDark = Color(0xff072A1C);
-const _kPrimary = Color(0xff0E5A3B);
-const _kMid = Color(0xff1D7A51);
-const _kSurface = Color(0xFFF8FAF9);
-const _kBorder = Color(0xffE8E3DD);
-const _kMuted = Color(0xff667085);
+const _kDark = AppColors.green8;
+const _kPrimary = AppColors.green;
+const _kMid = AppColors.green3;
+const _kSurface = AppColors.white;
+const _kBorder = AppColors.grey3;
+const _kMuted = AppColors.grey;
 
 // Cap content to a comfortable phone width so it stays centred (instead of
 // stretching edge-to-edge) on wide / landscape screens.
@@ -313,7 +314,7 @@ class _TeamManagementScreenState extends State<TeamManagementScreen>
                   width: _s(8),
                   height: _s(8),
                   decoration: const BoxDecoration(
-                    color: Color(0xff22C55E),
+                    color: AppColors.green5,
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -819,7 +820,7 @@ class _TeamManagementScreenState extends State<TeamManagementScreen>
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: _sf(15),
-                    color: const Color(0xff667085),
+                    color: AppColors.grey,
                   ),
                 ),
               ),
@@ -828,7 +829,7 @@ class _TeamManagementScreenState extends State<TeamManagementScreen>
                 ElevatedButton(
                   onPressed: onRetry,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xff0E5A3B),
+                    backgroundColor: AppColors.green,
                     padding: EdgeInsets.symmetric(
                       horizontal: _s(28),
                       vertical: _s(10),
@@ -869,7 +870,7 @@ class _TeamManagementScreenState extends State<TeamManagementScreen>
                 width: _s(16),
                 height: _s(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xff22C55E),
+                  color: AppColors.green5,
                   shape: BoxShape.circle,
                   border: Border.all(color: Colors.white, width: 2.5),
                 ),
@@ -887,7 +888,7 @@ class _TeamManagementScreenState extends State<TeamManagementScreen>
                     style: TextStyle(
                       fontSize: _sf(16),
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xff111111),
+                      color: AppColors.black,
                     ),
                   ),
                   SizedBox(height: _s(6)),
@@ -914,7 +915,7 @@ class _TeamManagementScreenState extends State<TeamManagementScreen>
     return Container(
       padding: EdgeInsets.symmetric(horizontal: _s(9), vertical: _s(4)),
       decoration: BoxDecoration(
-        color: const Color(0xff22C55E).withValues(alpha: 0.12),
+        color: AppColors.green5.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(_s(20)),
       ),
       child: Row(
@@ -924,7 +925,7 @@ class _TeamManagementScreenState extends State<TeamManagementScreen>
             width: _s(6),
             height: _s(6),
             decoration: const BoxDecoration(
-              color: Color(0xff16A34A),
+              color: AppColors.green9,
               shape: BoxShape.circle,
             ),
           ),
@@ -933,7 +934,7 @@ class _TeamManagementScreenState extends State<TeamManagementScreen>
             'Live',
             style: TextStyle(
               fontSize: _sf(11),
-              color: const Color(0xff16A34A),
+              color: AppColors.green9,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -964,7 +965,7 @@ class _TeamManagementScreenState extends State<TeamManagementScreen>
               width: _s(54),
               height: _s(54),
               decoration: BoxDecoration(
-                color: const Color(0xffE8E3DD),
+                color: AppColors.grey3,
                 borderRadius: BorderRadius.circular(_s(16)),
               ),
             ),
@@ -977,7 +978,7 @@ class _TeamManagementScreenState extends State<TeamManagementScreen>
                     width: _s(140),
                     height: _s(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xffE8E3DD),
+                      color: AppColors.grey3,
                       borderRadius: BorderRadius.circular(_s(4)),
                     ),
                   ),
@@ -986,7 +987,7 @@ class _TeamManagementScreenState extends State<TeamManagementScreen>
                     width: _s(80),
                     height: _s(10),
                     decoration: BoxDecoration(
-                      color: const Color(0xffE8E3DD),
+                      color: AppColors.grey3,
                       borderRadius: BorderRadius.circular(_s(4)),
                     ),
                   ),
@@ -1016,14 +1017,14 @@ class _TeamManagementScreenState extends State<TeamManagementScreen>
           SizedBox(height: SizeConfig.heightPercent(2)),
           Text(
             _errorMessage!,
-            style: TextStyle(fontSize: _sf(16), color: const Color(0xff667085)),
+            style: TextStyle(fontSize: _sf(16), color: AppColors.grey),
             textAlign: TextAlign.center,
           ),
           SizedBox(height: SizeConfig.heightPercent(3)),
           ElevatedButton(
             onPressed: _loadData,
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xff0E5A3B),
+              backgroundColor: AppColors.green,
               padding: EdgeInsets.symmetric(
                 horizontal: _s(32),
                 vertical: _s(12),
@@ -1060,7 +1061,7 @@ class _TeamManagementScreenState extends State<TeamManagementScreen>
             _avatar(
               imageUrl: manager.profileImage,
               fallbackText: _initials(manager.fullName),
-              gradient: const [Color(0xff6558FF), Color(0xff8B3DFF)],
+              gradient: const [AppColors.blue, AppColors.purple],
             ),
             SizedBox(width: _s(14)),
             // Info
@@ -1075,13 +1076,13 @@ class _TeamManagementScreenState extends State<TeamManagementScreen>
                     style: TextStyle(
                       fontSize: _sf(16),
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xff111111),
+                      color: AppColors.black,
                     ),
                   ),
                   SizedBox(height: _s(5)),
                   Row(
                     children: [
-                      _codePill(manager.managerCode, const Color(0xff6558FF)),
+                      _codePill(manager.managerCode, AppColors.blue),
                       SizedBox(width: _s(6)),
                       Flexible(
                         child: Text(
@@ -1232,7 +1233,7 @@ class _TeamManagementScreenState extends State<TeamManagementScreen>
   }
 
   Widget _statusPill(bool active) {
-    final color = active ? _kPrimary : const Color(0xffFF3B3B);
+    final color = active ? _kPrimary : AppColors.red2;
     return Container(
       padding: EdgeInsets.symmetric(horizontal: _s(9), vertical: _s(4)),
       decoration: BoxDecoration(
@@ -1316,7 +1317,7 @@ class _TeamManagementScreenState extends State<TeamManagementScreen>
                     style: TextStyle(
                       fontSize: _sf(16),
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xff111111),
+                      color: AppColors.black,
                     ),
                   ),
                   SizedBox(height: _s(5)),

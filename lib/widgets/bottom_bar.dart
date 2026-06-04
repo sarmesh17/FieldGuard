@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:fieldguard/core/theme/app_colors.dart';
 
 // ─── Brand palette (consistent with the rest of the app) ────────────────────
-const _kPrimary = Color(0xff0E5A3B);
-const _kPillBg = Color(0xffDCF5E4);
-const _kInactive = Color(0xff8A94A6);
+const _kPrimary = AppColors.green;
+const _kPillBg = AppColors.green15;
+const _kInactive = AppColors.grey8;
 
 /// Modern bottom navigation bar (Material-3 style).
 ///

@@ -10,6 +10,7 @@ import 'package:fieldguard/features/team/data/datasource/team_datasource_impl.da
 import 'package:fieldguard/features/team/data/dto/employee_detail_response.dart';
 import 'package:fieldguard/widgets/app_skeletons.dart';
 import 'package:flutter/material.dart';
+import 'package:fieldguard/core/theme/app_colors.dart';
 
 class EmployeeDetailScreen extends StatefulWidget {
   final String employeeId;
@@ -182,7 +183,7 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Employee deleted successfully'),
-            backgroundColor: Color(0xff0E5A3B),
+            backgroundColor: AppColors.green,
           ),
         );
         Navigator.pop(context, true); // Return to previous screen
@@ -213,7 +214,7 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen>
     return ResponsiveBuilder(
       builder: (context, screenType, orientation, constraints) {
         return Scaffold(
-          backgroundColor: const Color(0xFFF8FAF9),
+          backgroundColor: AppColors.white,
           body: _isLoading
               ? const SkeletonDetail()
               : _errorMessage != null
@@ -239,7 +240,7 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen>
             _errorMessage!,
             style: TextStyle(
               fontSize: SizeConfig.scaledFontSize(16),
-              color: const Color(0xff667085),
+              color: AppColors.grey,
             ),
             textAlign: TextAlign.center,
           ),
@@ -247,7 +248,7 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen>
           ElevatedButton(
             onPressed: _loadEmployeeDetail,
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xff0E5A3B),
+              backgroundColor: AppColors.green,
               padding: EdgeInsets.symmetric(
                 horizontal: SizeConfig.scale(32),
                 vertical: SizeConfig.scale(12),
@@ -269,7 +270,7 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen>
         SliverAppBar(
           expandedHeight: SizeConfig.heightPercent(30),
           pinned: true,
-          backgroundColor: const Color(0xff0E5A3B),
+          backgroundColor: AppColors.green,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back, color: Colors.white),
             onPressed: () => Navigator.pop(context),
@@ -296,7 +297,7 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen>
                       Icon(
                         Icons.edit_outlined,
                         size: 20,
-                        color: Color(0xff0E5A3B),
+                        color: AppColors.green,
                       ),
                       SizedBox(width: 12),
                       Text('Edit'),
@@ -323,9 +324,9 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen>
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    Color(0xff0B4A30),
-                    Color(0xff0E5A3B),
-                    Color(0xff2E8B57),
+                    AppColors.green17,
+                    AppColors.green,
+                    AppColors.green26,
                   ],
                 ),
               ),
@@ -417,8 +418,8 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen>
                         ),
                         decoration: BoxDecoration(
                           color: _employee!.isActive
-                              ? const Color(0xffDDF5E0)
-                              : const Color(0xffFFE3E6),
+                              ? AppColors.green4
+                              : AppColors.red8,
                           borderRadius: BorderRadius.circular(
                             SizeConfig.scale(20),
                           ),
@@ -432,8 +433,8 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen>
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 color: _employee!.isActive
-                                    ? const Color(0xff0E5A3B)
-                                    : const Color(0xffFF3B3B),
+                                    ? AppColors.green
+                                    : AppColors.red2,
                               ),
                             ),
                             SizedBox(width: SizeConfig.scale(8)),
@@ -442,8 +443,8 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen>
                               style: TextStyle(
                                 fontSize: SizeConfig.scaledFontSize(14),
                                 color: _employee!.isActive
-                                    ? const Color(0xff0E5A3B)
-                                    : const Color(0xffFF3B3B),
+                                    ? AppColors.green
+                                    : AppColors.red2,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -459,14 +460,14 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen>
                     _sectionCard([
                       _detailRow(
                         icon: Icons.phone_rounded,
-                        iconColor: const Color(0xff0E5A3B),
+                        iconColor: AppColors.green,
                         label: 'Phone Number',
                         value: formatNepaliPhone(_employee!.phoneNumber),
                       ),
                       if (_employee!.email != null)
                         _detailRow(
                           icon: Icons.email_rounded,
-                          iconColor: const Color(0xff0E5A3B),
+                          iconColor: AppColors.green,
                           label: 'Email',
                           value: _employee!.email!,
                         ),
@@ -479,26 +480,26 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen>
                     _sectionCard([
                       _detailRow(
                         icon: Icons.badge_rounded,
-                        iconColor: const Color(0xff6558FF),
+                        iconColor: AppColors.blue,
                         label: 'Role',
                         value: _employee!.role,
                       ),
                       _detailRow(
                         icon: Icons.business_rounded,
-                        iconColor: const Color(0xff6558FF),
+                        iconColor: AppColors.blue,
                         label: 'Company ID',
                         value: _employee!.companyId,
                       ),
                       if (_employee!.managerId != null)
                         _detailRow(
                           icon: Icons.supervisor_account_rounded,
-                          iconColor: const Color(0xff6558FF),
+                          iconColor: AppColors.blue,
                           label: 'Manager ID',
                           value: _employee!.managerId!,
                         ),
                       _detailRow(
                         icon: Icons.calendar_today_rounded,
-                        iconColor: const Color(0xff6558FF),
+                        iconColor: AppColors.blue,
                         label: 'Joined Date',
                         value: _formatDate(_employee!.createdAt),
                       ),
@@ -514,7 +515,7 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen>
                           child: _buildActionCard(
                             icon: Icons.timeline_rounded,
                             label: 'Tracking\nHistory',
-                            color: const Color(0xff0E5A3B),
+                            color: AppColors.green,
                             onTap: () => Navigator.push(
                               context,
                               MaterialPageRoute(
@@ -531,7 +532,7 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen>
                           child: _buildActionCard(
                             icon: Icons.location_on_rounded,
                             label: 'Live\nLocation',
-                            color: const Color(0xff2980B9),
+                            color: AppColors.blue9,
                             onTap: () => Navigator.push(
                               context,
                               MaterialPageRoute(
@@ -562,7 +563,7 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen>
       style: TextStyle(
         fontSize: SizeConfig.scaledFontSize(18),
         fontWeight: FontWeight.w700,
-        color: const Color(0xff111111),
+        color: AppColors.black,
       ),
     );
   }
@@ -574,14 +575,14 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen>
     final img = _employee!.profileImage;
 
     final fallback = Container(
-      color: const Color(0xffEAF4EF),
+      color: AppColors.white18,
       alignment: Alignment.center,
       child: Text(
         _initials(),
         style: TextStyle(
           fontSize: SizeConfig.scaledFontSize(38),
           fontWeight: FontWeight.w800,
-          color: const Color(0xff0E5A3B),
+          color: AppColors.green,
         ),
       ),
     );
@@ -634,7 +635,7 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen>
         children.add(
           Padding(
             padding: EdgeInsets.only(left: SizeConfig.scale(72)),
-            child: const Divider(height: 1, color: Color(0xffF0ECE6)),
+            child: const Divider(height: 1, color: AppColors.white22),
           ),
         );
       }
@@ -643,7 +644,7 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen>
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(SizeConfig.scale(16)),
-        border: Border.all(color: const Color(0xffE8E3DD)),
+        border: Border.all(color: AppColors.grey3),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -684,7 +685,7 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen>
                   label,
                   style: TextStyle(
                     fontSize: SizeConfig.scaledFontSize(12),
-                    color: const Color(0xff667085),
+                    color: AppColors.grey,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -693,7 +694,7 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen>
                   value,
                   style: TextStyle(
                     fontSize: SizeConfig.scaledFontSize(15),
-                    color: const Color(0xff111111),
+                    color: AppColors.black,
                     fontWeight: FontWeight.w600,
                   ),
                 ),

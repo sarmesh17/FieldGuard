@@ -7,6 +7,7 @@ import 'package:fieldguard/features/subscription/presentation/screens/upgrade_sc
 import 'package:fieldguard/features/subscription/presentation/widgets/subscription_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fieldguard/core/theme/app_colors.dart';
 
 /// Screen A — current plan, seat usage and the plan catalogue. Entry point for
 /// upgrading (PRO) or contacting sales (ENTERPRISE).
@@ -47,7 +48,7 @@ class SubscriptionScreen extends ConsumerWidget {
     return ResponsiveBuilder(
       builder: (context, screenType, orientation, constraints) {
         return Scaffold(
-          backgroundColor: const Color(0xFFF5F6FA),
+          backgroundColor: AppColors.white2,
           appBar: AppBar(
             backgroundColor: Colors.white,
             elevation: 0,
@@ -58,7 +59,7 @@ class SubscriptionScreen extends ConsumerWidget {
             title: const Text(
               'Subscription',
               style: TextStyle(
-                color: Color(0xff111111),
+                color: AppColors.black,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -132,7 +133,7 @@ class _Body extends StatelessWidget {
                   style: TextStyle(
                     fontSize: SizeConfig.scaledFontSize(15),
                     fontWeight: FontWeight.w800,
-                    color: const Color(0xff111827),
+                    color: AppColors.ink,
                   ),
                 ),
                 SizedBox(height: SizeConfig.scale(12)),
@@ -249,7 +250,7 @@ class _CurrentPlanBanner extends StatelessWidget {
               ),
               decoration: BoxDecoration(
                 color: expired
-                    ? const Color(0xffE53935).withValues(alpha: 0.85)
+                    ? AppColors.red3.withValues(alpha: 0.85)
                     : Colors.white.withValues(alpha: 0.16),
                 borderRadius: BorderRadius.circular(SizeConfig.scale(10)),
               ),

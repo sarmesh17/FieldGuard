@@ -15,6 +15,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:fieldguard/core/theme/app_colors.dart';
 
 class CreateGeofenceForm extends StatefulWidget {
   final double latitude;
@@ -281,7 +282,7 @@ class _CreateGeofenceFormState extends State<CreateGeofenceForm> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Shop created successfully'),
-            backgroundColor: Color(0xff0E5A3B),
+            backgroundColor: AppColors.green,
           ),
         );
         Navigator.of(context).pop(true);
@@ -343,7 +344,7 @@ class _CreateGeofenceFormState extends State<CreateGeofenceForm> {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE5E7EB),
+                      color: AppColors.grey4,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -354,27 +355,27 @@ class _CreateGeofenceFormState extends State<CreateGeofenceForm> {
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF111827),
+                    color: AppColors.ink,
                   ),
                 ),
                 const SizedBox(height: 4),
                 const Text(
                   'Fill in the shop details for this location.',
-                  style: TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
+                  style: TextStyle(fontSize: 13, color: AppColors.grey5),
                 ),
                 const SizedBox(height: 20),
                 Container(
                   padding: const EdgeInsets.symmetric(
                       horizontal: 14, vertical: 12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF0FDF4),
+                    color: AppColors.green6,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFD1FADF)),
+                    border: Border.all(color: AppColors.green11),
                   ),
                   child: Row(
                     children: [
                       const Icon(Icons.my_location,
-                          color: Color(0xff0E5A3B), size: 18),
+                          color: AppColors.green, size: 18),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
@@ -382,7 +383,7 @@ class _CreateGeofenceFormState extends State<CreateGeofenceForm> {
                           'Lng: ${widget.longitude.toStringAsFixed(6)}',
                           style: const TextStyle(
                             fontSize: 13,
-                            color: Color(0xff0E5A3B),
+                            color: AppColors.green,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -429,7 +430,7 @@ class _CreateGeofenceFormState extends State<CreateGeofenceForm> {
                             height: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              color: const Color(0xff0E5A3B),
+                              color: AppColors.green,
                             ),
                           ),
                         ),
@@ -504,7 +505,7 @@ class _CreateGeofenceFormState extends State<CreateGeofenceForm> {
                   width: double.infinity,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xff0E5A3B),
+                      backgroundColor: AppColors.green,
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14)),
                       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -617,7 +618,7 @@ class _CreateGeofenceFormState extends State<CreateGeofenceForm> {
               child: Container(
                 padding: const EdgeInsets.all(4),
                 decoration: const BoxDecoration(
-                  color: Color(0xff0E5A3B),
+                  color: AppColors.green,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.check,
@@ -677,19 +678,19 @@ class _CreateGeofenceFormState extends State<CreateGeofenceForm> {
         width: double.infinity,
         height: 120,
         decoration: BoxDecoration(
-          color: const Color(0xFFF9FAFB),
+          color: AppColors.white5,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFE5E7EB)),
+          border: Border.all(color: AppColors.grey4),
         ),
         child: const Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.camera_alt,
-                size: 32, color: Color(0xFF9CA3AF)),
+                size: 32, color: AppColors.grey2),
             SizedBox(height: 8),
             Text(
               'Tap to take shop photo',
-              style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
+              style: TextStyle(fontSize: 13, color: AppColors.grey2),
             ),
           ],
         ),
@@ -718,14 +719,14 @@ class _CreateGeofenceFormState extends State<CreateGeofenceForm> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         decoration: BoxDecoration(
-          color: const Color(0xFFF9FAFB),
+          color: AppColors.white5,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFE5E7EB)),
+          border: Border.all(color: AppColors.grey4),
         ),
         child: Row(
           children: [
             const Icon(Icons.visibility_outlined,
-                color: Color(0xFF9CA3AF), size: 20),
+                color: AppColors.grey2, size: 20),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
@@ -733,8 +734,8 @@ class _CreateGeofenceFormState extends State<CreateGeofenceForm> {
                 style: TextStyle(
                   fontSize: 14,
                   color: selected > 0
-                      ? const Color(0xFF111827)
-                      : const Color(0xFF6B7280),
+                      ? AppColors.ink
+                      : AppColors.grey5,
                   fontWeight:
                       selected > 0 ? FontWeight.w600 : FontWeight.w400,
                 ),
@@ -746,12 +747,12 @@ class _CreateGeofenceFormState extends State<CreateGeofenceForm> {
                 height: 18,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: Color(0xff0E5A3B),
+                  color: AppColors.green,
                 ),
               )
             else
               const Icon(Icons.chevron_right,
-                  color: Color(0xFF9CA3AF), size: 22),
+                  color: AppColors.grey2, size: 22),
           ],
         ),
       ),
@@ -778,26 +779,26 @@ class _CreateGeofenceFormState extends State<CreateGeofenceForm> {
       decoration: InputDecoration(
         hintText: hint,
         hintStyle:
-            const TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
+            const TextStyle(color: AppColors.grey2, fontSize: 14),
         prefixIcon:
-            Icon(icon, color: const Color(0xFF9CA3AF), size: 20),
+            Icon(icon, color: AppColors.grey2, size: 20),
         filled: true,
-        fillColor: const Color(0xFFF9FAFB),
+        fillColor: AppColors.white5,
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         counterText: '',
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+          borderSide: const BorderSide(color: AppColors.grey4),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+          borderSide: const BorderSide(color: AppColors.grey4),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide:
-              const BorderSide(color: Color(0xff0E5A3B), width: 1.5),
+              const BorderSide(color: AppColors.green, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -824,7 +825,7 @@ class _FieldLabel extends StatelessWidget {
       style: const TextStyle(
         fontSize: 13,
         fontWeight: FontWeight.w600,
-        color: Color(0xFF374151),
+        color: AppColors.blue2,
       ),
     );
   }
@@ -889,7 +890,7 @@ class _VisibilityPickerState extends State<_VisibilityPicker> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE5E7EB),
+                    color: AppColors.grey4,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -904,7 +905,7 @@ class _VisibilityPickerState extends State<_VisibilityPicker> {
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF111827),
+                          color: AppColors.ink,
                         ),
                       ),
                     ),
@@ -915,7 +916,7 @@ class _VisibilityPickerState extends State<_VisibilityPicker> {
                       child: const Text(
                         'Clear',
                         style: TextStyle(
-                          color: Color(0xff0E5A3B),
+                          color: AppColors.green,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -929,7 +930,7 @@ class _VisibilityPickerState extends State<_VisibilityPicker> {
                   '${_selected.length} selected',
                   style: const TextStyle(
                     fontSize: 13,
-                    color: Color(0xFF6B7280),
+                    color: AppColors.grey5,
                   ),
                 ),
               ),
@@ -941,29 +942,29 @@ class _VisibilityPickerState extends State<_VisibilityPicker> {
                     isDense: true,
                     hintText: 'Search by name or code',
                     hintStyle: const TextStyle(
-                      color: Color(0xFF9CA3AF),
+                      color: AppColors.grey2,
                       fontSize: 14,
                     ),
                     prefixIcon: const Icon(Icons.search,
-                        color: Color(0xFF9CA3AF), size: 20),
+                        color: AppColors.grey2, size: 20),
                     filled: true,
-                    fillColor: const Color(0xFFF9FAFB),
+                    fillColor: AppColors.white5,
                     contentPadding:
                         const EdgeInsets.symmetric(vertical: 12),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide:
-                          const BorderSide(color: Color(0xFFE5E7EB)),
+                          const BorderSide(color: AppColors.grey4),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide:
-                          const BorderSide(color: Color(0xFFE5E7EB)),
+                          const BorderSide(color: AppColors.grey4),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: const BorderSide(
-                          color: Color(0xff0E5A3B), width: 1.5),
+                          color: AppColors.green, width: 1.5),
                     ),
                   ),
                 ),
@@ -975,7 +976,7 @@ class _VisibilityPickerState extends State<_VisibilityPicker> {
                           'No matches found',
                           style: TextStyle(
                             fontSize: 14,
-                            color: Color(0xFF6B7280),
+                            color: AppColors.grey5,
                           ),
                         ),
                       )
@@ -993,8 +994,8 @@ class _VisibilityPickerState extends State<_VisibilityPicker> {
                                   onTap: () =>
                                       _toggle(int.tryParse(m.id)),
                                   gradient: const [
-                                    Color(0xff6558FF),
-                                    Color(0xff8B3DFF),
+                                    AppColors.blue,
+                                    AppColors.purple,
                                   ],
                                 )),
                           ],
@@ -1008,8 +1009,8 @@ class _VisibilityPickerState extends State<_VisibilityPicker> {
                                   onTap: () =>
                                       _toggle(int.tryParse(e.id)),
                                   gradient: const [
-                                    Color(0xff0E5A3B),
-                                    Color(0xff2E6F4F),
+                                    AppColors.green,
+                                    AppColors.gradientStart,
                                   ],
                                 )),
                           ],
@@ -1024,7 +1025,7 @@ class _VisibilityPickerState extends State<_VisibilityPicker> {
                     width: double.infinity,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xff0E5A3B),
+                        backgroundColor: AppColors.green,
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14)),
                         padding: const EdgeInsets.symmetric(vertical: 14),
@@ -1071,7 +1072,7 @@ class _PickerSectionHeader extends StatelessWidget {
         style: const TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.w700,
-          color: Color(0xFF9CA3AF),
+          color: AppColors.grey2,
           letterSpacing: 0.6,
         ),
       ),
@@ -1113,13 +1114,13 @@ class _PickerTile extends StatelessWidget {
             const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: selected
-              ? const Color(0xffF0FDF4)
+              ? AppColors.green6
               : Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: selected
-                ? const Color(0xff0E5A3B)
-                : const Color(0xFFE5E7EB),
+                ? AppColors.green
+                : AppColors.grey4,
           ),
         ),
         child: Row(
@@ -1151,7 +1152,7 @@ class _PickerTile extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF111827),
+                      color: AppColors.ink,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -1159,7 +1160,7 @@ class _PickerTile extends StatelessWidget {
                     code,
                     style: const TextStyle(
                       fontSize: 12,
-                      color: Color(0xFF6B7280),
+                      color: AppColors.grey5,
                     ),
                   ),
                 ],
@@ -1170,8 +1171,8 @@ class _PickerTile extends StatelessWidget {
                   ? Icons.check_circle
                   : Icons.radio_button_unchecked,
               color: selected
-                  ? const Color(0xff0E5A3B)
-                  : const Color(0xFFD1D5DB),
+                  ? AppColors.green
+                  : AppColors.grey29,
               size: 22,
             ),
           ],

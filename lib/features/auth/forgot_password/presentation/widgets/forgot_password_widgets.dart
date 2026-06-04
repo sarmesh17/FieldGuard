@@ -1,13 +1,14 @@
 import 'package:fieldguard/core/responsive/responsive.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:fieldguard/core/theme/app_colors.dart';
 
 // ─── Brand colours (shared with the login screen) ────────────────────────────
-const kFpDark = Color(0xFF1A4731);
-const kFpPrimary = Color(0xFF165C3D);
-const kFpMid = Color(0xFF2E6F4F);
-const kFpLight = Color(0xFF5FBF8F);
-const kFpFocus = Color(0xFFF0FAF5);
+const kFpDark = AppColors.green10;
+const kFpPrimary = AppColors.green12;
+const kFpMid = AppColors.gradientStart;
+const kFpLight = AppColors.gradientEnd;
+const kFpFocus = AppColors.white6;
 
 /// Full-screen gradient backdrop with decorative orbs, matching the login
 /// screen so the reset flow feels like part of the same surface.
@@ -183,7 +184,7 @@ class _FpPillFieldState extends State<FpPillField> {
             curve: Curves.easeOut,
             height: SizeConfig.scale(56),
             decoration: BoxDecoration(
-              color: _focused ? kFpFocus : const Color(0xFFF4F6F9),
+              color: _focused ? kFpFocus : AppColors.white7,
               borderRadius: BorderRadius.circular(SizeConfig.scale(16)),
               border: Border.all(
                 color: hasError
@@ -221,8 +222,8 @@ class _FpPillFieldState extends State<FpPillField> {
                         colors: _focused
                             ? [kFpMid, kFpDark]
                             : [
-                                const Color(0xFFE4EDE8),
-                                const Color(0xFFD8E7DE),
+                                AppColors.grey15,
+                                AppColors.green14,
                               ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,

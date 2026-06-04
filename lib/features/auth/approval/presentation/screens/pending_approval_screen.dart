@@ -4,12 +4,13 @@ import 'package:fieldguard/features/auth/login/presentation/providers/login_prov
 import 'package:fieldguard/features/auth/login/presentation/providers/login_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fieldguard/core/theme/app_colors.dart';
 
 // ─── Brand colours ───────────────────────────────────────────────────────────
-const _kDark = Color(0xFF1A4731);
-const _kPrimary = Color(0xFF165C3D);
-const _kMid = Color(0xFF2E6F4F);
-const _kLight = Color(0xFF5FBF8F);
+const _kDark = AppColors.green10;
+const _kPrimary = AppColors.green12;
+const _kMid = AppColors.gradientStart;
+const _kLight = AppColors.gradientEnd;
 
 /// Shown to a signed-in user whose company is still awaiting admin approval.
 ///
@@ -67,7 +68,7 @@ class _PendingApprovalScreenState extends ConsumerState<PendingApprovalScreen> {
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: [Color(0xFFF0FAF5), Colors.white],
+                    colors: [AppColors.white6, Colors.white],
                   ),
                 ),
               ),

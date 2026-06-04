@@ -4,11 +4,12 @@ import 'package:fieldguard/features/tasks/presentation/providers/tasks_provider.
 import 'package:fieldguard/widgets/app_skeletons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fieldguard/core/theme/app_colors.dart';
 
-const _kBrand = Color(0xff005C33);
-const _kInk = Color(0xff0D1B2A);
-const _kMuted = Color(0xff8A94A6);
-const _kBg = Color(0xffF2F4F7);
+const _kBrand = AppColors.green2;
+const _kInk = AppColors.ink2;
+const _kMuted = AppColors.grey8;
+const _kBg = AppColors.white3;
 
 /// Full-screen task audit feed (`GET /api/v1/tasks/history`).
 ///
@@ -272,7 +273,7 @@ class _PerformerLine extends StatelessWidget {
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [_kBrand, Color(0xff00874C)],
+              colors: [_kBrand, AppColors.green7],
             ),
           ),
           alignment: Alignment.center,
@@ -386,7 +387,7 @@ class _ChangeRow extends StatelessWidget {
                     TextSpan(
                       text: change.oldValue,
                       style: const TextStyle(
-                        color: Color(0xffB0413E),
+                        color: AppColors.red14,
                         decoration: TextDecoration.lineThrough,
                       ),
                     ),
@@ -446,10 +447,10 @@ class _StatusPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = switch (status.toUpperCase()) {
-      'PENDING' => const Color(0xffF59E0B),
-      'IN_PROGRESS' => const Color(0xff3B82F6),
+      'PENDING' => AppColors.orange2,
+      'IN_PROGRESS' => AppColors.blue3,
       'COMPLETED' => _kBrand,
-      'CANCELLED' => const Color(0xffFF3347),
+      'CANCELLED' => AppColors.red5,
       _ => _kMuted,
     };
     return Container(
@@ -534,11 +535,11 @@ class _ErrorView extends StatelessWidget {
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: const Color(0xffFF3347).withValues(alpha: 0.08),
+                color: AppColors.red5.withValues(alpha: 0.08),
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.error_outline_rounded,
-                  size: 38, color: Color(0xffFF3347)),
+                  size: 38, color: AppColors.red5),
             ),
             const SizedBox(height: 20),
             const Text(
