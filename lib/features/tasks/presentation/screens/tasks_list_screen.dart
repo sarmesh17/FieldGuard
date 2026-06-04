@@ -114,13 +114,13 @@ class _TasksListScreenState extends ConsumerState<TasksListScreen>
 
     if (loginState is! LoginSuccess || _tabController == null) {
       return const Scaffold(
-        backgroundColor: AppColors.white2,
+        backgroundColor: AppColors.white,
         body: SkeletonList(),
       );
     }
 
     return Scaffold(
-      backgroundColor: AppColors.white2,
+      backgroundColor: AppColors.white,
       floatingActionButton: _CreateFAB(onPressed: _openCreateTask),
       body: NestedScrollView(
         headerSliverBuilder: (context, _) => [
@@ -510,7 +510,7 @@ class _AdminManagerPickerBar extends StatelessWidget {
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border(bottom: BorderSide(color: AppColors.white4)),
+        border: Border(bottom: BorderSide(color: AppColors.white)),
       ),
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: loading
@@ -592,7 +592,7 @@ class _TeamFilterBar extends StatelessWidget {
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border(bottom: BorderSide(color: AppColors.white4)),
+        border: Border(bottom: BorderSide(color: AppColors.white)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -777,7 +777,7 @@ class _FilterChip extends StatelessWidget {
         curve: Curves.easeOut,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
         decoration: BoxDecoration(
-          color: selected ? color : AppColors.white2,
+          color: selected ? color : AppColors.white,
           borderRadius: BorderRadius.circular(24),
           boxShadow: selected
               ? [
@@ -1019,7 +1019,7 @@ class _TaskCard extends StatelessWidget {
                           _CreatorChip(creator: task.creator!),
                         ],
                         const SizedBox(height: 12),
-                        Container(height: 1, color: AppColors.white4),
+                        Container(height: 1, color: AppColors.white),
                         const SizedBox(height: 12),
                         Row(
                           children: [
@@ -1044,7 +1044,7 @@ class _TaskCard extends StatelessWidget {
                                       subtitle,
                                       style: const TextStyle(
                                         fontSize: 11,
-                                        color: AppColors.grey8,
+                                        color: AppColors.grey2,
                                       ),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
@@ -1059,7 +1059,7 @@ class _TaskCard extends StatelessWidget {
                                 vertical: 5,
                               ),
                               decoration: BoxDecoration(
-                                color: AppColors.white2,
+                                color: AppColors.white,
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: Row(
@@ -1111,7 +1111,7 @@ class _CreatorChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: AppColors.white4,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -1156,7 +1156,7 @@ class _ShopRow extends StatelessWidget {
           height: 22,
           clipBehavior: Clip.antiAlias,
           decoration: BoxDecoration(
-            color: AppColors.white4,
+            color: AppColors.white,
             borderRadius: BorderRadius.circular(6),
           ),
           child: hasImage
@@ -1166,13 +1166,13 @@ class _ShopRow extends StatelessWidget {
                   errorBuilder: (_, _, _) => const Icon(
                     Icons.store_rounded,
                     size: 14,
-                    color: AppColors.grey8,
+                    color: AppColors.grey2,
                   ),
                 )
               : const Icon(
                   Icons.store_rounded,
                   size: 14,
-                  color: AppColors.grey8,
+                  color: AppColors.grey2,
                 ),
         ),
         const SizedBox(width: 8),
@@ -1187,8 +1187,8 @@ class _ShopRow extends StatelessWidget {
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: shop == null
-                  ? AppColors.grey8
-                  : AppColors.grey10,
+                  ? AppColors.grey2
+                  : AppColors.grey,
               fontStyle: shop == null ? FontStyle.italic : FontStyle.normal,
             ),
           ),
@@ -1400,7 +1400,7 @@ class _EmptyView extends StatelessWidget {
               message,
               style: const TextStyle(
                 fontSize: 14,
-                color: AppColors.grey8,
+                color: AppColors.grey2,
                 height: 1.5,
               ),
               textAlign: TextAlign.center,
@@ -1430,13 +1430,13 @@ class _ErrorView extends StatelessWidget {
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: AppColors.red5.withValues(alpha: 0.08),
+                color: AppColors.red2.withValues(alpha: 0.08),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 Icons.wifi_off_rounded,
                 size: 38,
-                color: AppColors.red5,
+                color: AppColors.red2,
               ),
             ),
             const SizedBox(height: 20),
@@ -1451,7 +1451,7 @@ class _ErrorView extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               message,
-              style: const TextStyle(fontSize: 13, color: AppColors.grey8),
+              style: const TextStyle(fontSize: 13, color: AppColors.grey2),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 28),
@@ -1489,7 +1489,7 @@ Color _statusColor(String status) => switch (status.toUpperCase()) {
   'PENDING' => AppColors.orange2,
   'IN_PROGRESS' => AppColors.blue3,
   'COMPLETED' => AppColors.green,
-  'CANCELLED' => AppColors.red5,
+  'CANCELLED' => AppColors.red2,
   _ => AppColors.grey,
 };
 
@@ -1507,7 +1507,7 @@ String _statusLabel(String status) => switch (status.toUpperCase()) {
 };
 
 Color _priorityColor(String priority) => switch (priority.toUpperCase()) {
-  'HIGH' => AppColors.red4,
+  'HIGH' => AppColors.red2,
   'MEDIUM' => AppColors.orange2,
   'LOW' => AppColors.blue3,
   _ => AppColors.grey,

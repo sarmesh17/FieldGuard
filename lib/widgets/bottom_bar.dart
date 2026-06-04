@@ -4,7 +4,7 @@ import 'package:fieldguard/core/theme/app_colors.dart';
 // ─── Brand palette (consistent with the rest of the app) ────────────────────
 const _kPrimary = AppColors.green;
 const _kPillBg = AppColors.green6;
-const _kInactive = AppColors.grey8;
+const _kInactive = AppColors.grey2;
 
 /// Modern bottom navigation bar (Material-3 style).
 ///

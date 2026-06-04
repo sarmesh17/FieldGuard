@@ -8,8 +8,8 @@ import 'package:fieldguard/core/theme/app_colors.dart';
 
 const _kBrand = AppColors.green;
 const _kInk = AppColors.ink2;
-const _kMuted = AppColors.grey8;
-const _kBg = AppColors.white2;
+const _kMuted = AppColors.grey2;
+const _kBg = AppColors.white;
 
 /// Full-screen task audit feed (`GET /api/v1/tasks/history`).
 ///
@@ -387,7 +387,7 @@ class _ChangeRow extends StatelessWidget {
                     TextSpan(
                       text: change.oldValue,
                       style: const TextStyle(
-                        color: AppColors.red14,
+                        color: AppColors.red,
                         decoration: TextDecoration.lineThrough,
                       ),
                     ),
@@ -450,7 +450,7 @@ class _StatusPill extends StatelessWidget {
       'PENDING' => AppColors.orange2,
       'IN_PROGRESS' => AppColors.blue3,
       'COMPLETED' => _kBrand,
-      'CANCELLED' => AppColors.red5,
+      'CANCELLED' => AppColors.red2,
       _ => _kMuted,
     };
     return Container(
@@ -535,11 +535,11 @@ class _ErrorView extends StatelessWidget {
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: AppColors.red5.withValues(alpha: 0.08),
+                color: AppColors.red2.withValues(alpha: 0.08),
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.error_outline_rounded,
-                  size: 38, color: AppColors.red5),
+                  size: 38, color: AppColors.red2),
             ),
             const SizedBox(height: 20),
             const Text(

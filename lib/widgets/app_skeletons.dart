@@ -9,7 +9,7 @@ import 'package:fieldguard/core/theme/app_colors.dart';
 /// [SkeletonDetail] for detail screens. The card chrome (white background,
 /// border) stays OUTSIDE the shimmer so only the grey placeholder blocks
 /// animate — never the whole card.
-const _baseColor = AppColors.white9;
+const _baseColor = AppColors.grey4;
 const _highlightColor = AppColors.white;
 
 /// Wraps placeholder boxes in the app's standard shimmer animation.

@@ -863,7 +863,7 @@ class _ModernFieldState extends State<_ModernField> {
         curve: Curves.easeOut,
         height: SizeConfig.scale(56),
         decoration: BoxDecoration(
-          color: _focused ? _kFocus : AppColors.white2,
+          color: _focused ? _kFocus : AppColors.white,
           borderRadius: BorderRadius.circular(SizeConfig.scale(16)),
           border: Border.all(
             color: _focused ? _kMid : Colors.transparent,
@@ -893,7 +893,7 @@ class _ModernFieldState extends State<_ModernField> {
                   gradient: LinearGradient(
                     colors: _focused
                         ? [_kMid, _kDark]
-                        : [AppColors.grey15, AppColors.green6],
+                        : [AppColors.grey4, AppColors.green6],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -975,7 +975,7 @@ class _ModernPasswordFieldState extends State<_ModernPasswordField> {
         curve: Curves.easeOut,
         height: SizeConfig.scale(56),
         decoration: BoxDecoration(
-          color: _focused ? _kFocus : AppColors.white2,
+          color: _focused ? _kFocus : AppColors.white,
           borderRadius: BorderRadius.circular(SizeConfig.scale(16)),
           border: Border.all(
             color: _focused ? _kMid : Colors.transparent,
@@ -1008,7 +1008,7 @@ class _ModernPasswordFieldState extends State<_ModernPasswordField> {
                   gradient: LinearGradient(
                     colors: _focused
                         ? [_kMid, _kDark]
-                        : [AppColors.grey15, AppColors.green6],
+                        : [AppColors.grey4, AppColors.green6],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),

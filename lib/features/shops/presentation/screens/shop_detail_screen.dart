@@ -186,7 +186,7 @@ class _ShopDetailScreenState extends State<ShopDetailScreen> {
                       decoration: BoxDecoration(
                         color: _shopDetail!.isActive
                             ? AppColors.green6
-                            : AppColors.red8,
+                            : AppColors.red6,
                         borderRadius: BorderRadius.circular(SizeConfig.scale(20)),
                       ),
                       child: Text(

@@ -126,7 +126,7 @@ class _EnterpriseInquiryScreenState
     return ResponsiveBuilder(
       builder: (context, screenType, orientation, constraints) {
         return Scaffold(
-          backgroundColor: AppColors.white2,
+          backgroundColor: AppColors.white,
           appBar: AppBar(
             backgroundColor: Colors.white,
             elevation: 0,
@@ -666,7 +666,7 @@ class _DetailCard extends StatelessWidget {
 
   Widget _divider() => Padding(
         padding: EdgeInsets.symmetric(vertical: SizeConfig.scale(12)),
-        child: const Divider(height: 1, color: AppColors.white4),
+        child: const Divider(height: 1, color: AppColors.white),
       );
 
   Widget _row(IconData icon, String label, String value) {

@@ -218,11 +218,11 @@ class _ThemeFor {
           avatarBackground: Colors.white,
           avatarFg: AppColors.green,
           avatarIcon: Icons.check,
-          titleColor: AppColors.grey5,
+          titleColor: AppColors.grey,
           titleStrike: true,
           subtitleIcon: Icons.check_circle,
           subtitleColor: AppColors.green,
-          chevronColor: AppColors.grey5,
+          chevronColor: AppColors.grey,
           subtitle: (t) => 'Completed',
         );
       case 'CANCELLED':
@@ -230,13 +230,13 @@ class _ThemeFor {
           background: AppColors.red6,
           borderColor: null,
           avatarBackground: Colors.white,
-          avatarFg: AppColors.red10,
+          avatarFg: AppColors.red,
           avatarIcon: Icons.close,
-          titleColor: AppColors.grey5,
+          titleColor: AppColors.grey,
           titleStrike: true,
           subtitleIcon: Icons.cancel_outlined,
-          subtitleColor: AppColors.red10,
-          chevronColor: AppColors.grey5,
+          subtitleColor: AppColors.red,
+          chevronColor: AppColors.grey,
           subtitle: (t) => 'Cancelled',
         );
       default: // PENDING
@@ -249,7 +249,7 @@ class _ThemeFor {
           titleColor: AppColors.ink,
           titleStrike: false,
           subtitleIcon: Icons.schedule,
-          subtitleColor: AppColors.grey5,
+          subtitleColor: AppColors.grey,
           chevronColor: AppColors.green,
           subtitle: (t) => t.isEmpty ? 'Pending' : 'Due $t',
         );
@@ -287,12 +287,12 @@ class _EmptyRow extends StatelessWidget {
         ),
         child: const Row(
           children: [
-            Icon(Icons.event_available_outlined, color: AppColors.grey5),
+            Icon(Icons.event_available_outlined, color: AppColors.grey),
             SizedBox(width: 12),
             Expanded(
               child: Text(
                 'No tasks scheduled for today',
-                style: TextStyle(color: AppColors.grey5),
+                style: TextStyle(color: AppColors.grey),
               ),
             ),
           ],

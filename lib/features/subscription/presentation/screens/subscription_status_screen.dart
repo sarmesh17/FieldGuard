@@ -84,7 +84,7 @@ class _SubscriptionStatusScreenState
     return ResponsiveBuilder(
       builder: (context, screenType, orientation, constraints) {
         return Scaffold(
-          backgroundColor: AppColors.white2,
+          backgroundColor: AppColors.white,
           appBar: AppBar(
             backgroundColor: Colors.white,
             elevation: 0,
@@ -123,7 +123,7 @@ class _SubscriptionStatusScreenState
     if (_error != null && _latest == null) {
       return _StatusView(
         icon: Icons.wifi_off_rounded,
-        iconColor: AppColors.red3,
+        iconColor: AppColors.red2,
         title: 'Couldn\'t check status',
         message: _error!,
         primaryLabel: 'Retry',
@@ -175,7 +175,7 @@ class _SubscriptionStatusScreenState
       case SubscriptionRequestStatus.rejected:
         return _StatusView(
           icon: Icons.cancel_rounded,
-          iconColor: AppColors.red3,
+          iconColor: AppColors.red2,
           title: 'Request rejected',
           message: latest.rejectionReason?.isNotEmpty == true
               ? latest.rejectionReason!

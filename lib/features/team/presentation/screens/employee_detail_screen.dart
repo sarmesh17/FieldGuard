@@ -419,7 +419,7 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen>
                         decoration: BoxDecoration(
                           color: _employee!.isActive
                               ? AppColors.green6
-                              : AppColors.red8,
+                              : AppColors.red6,
                           borderRadius: BorderRadius.circular(
                             SizeConfig.scale(20),
                           ),
@@ -532,7 +532,7 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen>
                           child: _buildActionCard(
                             icon: Icons.location_on_rounded,
                             label: 'Live\nLocation',
-                            color: AppColors.blue9,
+                            color: AppColors.blue3,
                             onTap: () => Navigator.push(
                               context,
                               MaterialPageRoute(
@@ -635,7 +635,7 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen>
         children.add(
           Padding(
             padding: EdgeInsets.only(left: SizeConfig.scale(72)),
-            child: const Divider(height: 1, color: AppColors.white22),
+            child: const Divider(height: 1, color: AppColors.grey3),
           ),
         );
       }

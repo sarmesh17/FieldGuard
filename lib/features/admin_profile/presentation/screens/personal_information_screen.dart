@@ -34,7 +34,7 @@ class _PersonalInformationScreenState
     final h = size.height;
 
     return Scaffold(
-      backgroundColor: AppColors.white2,
+      backgroundColor: AppColors.white,
       appBar: AppBar(
         backgroundColor: AppColors.green,
         elevation: 0,
@@ -466,7 +466,7 @@ class _PersonalInformationScreenState
                   label,
                   style: TextStyle(
                     fontSize: w * 0.032,
-                    color: AppColors.grey5,
+                    color: AppColors.grey,
                     fontWeight: FontWeight.w500,
                   ),
                 ),

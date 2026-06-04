@@ -55,7 +55,7 @@ class _CollectPaymentFab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const amber = AppColors.brown4;
+    const amber = AppColors.brown;
     return Material(
       color: amber,
       borderRadius: BorderRadius.circular(30),
@@ -156,7 +156,7 @@ class _UpdateTaskSheetState extends ConsumerState<_UpdateTaskSheet> {
     ('PENDING', 'Pending', AppColors.orange2),
     ('IN_PROGRESS', 'In Progress', AppColors.blue3),
     ('COMPLETED', 'Completed', AppColors.green5),
-    ('CANCELLED', 'Cancelled', AppColors.grey5),
+    ('CANCELLED', 'Cancelled', AppColors.grey),
   ];
 
   @override
@@ -317,7 +317,7 @@ class _UpdateTaskSheetState extends ConsumerState<_UpdateTaskSheet> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.grey7,
+                  color: AppColors.grey4,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -392,7 +392,7 @@ class _UpdateTaskSheetState extends ConsumerState<_UpdateTaskSheet> {
                   return _Chip(
                     label: r.chipLabel,
                     selected: selected,
-                    selectedColor: AppColors.red4,
+                    selectedColor: AppColors.red2,
                     onTap: () => _onReasonTap(r),
                   );
                 }).toList(),
@@ -439,7 +439,7 @@ class _UpdateTaskSheetState extends ConsumerState<_UpdateTaskSheet> {
                     hintStyle: const TextStyle(
                         fontSize: 13.5, color: AppColors.grey9),
                     filled: true,
-                    fillColor: AppColors.white2,
+                    fillColor: AppColors.white,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
@@ -471,7 +471,7 @@ class _UpdateTaskSheetState extends ConsumerState<_UpdateTaskSheet> {
                   hintStyle: const TextStyle(
                       fontSize: 13.5, color: AppColors.grey9),
                   filled: true,
-                  fillColor: AppColors.white2,
+                  fillColor: AppColors.white,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
@@ -500,7 +500,7 @@ class _UpdateTaskSheetState extends ConsumerState<_UpdateTaskSheet> {
                 hintStyle: const TextStyle(
                     fontSize: 13.5, color: AppColors.grey9),
                 filled: true,
-                fillColor: AppColors.white2,
+                fillColor: AppColors.white,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -515,7 +515,7 @@ class _UpdateTaskSheetState extends ConsumerState<_UpdateTaskSheet> {
               Text(
                 _errorMessage!,
                 style: const TextStyle(
-                    fontSize: 12.5, color: AppColors.red4),
+                    fontSize: 12.5, color: AppColors.red2),
               ),
             ],
 
@@ -529,7 +529,7 @@ class _UpdateTaskSheetState extends ConsumerState<_UpdateTaskSheet> {
                         _submitting ? null : () => Navigator.pop(context),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      side: const BorderSide(color: AppColors.grey7),
+                      side: const BorderSide(color: AppColors.grey4),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14)),
                     ),
@@ -538,7 +538,7 @@ class _UpdateTaskSheetState extends ConsumerState<_UpdateTaskSheet> {
                       style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.grey5),
+                          color: AppColors.grey),
                     ),
                   ),
                 ),
@@ -605,9 +605,9 @@ class _Chip extends StatelessWidget {
           borderRadius: BorderRadius.circular(24),
           color: selected
               ? selectedColor
-              : AppColors.white2,
+              : AppColors.white,
           border: Border.all(
-            color: selected ? selectedColor : AppColors.grey7,
+            color: selected ? selectedColor : AppColors.grey4,
           ),
         ),
         child: Row(
@@ -624,7 +624,7 @@ class _Chip extends StatelessWidget {
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color:
-                    selected ? Colors.white : AppColors.grey5,
+                    selected ? Colors.white : AppColors.grey,
               ),
             ),
           ],
@@ -657,9 +657,9 @@ class _ImagePickerSection extends StatelessWidget {
         height: hasImage ? 160 : 90,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
-          color: AppColors.white2,
+          color: AppColors.white,
           border: Border.all(
-            color: AppColors.grey7,
+            color: AppColors.grey4,
             width: 1.5,
           ),
         ),
@@ -714,7 +714,7 @@ class _ImagePickerSection extends StatelessWidget {
                   Text(
                     'Attach cancel photo (required)',
                     style: TextStyle(
-                        fontSize: 12.5, color: AppColors.grey8),
+                        fontSize: 12.5, color: AppColors.grey2),
                   ),
                 ],
               ),

@@ -154,7 +154,7 @@ class _CreateShopMapScreenState extends State<CreateShopMapScreen> {
 
           if (_mapLoading)
             const ColoredBox(
-              color: AppColors.white2,
+              color: AppColors.white,
               child: Center(child: CircularProgressIndicator(color: _brand)),
             ),
 

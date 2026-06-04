@@ -499,7 +499,7 @@ class _FilterBar extends StatelessWidget {
                   color: hasRange ? _kBrand.withValues(alpha: 0.10) : Colors.white,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: hasRange ? _kBrand : AppColors.grey7,
+                    color: hasRange ? _kBrand : AppColors.grey4,
                   ),
                 ),
                 child: Row(
@@ -559,7 +559,7 @@ class _Chip extends StatelessWidget {
           color: selected ? _kBrand : Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: selected ? _kBrand : AppColors.grey7,
+            color: selected ? _kBrand : AppColors.grey4,
           ),
         ),
         child: Text(
@@ -652,7 +652,7 @@ class _SummaryCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.grey12),
+        border: Border.all(color: AppColors.grey4),
       ),
       child: Row(
         children: [
@@ -681,7 +681,7 @@ class _SummaryCard extends StatelessWidget {
   Widget _divider() => Container(
         width: 1,
         height: 34,
-        color: AppColors.white4,
+        color: AppColors.white,
       );
 }
 
@@ -755,7 +755,7 @@ class _CollectionTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.grey12),
+        border: Border.all(color: AppColors.grey4),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -807,7 +807,7 @@ class _CollectionTile extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   _fmtDateTime(item.createdAt),
-                  style: const TextStyle(fontSize: 11, color: AppColors.grey11),
+                  style: const TextStyle(fontSize: 11, color: AppColors.grey9),
                 ),
                 if (item.notes != null && item.notes!.isNotEmpty) ...[
                   const SizedBox(height: 6),
@@ -815,7 +815,7 @@ class _CollectionTile extends StatelessWidget {
                     item.notes!,
                     style: const TextStyle(
                       fontSize: 12.5,
-                      color: AppColors.grey10,
+                      color: AppColors.grey,
                       height: 1.35,
                     ),
                   ),
@@ -917,11 +917,11 @@ class _EmptyBlock extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.grey12),
+        border: Border.all(color: AppColors.grey4),
       ),
       child: const Column(
         children: [
-          Icon(Icons.inbox_rounded, size: 30, color: AppColors.grey11),
+          Icon(Icons.inbox_rounded, size: 30, color: AppColors.grey9),
           SizedBox(height: 8),
           Text(
             'No collections match these filters',
@@ -945,7 +945,7 @@ class _ErrorBlock extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.white10,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.red7),
       ),
@@ -1141,11 +1141,11 @@ class _SetDueSheetState extends ConsumerState<_SetDueSheet> {
                 ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.grey7),
+                  borderSide: const BorderSide(color: AppColors.grey4),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.grey7),
+                  borderSide: const BorderSide(color: AppColors.grey4),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),

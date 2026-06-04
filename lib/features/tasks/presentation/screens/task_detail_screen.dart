@@ -28,8 +28,8 @@ part 'task_detail_action_widgets.dart';
 const _kBrand = AppColors.green;
 const _kBrandLight = AppColors.green;
 const _kInk = AppColors.ink2;
-const _kMuted = AppColors.grey8;
-const _kBg = AppColors.white2;
+const _kMuted = AppColors.grey2;
+const _kBg = AppColors.white;
 
 /// Full task view. The list screen only has summary data, so on tap we
 /// fetch the complete record from `GET /api/v1/tasks/:id` via
@@ -262,7 +262,7 @@ class _TaskDetailBodyState extends ConsumerState<_TaskDetailBody>
             children: [
               for (var i = 0; i < task.items.length; i++) ...[
                 if (i > 0)
-                  const Divider(height: 18, color: AppColors.white4),
+                  const Divider(height: 18, color: AppColors.white),
                 _ChecklistItem(text: task.items[i], index: i),
               ],
             ],
@@ -286,7 +286,7 @@ class _TaskDetailBodyState extends ConsumerState<_TaskDetailBody>
               name: task.assignee.fullName,
               subtitle: task.assignee.employeeCode,
             ),
-            const Divider(height: 22, color: AppColors.white4),
+            const Divider(height: 22, color: AppColors.white),
             _PersonRow(
               icon: Icons.edit_note_rounded,
               role: 'Created by',
@@ -294,7 +294,7 @@ class _TaskDetailBodyState extends ConsumerState<_TaskDetailBody>
               subtitle: null,
             ),
             if (task.manager != null) ...[
-              const Divider(height: 22, color: AppColors.white4),
+              const Divider(height: 22, color: AppColors.white),
               _PersonRow(
                 icon: Icons.shield_moon_rounded,
                 role: 'Manager',

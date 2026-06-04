@@ -141,7 +141,7 @@ class _UpgradeScreenState extends ConsumerState<UpgradeScreen> {
     return ResponsiveBuilder(
       builder: (context, screenType, orientation, constraints) {
         return Scaffold(
-          backgroundColor: AppColors.white2,
+          backgroundColor: AppColors.white,
           appBar: AppBar(
             backgroundColor: Colors.white,
             elevation: 0,
@@ -415,7 +415,7 @@ class _QrCard extends StatelessWidget {
                   width: qrSize,
                   height: qrSize,
                   decoration: BoxDecoration(
-                    color: AppColors.white2,
+                    color: AppColors.white,
                     borderRadius: BorderRadius.circular(SizeConfig.scale(14)),
                   ),
                   clipBehavior: Clip.antiAlias,
@@ -489,7 +489,7 @@ class _QrCard extends StatelessWidget {
                 vertical: SizeConfig.scale(10),
               ),
               decoration: BoxDecoration(
-                color: AppColors.white2,
+                color: AppColors.white,
                 borderRadius: BorderRadius.circular(SizeConfig.scale(12)),
               ),
               child: Row(
@@ -634,7 +634,7 @@ class _ProofPicker extends StatelessWidget {
               width: SizeConfig.scale(56),
               height: SizeConfig.scale(56),
               decoration: BoxDecoration(
-                color: AppColors.white2,
+                color: AppColors.white,
                 borderRadius: BorderRadius.circular(SizeConfig.scale(12)),
               ),
               clipBehavior: Clip.antiAlias,

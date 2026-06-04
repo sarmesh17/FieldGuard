@@ -8,7 +8,7 @@ import 'package:fieldguard/core/theme/app_colors.dart';
 // ─── Palette ─────────────────────────────────────────────────────────────────
 const _kDark = AppColors.green;
 const _kMid = AppColors.gradientStart;
-const _kDanger = AppColors.red10;
+const _kDanger = AppColors.red;
 const _kDangerSoft = AppColors.red6;
 
 /// Shown when the company's registration was rejected by an administrator.

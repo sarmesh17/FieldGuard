@@ -331,7 +331,7 @@ class _SessionCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.grey12),
+        border: Border.all(color: AppColors.grey4),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -413,7 +413,7 @@ class _SessionCard extends StatelessWidget {
                       )
                     else
                       const Icon(Icons.chevron_right_rounded,
-                          color: AppColors.grey11),
+                          color: AppColors.grey9),
                   ],
                 ),
                 const SizedBox(height: 14),
@@ -457,7 +457,7 @@ class _StatChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: AppColors.white4,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -491,7 +491,7 @@ class _EmptyView extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(Icons.location_off_rounded,
-              size: SizeConfig.scale(56), color: AppColors.grey11),
+              size: SizeConfig.scale(56), color: AppColors.grey9),
           const SizedBox(height: 14),
           const Text(
             'No tracking yet',

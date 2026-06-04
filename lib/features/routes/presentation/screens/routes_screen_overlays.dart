@@ -15,7 +15,7 @@ class _TrackingOffOverlay extends StatelessWidget {
           children: [
             Icon(
               Icons.location_off_outlined,
-              color: AppColors.grey5,
+              color: AppColors.grey,
               size: 34,
             ),
             SizedBox(height: 8),
@@ -31,7 +31,7 @@ class _TrackingOffOverlay extends StatelessWidget {
             Text(
               'Turn it on from the Home screen to see your route.',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 12, color: AppColors.grey5),
+              style: TextStyle(fontSize: 12, color: AppColors.grey),
             ),
           ],
         ),
@@ -138,7 +138,7 @@ class _ActiveNavCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 14,
-                      color: reached ? _kBrand : AppColors.grey5,
+                      color: reached ? _kBrand : AppColors.grey,
                       fontWeight: reached ? FontWeight.w600 : FontWeight.normal,
                     ),
                   ),
@@ -226,7 +226,7 @@ class _ActiveNavCard extends StatelessWidget {
         Text(
           'NO ACTIVE TASK',
           style: TextStyle(
-            color: AppColors.grey5,
+            color: AppColors.grey,
             fontWeight: FontWeight.w700,
             fontSize: 11,
             letterSpacing: 0.6,
@@ -240,7 +240,7 @@ class _ActiveNavCard extends StatelessWidget {
         SizedBox(height: 4),
         Text(
           'Start a task to see the route to its shop here.',
-          style: TextStyle(fontSize: 13, color: AppColors.grey5),
+          style: TextStyle(fontSize: 13, color: AppColors.grey),
         ),
       ],
     );

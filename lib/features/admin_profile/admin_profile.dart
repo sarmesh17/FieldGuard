@@ -119,14 +119,14 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen>
     // Show loading or error states
     if (profileState is ProfileLoading) {
       return const Scaffold(
-        backgroundColor: AppColors.white2,
+        backgroundColor: AppColors.white,
         body: SkeletonDetail(),
       );
     }
 
     if (profileState is ProfileFailure) {
       return Scaffold(
-        backgroundColor: AppColors.white2,
+        backgroundColor: AppColors.white,
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -191,7 +191,7 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen>
 
     if (profile == null) {
       return const Scaffold(
-        backgroundColor: AppColors.white2,
+        backgroundColor: AppColors.white,
         body: SkeletonDetail(),
       );
     }
@@ -200,7 +200,7 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen>
     final isManager = profile.role.toUpperCase() == 'MANAGER';
 
     return Scaffold(
-      backgroundColor: AppColors.white2,
+      backgroundColor: AppColors.white,
       // Suppress the Android stretch/glow overscroll so pulling the screen
       // doesn't drag the green header and tear the layout.
       body: ScrollConfiguration(
@@ -571,7 +571,7 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen>
           profile.email ?? profile.company?.email ?? 'No email',
           style: TextStyle(
             fontSize: w * 0.037,
-            color: AppColors.grey5,
+            color: AppColors.grey,
             fontWeight: FontWeight.w400,
           ),
         ),
@@ -702,7 +702,7 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen>
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      AppColors.white16,
+                      AppColors.white,
                       AppColors.white,
                     ],
                   ),
@@ -808,14 +808,14 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen>
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                   colors: [
-                                    AppColors.red3,
-                                    AppColors.red15,
+                                    AppColors.red2,
+                                    AppColors.red,
                                   ],
                                 ),
                                 borderRadius: BorderRadius.circular(SizeConfig.scale(16)),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: AppColors.red3.withValues(alpha: 0.4),
+                                    color: AppColors.red2.withValues(alpha: 0.4),
                                     blurRadius: SizeConfig.scale(12),
                                     offset: Offset(0, SizeConfig.scale(4)),
                                   ),
@@ -865,10 +865,10 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen>
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(w * 0.04),
-          border: Border.all(color: AppColors.red19, width: 1.5),
+          border: Border.all(color: AppColors.red6, width: 1.5),
           boxShadow: [
             BoxShadow(
-              color: AppColors.red3.withValues(alpha: 0.08),
+              color: AppColors.red2.withValues(alpha: 0.08),
               blurRadius: 14,
               offset: const Offset(0, 4),
             ),
@@ -879,14 +879,14 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen>
           children: [
             Icon(
               Icons.logout_rounded,
-              color: AppColors.red3,
+              color: AppColors.red2,
               size: w * 0.055,
             ),
             SizedBox(width: w * 0.025),
             Text(
               'Sign Out',
               style: TextStyle(
-                color: AppColors.red3,
+                color: AppColors.red2,
                 fontSize: w * 0.044,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.2,
@@ -1095,10 +1095,10 @@ class SectionTile extends StatelessWidget {
 
     final Color effectiveIconBg =
         iconBg ??
-        (selected ? AppColors.blue7 : AppColors.white4);
+        (selected ? AppColors.blue7 : AppColors.white);
     final Color effectiveIconColor =
         iconColor ??
-        (selected ? AppColors.blue : AppColors.grey5);
+        (selected ? AppColors.blue : AppColors.grey);
 
     return Material(
       color: Colors.transparent,
@@ -1137,7 +1137,7 @@ class SectionTile extends StatelessWidget {
                   style: TextStyle(
                     fontSize: w * 0.04,
                     fontWeight: isAction ? FontWeight.w600 : FontWeight.w500,
-                    color: AppColors.blue6,
+                    color: AppColors.blue2,
                   ),
                 ),
               ),
@@ -1147,7 +1147,7 @@ class SectionTile extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: isAction
                       ? effectiveIconColor.withValues(alpha: 0.1)
-                      : AppColors.white4,
+                      : AppColors.white,
                   borderRadius: BorderRadius.circular(w * 0.022),
                 ),
                 child: Icon(

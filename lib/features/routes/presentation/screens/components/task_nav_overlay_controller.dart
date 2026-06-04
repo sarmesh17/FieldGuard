@@ -431,7 +431,7 @@ class TaskNavOverlayController {
     canvas.drawPath(
       path,
       Paint()
-        ..color = AppColors.red16
+        ..color = AppColors.red2
         ..style = PaintingStyle.fill,
     );
     canvas.drawCircle(

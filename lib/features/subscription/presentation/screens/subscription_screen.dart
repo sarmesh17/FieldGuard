@@ -48,7 +48,7 @@ class SubscriptionScreen extends ConsumerWidget {
     return ResponsiveBuilder(
       builder: (context, screenType, orientation, constraints) {
         return Scaffold(
-          backgroundColor: AppColors.white2,
+          backgroundColor: AppColors.white,
           appBar: AppBar(
             backgroundColor: Colors.white,
             elevation: 0,
@@ -250,7 +250,7 @@ class _CurrentPlanBanner extends StatelessWidget {
               ),
               decoration: BoxDecoration(
                 color: expired
-                    ? AppColors.red3.withValues(alpha: 0.85)
+                    ? AppColors.red2.withValues(alpha: 0.85)
                     : Colors.white.withValues(alpha: 0.16),
                 borderRadius: BorderRadius.circular(SizeConfig.scale(10)),
               ),

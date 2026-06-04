@@ -164,7 +164,7 @@ class _ShopBody extends StatelessWidget {
                     shop.address!,
                     style: const TextStyle(
                       fontSize: 12.5,
-                      color: AppColors.grey10,
+                      color: AppColors.grey,
                       height: 1.35,
                     ),
                   ),
@@ -329,7 +329,7 @@ class _VisitRow extends StatelessWidget {
               child: VerticalDivider(
                 width: 2,
                 thickness: 2,
-                color: AppColors.blue14,
+                color: AppColors.blue13,
               ),
             ),
           ),
@@ -720,7 +720,7 @@ class _PersonRow extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
-                color: AppColors.grey10,
+                color: AppColors.grey,
               ),
             ),
           ),
@@ -841,7 +841,7 @@ class _LoadingSkeleton extends StatelessWidget {
         ),
         Expanded(
           child: Shimmer.fromColors(
-            baseColor: AppColors.white9,
+            baseColor: AppColors.grey4,
             highlightColor: AppColors.white,
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
@@ -879,11 +879,11 @@ class _ErrorView extends StatelessWidget {
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: AppColors.red5.withValues(alpha: 0.08),
+                color: AppColors.red2.withValues(alpha: 0.08),
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.error_outline_rounded,
-                  size: 38, color: AppColors.red5),
+                  size: 38, color: AppColors.red2),
             ),
             const SizedBox(height: 20),
             const Text(
@@ -931,7 +931,7 @@ Color _statusColor(String status) => switch (status.toUpperCase()) {
       'PENDING' => AppColors.orange2,
       'IN_PROGRESS' => AppColors.blue3,
       'COMPLETED' => AppColors.green5,
-      'CANCELLED' => AppColors.red5,
+      'CANCELLED' => AppColors.red2,
       _ => AppColors.grey9,
     };
 

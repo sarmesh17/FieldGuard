@@ -261,7 +261,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final h = SizeConfig.heightPercent(100);
 
     return Scaffold(
-      backgroundColor: AppColors.white2,
+      backgroundColor: AppColors.white,
       appBar: AppBar(
         backgroundColor: AppColors.green,
         elevation: 0,

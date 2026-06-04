@@ -583,7 +583,7 @@ class _UpdateShopScreenState extends ConsumerState<UpdateShopScreen> {
             curve: Curves.easeOut,
             child: _mapOverlayVisible
                 ? Container(
-                    color: AppColors.white2,
+                    color: AppColors.white,
                     child: const Center(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
@@ -654,13 +654,13 @@ class _UpdateShopScreenState extends ConsumerState<UpdateShopScreen> {
           const Row(
             children: [
               Icon(Icons.location_searching,
-                  color: AppColors.orange5, size: 18),
+                  color: AppColors.orange2, size: 18),
               SizedBox(width: 8),
               Text(
                 'New Location Preview',
                 style: TextStyle(
                   fontSize: 13,
-                  color: AppColors.orange5,
+                  color: AppColors.orange2,
                   fontWeight: FontWeight.w600,
                 ),
               ),
