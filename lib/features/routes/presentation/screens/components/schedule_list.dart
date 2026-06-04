@@ -213,7 +213,7 @@ class _ThemeFor {
         );
       case 'COMPLETED':
         return _ThemeFor._(
-          background: AppColors.green11,
+          background: AppColors.green6,
           borderColor: null,
           avatarBackground: Colors.white,
           avatarFg: AppColors.green,
@@ -242,8 +242,8 @@ class _ThemeFor {
       default: // PENDING
         return _ThemeFor._(
           background: Colors.white,
-          borderColor: AppColors.green11,
-          avatarBackground: AppColors.green11,
+          borderColor: AppColors.green6,
+          avatarBackground: AppColors.green6,
           avatarFg: AppColors.green,
           avatarIcon: null,
           titleColor: AppColors.ink,

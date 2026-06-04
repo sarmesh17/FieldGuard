@@ -4,7 +4,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:fieldguard/core/theme/app_colors.dart';
 
-const _kPrimary = AppColors.green12;
+const _kPrimary = AppColors.green;
 
 /// A checkbox + rich-text line asking the user to accept the Terms & Conditions
 /// and Privacy Policy. The two document names are tappable and open the

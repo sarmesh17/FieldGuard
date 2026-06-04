@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:fieldguard/core/theme/app_colors.dart';
 
 // ─── Brand colours (match the app's green palette) ───────────────────────────
-const _kDark = AppColors.green8;
+const _kDark = AppColors.green;
 const _kPrimary = AppColors.green;
-const _kMid = AppColors.green3;
+const _kMid = AppColors.green;
 
 /// Which document the [LegalScreen] should open on.
 enum LegalTab { terms, privacy }

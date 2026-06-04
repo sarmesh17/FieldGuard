@@ -32,10 +32,10 @@ part 'routes_screen_overlays.dart';
 part 'routes_screen_sheets.dart';
 
 const _kBrand = AppColors.green;
-const _kBrandSoft = AppColors.green11;
+const _kBrandSoft = AppColors.green6;
 // Header gradient stops — consistent with Team / Profile / Login.
-const _kDark = AppColors.green8;
-const _kMid = AppColors.green3;
+const _kDark = AppColors.green;
+const _kMid = AppColors.green;
 
 // Width-based [SizeConfig.scale] balloons on landscape phones. These helpers
 // scale off the SHORTER screen side so paddings/fonts stay phone-sized in

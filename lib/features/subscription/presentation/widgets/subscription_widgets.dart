@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:fieldguard/core/theme/app_colors.dart';
 
 // ─── Palette (matches the admin profile green) ───────────────────────────────
-const kSubDark = AppColors.green8;
+const kSubDark = AppColors.green;
 const kSubPrimary = AppColors.green;
-const kSubMid = AppColors.green3;
+const kSubMid = AppColors.green;
 const kSubLight = AppColors.gradientStart;
 const kSubAccent = AppColors.blue; // PRO highlight
 

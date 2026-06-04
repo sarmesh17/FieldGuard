@@ -391,7 +391,7 @@ class _SessionCard extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 9, vertical: 5),
                         decoration: BoxDecoration(
-                          color: AppColors.green4,
+                          color: AppColors.green6,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Row(
@@ -758,7 +758,7 @@ class _SessionRouteScreenState extends State<_SessionRouteScreen> {
               child: LinearProgressIndicator(
                 minHeight: 3,
                 color: _kBrand,
-                backgroundColor: AppColors.green4,
+                backgroundColor: AppColors.green6,
               ),
             )
           else if (pts.isEmpty)

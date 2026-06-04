@@ -322,7 +322,7 @@ class _TaskLiveTrackingScreenState
               child: LinearProgressIndicator(
                 minHeight: 3,
                 color: _green,
-                backgroundColor: AppColors.green4,
+                backgroundColor: AppColors.green6,
               ),
             ),
 
@@ -620,7 +620,7 @@ class _LiveInfoCard extends StatelessWidget {
               padding:
                   const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: AppColors.green4,
+                color: AppColors.green6,
                 borderRadius: BorderRadius.circular(20),
               ),
               child: const Row(

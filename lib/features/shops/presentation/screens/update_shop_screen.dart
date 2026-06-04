@@ -574,7 +574,7 @@ class _UpdateShopScreenState extends ConsumerState<UpdateShopScreen> {
               child: LinearProgressIndicator(
                 minHeight: 3,
                 color: AppColors.green,
-                backgroundColor: AppColors.green4,
+                backgroundColor: AppColors.green6,
               ),
             ),
           AnimatedOpacity(
@@ -617,7 +617,7 @@ class _UpdateShopScreenState extends ConsumerState<UpdateShopScreen> {
         decoration: BoxDecoration(
           color: AppColors.green6,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.green11),
+          border: Border.all(color: AppColors.green6),
         ),
         child: Row(
           children: [
@@ -754,7 +754,7 @@ class _UpdateShopScreenState extends ConsumerState<UpdateShopScreen> {
             value: _isActive,
             onChanged: (v) => setState(() => _isActive = v),
             activeThumbColor: AppColors.green,
-            activeTrackColor: AppColors.green4,
+            activeTrackColor: AppColors.green6,
           ),
         ],
       ),

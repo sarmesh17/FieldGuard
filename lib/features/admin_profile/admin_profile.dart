@@ -298,7 +298,7 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen>
                                       icon: Icons.person_add_alt_1_rounded,
                                       title: 'Create New Employee',
                                       iconColor: AppColors.green,
-                                      iconBg: AppColors.green15,
+                                      iconBg: AppColors.green6,
                                       isAction: true,
                                       onTap: () {
                                         Navigator.push(
@@ -350,7 +350,7 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen>
                                         icon: Icons.workspace_premium_rounded,
                                         title: 'Plan & Billing',
                                         iconColor: AppColors.green,
-                                        iconBg: AppColors.green15,
+                                        iconBg: AppColors.green6,
                                         onTap: _navigateToSubscription,
                                       ),
                                     ],
@@ -449,7 +449,7 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen>
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [AppColors.green8, AppColors.green, AppColors.green3],
+            colors: [AppColors.green, AppColors.green, AppColors.green],
             stops: [0.0, 0.55, 1.0],
           ),
         ),
@@ -722,7 +722,7 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen>
                             end: Alignment.bottomRight,
                             colors: [
                               AppColors.green,
-                              AppColors.green3,
+                              AppColors.green,
                             ],
                           ),
                           shape: BoxShape.circle,

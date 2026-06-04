@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fieldguard/core/theme/app_colors.dart';
 
-const _kBrand = AppColors.green2;
+const _kBrand = AppColors.green;
 const _kInk = AppColors.ink2;
 const _kMuted = AppColors.grey8;
 const _kBg = AppColors.white2;
@@ -273,7 +273,7 @@ class _PerformerLine extends StatelessWidget {
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [_kBrand, AppColors.green7],
+              colors: [_kBrand, AppColors.green],
             ),
           ),
           alignment: Alignment.center,

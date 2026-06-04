@@ -1031,7 +1031,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
         decoration: BoxDecoration(
           color: AppColors.green6,
           borderRadius: BorderRadius.circular(SizeConfig.scale(12)),
-          border: Border.all(color: AppColors.green11),
+          border: Border.all(color: AppColors.green6),
         ),
         child: Row(
           children: [

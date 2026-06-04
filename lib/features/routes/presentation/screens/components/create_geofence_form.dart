@@ -370,7 +370,7 @@ class _CreateGeofenceFormState extends State<CreateGeofenceForm> {
                   decoration: BoxDecoration(
                     color: AppColors.green6,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.green11),
+                    border: Border.all(color: AppColors.green6),
                   ),
                   child: Row(
                     children: [

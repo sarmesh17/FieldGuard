@@ -9,7 +9,7 @@ import 'package:fieldguard/features/collections/presentation/screens/collection_
 import 'package:fieldguard/core/theme/app_colors.dart';
 
 const _kBrand = AppColors.green;
-const _kBrandLight = AppColors.green7;
+const _kBrandLight = AppColors.green;
 const _kInk = AppColors.ink2;
 const _kMuted = AppColors.grey8;
 const _kBg = AppColors.white2;

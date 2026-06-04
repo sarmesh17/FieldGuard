@@ -6,7 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fieldguard/core/theme/app_colors.dart';
 
 // ─── Palette ─────────────────────────────────────────────────────────────────
-const _kDark = AppColors.green10;
+const _kDark = AppColors.green;
 const _kMid = AppColors.gradientStart;
 const _kDanger = AppColors.red10;
 const _kDangerSoft = AppColors.red6;

@@ -89,7 +89,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  AppColors.green17,
+                  AppColors.green,
                   AppColors.gradientStart,
                   AppColors.gradientEnd,
                 ],
