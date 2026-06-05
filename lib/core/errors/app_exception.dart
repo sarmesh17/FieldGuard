@@ -1,0 +1,68 @@
+sealed class AppException implements Exception {
+  const AppException(this.message);
+  final String message;
+
+  @override
+  String toString() => message;
+}
+
+class NetworkException extends AppException {
+  const NetworkException(super.message);
+}
+
+class UnauthorizedException extends AppException {
+  const UnauthorizedException(super.message);
+}
+
+/// HTTP 429 — too many requests (rate limit). Surfaced distinctly so the
+/// login/refresh UI can show it as a "too many attempts" warning rather than a
+/// credentials error. [retryAfterSeconds] is read from the `Retry-After`
+/// header when present, else null.
+class RateLimitException extends AppException {
+  final int? retryAfterSeconds;
+  const RateLimitException(super.message, {this.retryAfterSeconds});
+}
+
+/// A single server-side field validation error, from a 400's `errors[]`.
+class FieldError {
+  final String field;
+  final String message;
+
+  const FieldError({required this.field, required this.message});
+}
+
+class ValidationException extends AppException {
+  /// Field-level errors from the 400 `errors[]` array (empty for a 409 or any
+  /// response without per-field detail). Forms use these to set
+  /// `InputDecoration.errorText` on the matching field.
+  final List<FieldError> fieldErrors;
+
+  const ValidationException(super.message, {this.fieldErrors = const []});
+
+  /// First server message for [field], or null. Lets a form bind one field's
+  /// error without scanning the list itself.
+  String? errorFor(String field) {
+    for (final e in fieldErrors) {
+      if (e.field == field) return e.message;
+    }
+    return null;
+  }
+}
+
+class ServerException extends AppException {
+  const ServerException(super.message);
+}
+
+/// HTTP 409 — the request conflicts with existing state (e.g. a subscription
+/// upgrade request is already pending). Surfaced distinctly so callers can
+/// react to the conflict (e.g. jump to the waiting screen) instead of treating
+/// it as a generic validation error.
+class ConflictException extends AppException {
+  const ConflictException(super.message);
+}
+
+/// HTTP 402 — payment required. The company has hit a plan limit (e.g. no staff
+/// seats left) and must upgrade. [message] is the backend's explanation.
+class PaymentRequiredException extends AppException {
+  const PaymentRequiredException(super.message);
+}
