@@ -13,12 +13,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:fieldguard/core/theme/app_colors.dart';
 
 // ─── Brand palette (consistent with Team / Routes / Shops / Profile) ─────────
-const _kDark = Color(0xff072A1C);
-const _kPrimary = Color(0xff0E5A3B);
-const _kMid = Color(0xff1D7A51);
-const _kSurface = Color(0xffF7F5F2);
+const _kDark = AppColors.green;
+const _kPrimary = AppColors.green;
+const _kMid = AppColors.green;
+const _kSurface = AppColors.background;
 
 class Dashboard extends ConsumerWidget {
   const Dashboard({super.key});
@@ -256,7 +257,7 @@ class _HeroProgressRings extends ConsumerWidget {
               label: 'Today',
               completed: today?.completedTasks ?? 0,
               total: today?.totalTasks ?? 0,
-              gradient: const [Color(0xffFCD34D), Color(0xffF97316)],
+              gradient: const [AppColors.yellow, AppColors.orange2],
             ),
           ),
           Container(
@@ -269,7 +270,7 @@ class _HeroProgressRings extends ConsumerWidget {
               label: 'Overall',
               completed: overall?.completedTasks ?? 0,
               total: overall?.totalTasks ?? 0,
-              gradient: const [Color(0xff6EE7B7), Color(0xffFFFFFF)],
+              gradient: const [AppColors.gradientEnd, AppColors.white],
             ),
           ),
         ],
@@ -408,7 +409,7 @@ class _SectionLabel extends StatelessWidget {
     return Text(
       text,
       style: const TextStyle(
-        color: Color(0xff687184),
+        color: AppColors.grey,
         letterSpacing: 1,
         fontSize: 13,
         fontWeight: FontWeight.w600,
@@ -517,7 +518,7 @@ class _LiveTrackingCard extends ConsumerWidget {
               ),
               icon: const Icon(
                 Icons.warning_amber_rounded,
-                color: Color(0xffEA8C2A),
+                color: AppColors.orange2,
                 size: 36,
               ),
               title: const Text('Task in progress'),
@@ -535,7 +536,7 @@ class _LiveTrackingCard extends ConsumerWidget {
                 TextButton(
                   onPressed: () => Navigator.pop(ctx, true),
                   style: TextButton.styleFrom(
-                    foregroundColor: const Color(0xffE53935),
+                    foregroundColor: AppColors.red2,
                   ),
                   child: const Text('Turn off'),
                 ),
@@ -575,7 +576,7 @@ class _LiveTrackingCard extends ConsumerWidget {
             color: active ? null : Colors.white,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: active ? Colors.transparent : const Color(0xffE8E1D7),
+              color: active ? Colors.transparent : AppColors.grey3,
             ),
             boxShadow: [
               BoxShadow(
@@ -596,7 +597,7 @@ class _LiveTrackingCard extends ConsumerWidget {
                 decoration: BoxDecoration(
                   color: active
                       ? Colors.white.withValues(alpha: 0.18)
-                      : const Color(0xffF0FDF4),
+                      : AppColors.green6,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
@@ -615,7 +616,7 @@ class _LiveTrackingCard extends ConsumerWidget {
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
-                        color: active ? Colors.white : const Color(0xff111827),
+                        color: active ? Colors.white : AppColors.ink,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -627,7 +628,7 @@ class _LiveTrackingCard extends ConsumerWidget {
                         fontSize: 12.5,
                         color: active
                             ? Colors.white.withValues(alpha: 0.8)
-                            : const Color(0xff6B7280),
+                            : AppColors.grey,
                       ),
                     ),
                   ],
@@ -680,16 +681,16 @@ class _QuickActionsSection extends ConsumerWidget {
           _ActionButton(
             icon: Icons.add_task_rounded,
             label: 'New Task',
-            color: const Color(0xffF0FDF4),
-            iconColor: const Color(0xff16A34A),
+            color: AppColors.green6,
+            iconColor: AppColors.green5,
             onTap: () => context.push(AppRoutes.tasks),
           ),
           const SizedBox(width: 12),
           _ActionButton(
             icon: Icons.person_add_alt_1_rounded,
             label: 'Add Employee',
-            color: const Color(0xffEFF6FF),
-            iconColor: const Color(0xff3B82F6),
+            color: AppColors.blue7,
+            iconColor: AppColors.blue3,
             onTap: () {
               Navigator.push(
                 context,
@@ -702,8 +703,8 @@ class _QuickActionsSection extends ConsumerWidget {
             _ActionButton(
               icon: Icons.manage_accounts_rounded,
               label: 'Add Manager',
-              color: const Color(0xffFDF4FF),
-              iconColor: const Color(0xffD946EF),
+              color: AppColors.white,
+              iconColor: AppColors.pink,
               onTap: () {
                 Navigator.push(
                   context,
@@ -714,18 +715,6 @@ class _QuickActionsSection extends ConsumerWidget {
               },
             ),
           ],
-          const SizedBox(width: 12),
-          _ActionButton(
-            icon: Icons.campaign_rounded,
-            label: 'Broadcast',
-            color: const Color(0xffFEF2F2),
-            iconColor: const Color(0xffEF4444),
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Broadcast feature coming soon')),
-              );
-            },
-          ),
         ],
       ),
     );
@@ -756,7 +745,7 @@ class _ActionButton extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xffE8E1D7)),
+          border: Border.all(color: AppColors.grey3),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.02),
@@ -781,7 +770,7 @@ class _ActionButton extends StatelessWidget {
               style: const TextStyle(
                 fontWeight: FontWeight.w600,
                 fontSize: 13,
-                color: Color(0xff111827),
+                color: AppColors.ink,
               ),
             ),
           ],
@@ -815,21 +804,21 @@ class _UrgentTasksSection extends ConsumerWidget {
                 margin: const EdgeInsets.only(bottom: 12),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xffFEF2F2),
+                  color: AppColors.white,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xffFCA5A5)),
+                  border: Border.all(color: AppColors.red7),
                 ),
                 child: Row(
                   children: [
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: const BoxDecoration(
-                        color: Color(0xffFEE2E2),
+                        color: AppColors.red6,
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
                         Icons.warning_amber_rounded,
-                        color: Color(0xffEF4444),
+                        color: AppColors.red2,
                         size: 20,
                       ),
                     ),
@@ -843,7 +832,7 @@ class _UrgentTasksSection extends ConsumerWidget {
                             style: const TextStyle(
                               fontWeight: FontWeight.w700,
                               fontSize: 15,
-                              color: Color(0xff991B1B),
+                              color: AppColors.red,
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -851,7 +840,7 @@ class _UrgentTasksSection extends ConsumerWidget {
                             'High Priority • Assignee: ${task.assignee.fullName}',
                             style: const TextStyle(
                               fontSize: 12,
-                              color: Color(0xffB91C1C),
+                              color: AppColors.red,
                             ),
                           ),
                         ],
@@ -859,7 +848,7 @@ class _UrgentTasksSection extends ConsumerWidget {
                     ),
                     Icon(
                       Icons.chevron_right_rounded,
-                      color: const Color(0xffEF4444).withValues(alpha: 0.5),
+                      color: AppColors.red2.withValues(alpha: 0.5),
                     ),
                   ],
                 ),
@@ -895,33 +884,33 @@ class _TaskSummarySection extends ConsumerWidget {
           Expanded(
             child: _TaskStatCard(
               icon: Icons.hourglass_top_rounded,
-              iconBg: const Color(0xffFFF7ED),
-              iconColor: const Color(0xffEA8C2A),
+              iconBg: AppColors.orange8,
+              iconColor: AppColors.orange2,
               value: summary.pendingTasks,
               label: 'PENDING',
-              valueColor: const Color(0xffEA8C2A),
+              valueColor: AppColors.orange2,
             ),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: _TaskStatCard(
               icon: Icons.check_circle_outline_rounded,
-              iconBg: const Color(0xffF0FDF4),
-              iconColor: const Color(0xff16A34A),
+              iconBg: AppColors.green6,
+              iconColor: AppColors.green5,
               value: summary.completedTasks,
               label: 'DONE',
-              valueColor: const Color(0xff16A34A),
+              valueColor: AppColors.green5,
             ),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: _TaskStatCard(
               icon: Icons.autorenew_rounded,
-              iconBg: const Color(0xffEFF6FF),
-              iconColor: const Color(0xff3B82F6),
+              iconBg: AppColors.blue7,
+              iconColor: AppColors.blue3,
               value: summary.inProgressTasks,
               label: 'IN PROGRESS',
-              valueColor: const Color(0xff3B82F6),
+              valueColor: AppColors.blue3,
             ),
           ),
         ],
@@ -954,7 +943,7 @@ class _TaskStatCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xffE8E1D7)),
+        border: Border.all(color: AppColors.grey3),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.03),
@@ -999,7 +988,7 @@ class _TaskStatCard extends StatelessWidget {
               textAlign: TextAlign.center,
               maxLines: 1,
               style: const TextStyle(
-                color: Color(0xff687184),
+                color: AppColors.grey,
                 fontSize: 11,
                 letterSpacing: 0.4,
                 fontWeight: FontWeight.w600,
@@ -1027,7 +1016,7 @@ class TaskCardsSkeleton extends StatelessWidget {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xffE8E1D7)),
+                border: Border.all(color: AppColors.grey3),
               ),
               child: const AppShimmer(
                 child: Column(
@@ -1061,19 +1050,19 @@ class TaskCardsError extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xffE8E1D7)),
+        border: Border.all(color: AppColors.grey3),
       ),
       child: Column(
         children: [
           const Icon(
             Icons.cloud_off_outlined,
-            color: Color(0xff687184),
+            color: AppColors.grey,
             size: 32,
           ),
           const SizedBox(height: 8),
           const Text(
             'Could not load tasks',
-            style: TextStyle(color: Color(0xff687184), fontSize: 14),
+            style: TextStyle(color: AppColors.grey, fontSize: 14),
           ),
           const SizedBox(height: 10),
           TextButton(
@@ -1081,7 +1070,7 @@ class TaskCardsError extends StatelessWidget {
             child: const Text(
               'Retry',
               style: TextStyle(
-                color: Color(0xff0E5A3B),
+                color: AppColors.green,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -1113,28 +1102,28 @@ class _TeamStatusSection extends ConsumerWidget {
       error: (e, stack) => GestureDetector(
         onTap: () => ref.invalidate(dashboardSummaryProvider),
         child: _teamCard(
-          dotColor: const Color(0xff687184),
+          dotColor: AppColors.grey,
           title: 'Could not load — tap to retry',
           value: '',
-          valueColor: const Color(0xff687184),
+          valueColor: AppColors.grey,
         ),
       ),
       data: (team) => Column(
         children: [
           _teamCard(
-            dotColor: const Color(0xff4CB67A),
+            dotColor: AppColors.green5,
             title: 'Online Now',
             value:
                 '${team.onlineTeam} ${team.onlineTeam == 1 ? 'Rep' : 'Reps'}',
-            valueColor: const Color(0xff0E5A3B),
+            valueColor: AppColors.green,
           ),
           const SizedBox(height: 14),
           _teamCard(
-            dotColor: const Color(0xffCBD5E1),
+            dotColor: AppColors.blue13,
             title: 'Offline',
             value:
                 '${team.offlineTeam} ${team.offlineTeam == 1 ? 'Rep' : 'Reps'}',
-            valueColor: const Color(0xff6C7485),
+            valueColor: AppColors.grey,
           ),
         ],
       ),
@@ -1153,7 +1142,7 @@ class _TeamStatusSection extends ConsumerWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xffE8E1D7)),
+        border: Border.all(color: AppColors.grey3),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
@@ -1176,7 +1165,7 @@ class _TeamStatusSection extends ConsumerWidget {
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: Color(0xff111827),
+                color: AppColors.ink,
               ),
             ),
           ),
@@ -1207,7 +1196,7 @@ class _TeamStatusSkeletonCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xffE8E1D7)),
+        border: Border.all(color: AppColors.grey3),
       ),
       child: const AppShimmer(
         child: Row(
@@ -1242,7 +1231,7 @@ class _ActivityFeedSection extends ConsumerWidget {
               padding: EdgeInsets.all(20),
               child: Text(
                 'No recent activity',
-                style: TextStyle(color: Color(0xff687184)),
+                style: TextStyle(color: AppColors.grey),
               ),
             ),
           );
@@ -1252,7 +1241,7 @@ class _ActivityFeedSection extends ConsumerWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xffE8E1D7)),
+            border: Border.all(color: AppColors.grey3),
           ),
           child: Column(
             children: response.history.map((event) {
@@ -1260,18 +1249,18 @@ class _ActivityFeedSection extends ConsumerWidget {
 
               // Determine icon and color based on action
               IconData icon = Icons.info_outline_rounded;
-              Color color = const Color(0xff3B82F6);
+              Color color = AppColors.blue3;
 
               if (event.action.toUpperCase().contains('CREATE')) {
                 icon = Icons.add_circle_outline_rounded;
-                color = const Color(0xff16A34A);
+                color = AppColors.green5;
               } else if (event.action.toUpperCase().contains('UPDATE') ||
                   event.action.toUpperCase().contains('CHANGE')) {
                 icon = Icons.edit_note_rounded;
-                color = const Color(0xffEA8C2A);
+                color = AppColors.orange2;
               } else if (event.action.toUpperCase().contains('COMPLETE')) {
                 icon = Icons.check_circle_outline_rounded;
-                color = const Color(0xff16A34A);
+                color = AppColors.green5;
               }
 
               // Format date (e.g., "10:30 AM")
@@ -1301,7 +1290,7 @@ class _ActivityFeedSection extends ConsumerWidget {
                       style: const TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
-                        color: Color(0xff111827),
+                        color: AppColors.ink,
                       ),
                     ),
                     subtitle: Padding(
@@ -1313,7 +1302,7 @@ class _ActivityFeedSection extends ConsumerWidget {
                                 : 'Task ID: ${event.task.id}'),
                         style: const TextStyle(
                           fontSize: 12,
-                          color: Color(0xff687184),
+                          color: AppColors.grey,
                         ),
                       ),
                     ),
@@ -1321,7 +1310,7 @@ class _ActivityFeedSection extends ConsumerWidget {
                       timeString,
                       style: const TextStyle(
                         fontSize: 12,
-                        color: Color(0xff9CA3AF),
+                        color: AppColors.grey2,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -1330,7 +1319,7 @@ class _ActivityFeedSection extends ConsumerWidget {
                     const Divider(
                       height: 1,
                       indent: 64,
-                      color: Color(0xffE5E7EB),
+                      color: AppColors.grey4,
                     ),
                 ],
               );

@@ -146,7 +146,7 @@ class _DetailAppBar extends StatelessWidget {
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [Color(0xff003D22), _kBrandLight],
+                  colors: [AppColors.green, _kBrandLight],
                 ),
               ),
             ),
@@ -402,11 +402,11 @@ class _StepNode extends StatelessWidget {
                           colors: [_kBrand, _kBrandLight],
                         )
                       : null,
-                  color: reached ? null : const Color(0xffEDF0F3),
+                  color: reached ? null : AppColors.white,
                   border: Border.all(
                     color: reached
                         ? Colors.transparent
-                        : const Color(0xffDCE1E7),
+                        : AppColors.grey4,
                     width: 1.5,
                   ),
                   boxShadow: reached
@@ -422,7 +422,7 @@ class _StepNode extends StatelessWidget {
                 child: Icon(
                   isDone ? Icons.check_rounded : icon,
                   size: 20,
-                  color: reached ? Colors.white : const Color(0xffAAB2BD),
+                  color: reached ? Colors.white : AppColors.grey9,
                 ),
               ),
             ],
@@ -458,7 +458,7 @@ class _Connector extends StatelessWidget {
         borderRadius: BorderRadius.circular(4),
         child: Stack(
           children: [
-            Container(height: 5, color: const Color(0xffE9EDF1)),
+            Container(height: 5, color: AppColors.grey4),
             FractionallySizedBox(
               widthFactor: fraction,
               child: Container(
@@ -532,7 +532,7 @@ class _CancelledState extends StatelessWidget {
 
   const _CancelledState({required this.task});
 
-  static const _red = Color(0xffFF3347);
+  static const _red = AppColors.red2;
 
   static String _reasonLabel(String? raw) => switch (raw) {
         'SHOP_CLOSED' => 'Shop Closed',
@@ -597,7 +597,7 @@ class _CancelledState extends StatelessWidget {
                           ? 'Reason: $reasonLabel'
                           : 'This task is no longer active.',
                       style: const TextStyle(
-                          fontSize: 12.5, color: Color(0xff8A7178)),
+                          fontSize: 12.5, color: AppColors.grey),
                     ),
                   ],
                 ),
@@ -653,7 +653,7 @@ class _DueChip extends StatelessWidget {
             style: const TextStyle(
               fontSize: 11.5,
               fontWeight: FontWeight.w700,
-              color: Color(0xff5A6472),
+              color: AppColors.grey,
             ),
           ),
         ],

@@ -3,6 +3,8 @@ plugins {
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+    // Firebase (FCM). Must be applied AFTER the Android + Flutter plugins.
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -39,6 +41,16 @@ android {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
+
+            // Shrink + obfuscate Java/Kotlin (plugin) code and strip unused
+            // Android resources. Keep rules for reflection/JNI plugins live in
+            // proguard-rules.pro so nothing breaks at runtime.
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
         }
     }
 }

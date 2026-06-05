@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fieldguard/core/theme/app_colors.dart';
 
 class DotIndicator extends StatefulWidget {
   final int dotCount;
@@ -11,7 +12,7 @@ class DotIndicator extends StatefulWidget {
     super.key,
     this.dotCount = 3,
     this.activeColor = Colors.white,
-    this.inactiveColor = const Color(0x80FFFFFF),
+    this.inactiveColor = AppColors.white17,
     this.dotSize = 8.0,
     this.spacing = 8.0,
   });

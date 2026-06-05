@@ -4,6 +4,8 @@ import 'package:fieldguard/features/auth/approval/presentation/screens/account_r
 import 'package:fieldguard/features/auth/approval/presentation/screens/pending_approval_screen.dart';
 import 'package:fieldguard/features/admin_profile/admin_profile.dart';
 import 'package:fieldguard/features/tasks/presentation/screens/tasks_list_screen.dart';
+import 'package:fieldguard/features/auth/forgot_password/presentation/screens/forgot_password_screen.dart';
+import 'package:fieldguard/features/auth/forgot_password/presentation/screens/reset_password_screen.dart';
 import 'package:fieldguard/features/auth/login/presentation/providers/login_provider.dart';
 import 'package:fieldguard/features/auth/login/presentation/providers/login_state.dart';
 import 'package:fieldguard/features/auth/login/presentation/screens/login_screen.dart';
@@ -30,11 +32,16 @@ import 'package:go_router/go_router.dart';
 /// recreate the router, or every intermediate state during a login attempt
 /// (`LoginLoading`, `LoginFailure`, …) would reset navigation back to
 /// [AppRoutes.splash].
+/// Root navigator key — lets non-widget code (e.g. a push-notification tap)
+/// deep-link without a BuildContext.
+final rootNavigatorKey = GlobalKey<NavigatorState>();
+
 final goRouterProvider = Provider<GoRouter>((ref) {
   final authListenable = _RiverpodGoRouterRefresh(ref);
   ref.onDispose(authListenable.dispose);
 
   return GoRouter(
+    navigatorKey: rootNavigatorKey,
     initialLocation: AppRoutes.splash,
     debugLogDiagnostics: false,
     refreshListenable: authListenable,
@@ -44,6 +51,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       final authState = ref.read(loginNotifierProvider);
       final isOnAuthRoute =
           state.matchedLocation == AppRoutes.login ||
+          state.matchedLocation == AppRoutes.forgotPassword ||
+          state.matchedLocation == AppRoutes.resetPassword ||
           state.matchedLocation == AppRoutes.signup ||
           state.matchedLocation == AppRoutes.registrationSuccess;
 
@@ -98,6 +107,16 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.login,
         pageBuilder: (context, state) =>
             _slidePage(state: state, child: const LoginScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.forgotPassword,
+        pageBuilder: (context, state) =>
+            _slidePage(state: state, child: const ForgotPasswordScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.resetPassword,
+        pageBuilder: (context, state) =>
+            _slidePage(state: state, child: const ResetPasswordScreen()),
       ),
       GoRoute(
         path: AppRoutes.signup,

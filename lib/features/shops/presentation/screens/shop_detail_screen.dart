@@ -8,6 +8,7 @@ import 'package:fieldguard/features/shops/data/dto/shop_detail_response.dart';
 import 'package:fieldguard/features/tasks/presentation/screens/create_task_screen.dart';
 import 'package:fieldguard/widgets/app_skeletons.dart';
 import 'package:flutter/material.dart';
+import 'package:fieldguard/core/theme/app_colors.dart';
 
 class ShopDetailScreen extends StatefulWidget {
   final String shopId;
@@ -72,9 +73,9 @@ class _ShopDetailScreenState extends State<ShopDetailScreen> {
     return ResponsiveBuilder(
       builder: (context, screenType, orientation, constraints) {
         return Scaffold(
-          backgroundColor: const Color(0xFFF8FAF9),
+          backgroundColor: AppColors.white,
           appBar: AppBar(
-            backgroundColor: const Color(0xff0E5A3B),
+            backgroundColor: AppColors.green,
             elevation: 0,
             leading: IconButton(
               icon: const Icon(Icons.arrow_back, color: Colors.white),
@@ -113,7 +114,7 @@ class _ShopDetailScreenState extends State<ShopDetailScreen> {
             _errorMessage!,
             style: TextStyle(
               fontSize: SizeConfig.scaledFontSize(16),
-              color: const Color(0xff667085),
+              color: AppColors.grey,
             ),
             textAlign: TextAlign.center,
           ),
@@ -121,7 +122,7 @@ class _ShopDetailScreenState extends State<ShopDetailScreen> {
           ElevatedButton(
             onPressed: _loadShopDetail,
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xff0E5A3B),
+              backgroundColor: AppColors.green,
               padding: EdgeInsets.symmetric(
                 horizontal: SizeConfig.scale(32),
                 vertical: SizeConfig.scale(12),
@@ -150,11 +151,11 @@ class _ShopDetailScreenState extends State<ShopDetailScreen> {
               fit: BoxFit.cover,
               errorBuilder: (_, __, ___) => Container(
                 height: SizeConfig.scale(200),
-                color: const Color(0xffE8E3DD),
+                color: AppColors.grey3,
                 child: Icon(
                   Icons.store,
                   size: SizeConfig.scale(80),
-                  color: const Color(0xff667085),
+                  color: AppColors.grey,
                 ),
               ),
             ),
@@ -173,7 +174,7 @@ class _ShopDetailScreenState extends State<ShopDetailScreen> {
                         style: TextStyle(
                           fontSize: SizeConfig.scaledFontSize(24),
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xff111111),
+                          color: AppColors.black,
                         ),
                       ),
                     ),
@@ -184,8 +185,8 @@ class _ShopDetailScreenState extends State<ShopDetailScreen> {
                       ),
                       decoration: BoxDecoration(
                         color: _shopDetail!.isActive
-                            ? const Color(0xffDDF5E0)
-                            : const Color(0xffFFE3E6),
+                            ? AppColors.green6
+                            : AppColors.red6,
                         borderRadius: BorderRadius.circular(SizeConfig.scale(20)),
                       ),
                       child: Text(
@@ -193,8 +194,8 @@ class _ShopDetailScreenState extends State<ShopDetailScreen> {
                         style: TextStyle(
                           fontSize: SizeConfig.scaledFontSize(12),
                           color: _shopDetail!.isActive
-                              ? const Color(0xff0E5A3B)
-                              : const Color(0xffFF3B3B),
+                              ? AppColors.green
+                              : AppColors.red2,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -282,7 +283,7 @@ class _ShopDetailScreenState extends State<ShopDetailScreen> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text('Task created successfully'),
-                            backgroundColor: Color(0xff0E5A3B),
+                            backgroundColor: AppColors.green,
                           ),
                         );
                       }
@@ -299,7 +300,7 @@ class _ShopDetailScreenState extends State<ShopDetailScreen> {
                       ),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xff0E5A3B),
+                      backgroundColor: AppColors.green,
                       foregroundColor: Colors.white,
                       padding: EdgeInsets.symmetric(
                         vertical: SizeConfig.scale(16),
@@ -330,7 +331,7 @@ class _ShopDetailScreenState extends State<ShopDetailScreen> {
       style: TextStyle(
         fontSize: SizeConfig.scaledFontSize(18),
         fontWeight: FontWeight.w700,
-        color: const Color(0xff111111),
+        color: AppColors.black,
       ),
     );
   }
@@ -345,7 +346,7 @@ class _ShopDetailScreenState extends State<ShopDetailScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(SizeConfig.scale(12)),
-        border: Border.all(color: const Color(0xffE8E3DD)),
+        border: Border.all(color: AppColors.grey3),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -360,12 +361,12 @@ class _ShopDetailScreenState extends State<ShopDetailScreen> {
             width: SizeConfig.scale(48),
             height: SizeConfig.scale(48),
             decoration: BoxDecoration(
-              color: const Color(0xff0E5A3B).withValues(alpha: 0.1),
+              color: AppColors.green.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(SizeConfig.scale(12)),
             ),
             child: Icon(
               icon,
-              color: const Color(0xff0E5A3B),
+              color: AppColors.green,
               size: SizeConfig.scale(24),
             ),
           ),
@@ -378,7 +379,7 @@ class _ShopDetailScreenState extends State<ShopDetailScreen> {
                   label,
                   style: TextStyle(
                     fontSize: SizeConfig.scaledFontSize(12),
-                    color: const Color(0xff667085),
+                    color: AppColors.grey,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -387,7 +388,7 @@ class _ShopDetailScreenState extends State<ShopDetailScreen> {
                   value,
                   style: TextStyle(
                     fontSize: SizeConfig.scaledFontSize(15),
-                    color: const Color(0xff111111),
+                    color: AppColors.black,
                     fontWeight: FontWeight.w600,
                   ),
                 ),

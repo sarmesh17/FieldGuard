@@ -10,13 +10,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:fieldguard/core/theme/app_colors.dart';
 
 // ─── Brand colours ─────────────────────────────────────────────────────────────
-const _kDark = Color(0xFF1A4731);
-const _kPrimary = Color(0xFF165C3D);
-const _kMid = Color(0xFF2E6F4F);
-const _kLight = Color(0xFF5FBF8F);
-const _kFieldFocus = Color(0xFFF0FAF5);
+const _kDark = AppColors.green;
+const _kPrimary = AppColors.green;
+const _kMid = AppColors.gradientStart;
+const _kLight = AppColors.gradientEnd;
+const _kFieldFocus = AppColors.green6;
 
 class SignupScreen extends ConsumerStatefulWidget {
   const SignupScreen({super.key});
@@ -149,6 +150,10 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
     }
     if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(companyEmail)) {
       _snack('Please enter a valid company email');
+      return;
+    }
+    if (panCard.length != 9) {
+      _snack('PAN number must be 9 digits');
       return;
     }
     if (_citizenshipImagePath == null || _registrationDocPath == null) {
@@ -472,7 +477,15 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
                                           _InputField(
                                             controller: _panCardController,
                                             icon: Icons.contact_page_outlined,
-                                            hint: 'ABCDE1234N',
+                                            hint: '123456789',
+                                            keyboardType: TextInputType.number,
+                                            inputFormatters: [
+                                              FilteringTextInputFormatter
+                                                  .digitsOnly,
+                                              LengthLimitingTextInputFormatter(
+                                                9,
+                                              ),
+                                            ],
                                           ),
                                         ),
 
@@ -1346,7 +1359,7 @@ class _PasswordStrengthBar extends StatelessWidget {
       case 3:
         return Colors.amber.shade600;
       default:
-        return const Color(0xFF2E7D32);
+        return AppColors.green5;
     }
   }
 

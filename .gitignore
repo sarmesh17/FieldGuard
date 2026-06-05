@@ -47,3 +47,7 @@ app.*.map.json
 
 # Environment secrets
 .env
+
+# Firebase config (per-build / per-dev; do not commit — flagged by secret scanning)
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist

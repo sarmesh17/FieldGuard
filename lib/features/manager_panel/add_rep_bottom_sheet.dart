@@ -1,5 +1,6 @@
 import 'package:fieldguard/features/manager_panel/manager_panel.dart';
 import 'package:flutter/material.dart';
+import 'package:fieldguard/core/theme/app_colors.dart';
 
 class AddRepBottomSheet extends StatelessWidget {
   final double width;
@@ -27,7 +28,7 @@ class AddRepBottomSheet extends StatelessWidget {
             width: width * .12,
             height: width * .015,
             decoration: BoxDecoration(
-              color: const Color(0xffD9D9D9),
+              color: AppColors.grey4,
               borderRadius: BorderRadius.circular(width),
             ),
           ),
@@ -38,7 +39,7 @@ class AddRepBottomSheet extends StatelessWidget {
               children: [
                 Icon(
                   Icons.person_add_alt_1_outlined,
-                  color: const Color(0xff635BFF),
+                  color: AppColors.blue,
                   size: width * .08,
                 ),
                 SizedBox(width: width * .03),
@@ -55,13 +56,13 @@ class AddRepBottomSheet extends StatelessWidget {
                   width: width * .12,
                   height: width * .12,
                   decoration: const BoxDecoration(
-                    color: Color(0xffF3F3EF),
+                    color: AppColors.background,
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     Icons.close,
                     size: width * .08,
-                    color: const Color(0xff3F3F3F),
+                    color: AppColors.grey13,
                   ),
                 ),
               ],
@@ -88,14 +89,14 @@ class AddRepBottomSheet extends StatelessWidget {
                         height: width * .16,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(width * .03),
-                          border: Border.all(color: const Color(0xffDDD8D1)),
+                          border: Border.all(color: AppColors.grey3),
                         ),
                         child: Center(
                           child: Text(
                             '+977',
                             style: TextStyle(
                               fontSize: width * .06,
-                              color: const Color(0xff303030),
+                              color: AppColors.grey13,
                             ),
                           ),
                         ),
@@ -151,7 +152,7 @@ class AddRepBottomSheet extends StatelessWidget {
                     child: ElevatedButton(
                       onPressed: () {},
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xff1F6B46),
+                        backgroundColor: AppColors.green,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(width * .03),

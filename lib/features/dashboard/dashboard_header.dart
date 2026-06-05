@@ -1,8 +1,12 @@
 import 'package:fieldguard/features/auth/login/presentation/providers/login_provider.dart';
 import 'package:fieldguard/features/auth/login/presentation/providers/login_state.dart';
 import 'package:fieldguard/features/dashboard/dashboard_provider.dart';
+import 'package:fieldguard/features/notifications/presentation/notifications_notifier.dart';
+import 'package:fieldguard/features/notifications/presentation/notifications_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fieldguard/core/theme/app_colors.dart';
+import 'package:fieldguard/core/constant/api_constant.dart';
 
 /// Top row of the dashboard's gradient hero: avatar + greeting + name + role
 /// badge + notification bell. Rendered white-on-gradient.
@@ -27,6 +31,9 @@ class ManagerHeaderSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final loginState = ref.watch(loginNotifierProvider);
     final dashboardState = ref.watch(dashboardSummaryProvider);
+    final unreadCount = ref.watch(
+      notificationsNotifierProvider.select((s) => s.unreadCount),
+    );
 
     // Derive role from login state (fresh login) with a fallback to the
     // summary payload (survives app relaunch when login state is reset).
@@ -50,9 +57,7 @@ class ManagerHeaderSection extends ConsumerWidget {
       if (role.isEmpty && summary.role.isNotEmpty) role = summary.role;
       if (summary.profileImage != null) {
         final img = summary.profileImage!;
-        profileImageUrl = img.startsWith('http')
-            ? img
-            : 'https://fieldguard-be.onrender.com/$img';
+        profileImageUrl = ApiConstant.imageUrl(img);
       }
     });
 
@@ -142,19 +147,54 @@ class ManagerHeaderSection extends ConsumerWidget {
 
         const SizedBox(width: 10),
 
-        // ── Notification bell (frosted) ──────────────────────────────────
-        Container(
-          height: 42,
-          width: 42,
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.14),
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+        // ── Notification bell (frosted) + unread badge ───────────────────
+        GestureDetector(
+          onTap: () => Navigator.of(context, rootNavigator: true).push(
+            MaterialPageRoute(builder: (_) => const NotificationsScreen()),
           ),
-          child: const Icon(
-            Icons.notifications_none_rounded,
-            size: 22,
-            color: Colors.white,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                height: 42,
+                width: 42,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.14),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+                ),
+                child: const Icon(
+                  Icons.notifications_none_rounded,
+                  size: 22,
+                  color: Colors.white,
+                ),
+              ),
+              if (unreadCount > 0)
+                Positioned(
+                  right: -3,
+                  top: -3,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 5),
+                    constraints:
+                        const BoxConstraints(minWidth: 18, minHeight: 18),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: AppColors.red2,
+                      borderRadius: BorderRadius.circular(9),
+                      border: Border.all(color: Colors.white, width: 1.5),
+                    ),
+                    child: Text(
+                      unreadCount > 99 ? '99+' : '$unreadCount',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        height: 1,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
       ],
@@ -183,7 +223,7 @@ class ManagerHeaderSection extends ConsumerWidget {
 
   Widget _initialsWidget(String name) {
     return Container(
-      color: const Color(0xff163B45),
+      color: AppColors.teal,
       alignment: Alignment.center,
       child: Text(
         name.isNotEmpty ? name[0].toUpperCase() : '?',

@@ -19,16 +19,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:fieldguard/core/theme/app_colors.dart';
 
 part 'task_detail_status_widgets.dart';
 part 'task_detail_content_widgets.dart';
 part 'task_detail_action_widgets.dart';
 
-const _kBrand = Color(0xff005C33);
-const _kBrandLight = Color(0xff00874C);
-const _kInk = Color(0xff0D1B2A);
-const _kMuted = Color(0xff8A94A6);
-const _kBg = Color(0xffF2F4F7);
+const _kBrand = AppColors.green;
+const _kBrandLight = AppColors.green;
+const _kInk = AppColors.ink2;
+const _kMuted = AppColors.grey2;
+const _kBg = AppColors.white;
 
 /// Full task view. The list screen only has summary data, so on tap we
 /// fetch the complete record from `GET /api/v1/tasks/:id` via
@@ -150,9 +151,9 @@ class _TaskDetailBodyState extends ConsumerState<_TaskDetailBody>
         : '';
   }
 
-  /// Opens the collection form for this task's shop. The collection endpoint
-  /// is task-independent (only needs shopId), so we pass through from the
-  /// linked shop directly.
+  /// Opens the collection form for this task's shop. We pass both the shop
+  /// (from the linked shop) and the task id, so the API can also notify the
+  /// task's responsible manager.
   void _collectPayment(TaskData task) {
     final shop = task.shop;
     if (shop == null) return;
@@ -161,6 +162,7 @@ class _TaskDetailBodyState extends ConsumerState<_TaskDetailBody>
         builder: (_) => CollectPaymentScreen(
           shopId: shop.id,
           shopName: shop.name,
+          taskId: task.id,
         ),
       ),
     );
@@ -247,7 +249,7 @@ class _TaskDetailBodyState extends ConsumerState<_TaskDetailBody>
           child: Text(
             task.description,
             style: const TextStyle(
-                fontSize: 14, height: 1.55, color: Color(0xff394452)),
+                fontSize: 14, height: 1.55, color: AppColors.blue2),
           ),
         ),
         const SizedBox(height: 14),
@@ -261,7 +263,7 @@ class _TaskDetailBodyState extends ConsumerState<_TaskDetailBody>
             children: [
               for (var i = 0; i < task.items.length; i++) ...[
                 if (i > 0)
-                  const Divider(height: 18, color: Color(0xffF0F2F5)),
+                  const Divider(height: 18, color: AppColors.white),
                 _ChecklistItem(text: task.items[i], index: i),
               ],
             ],
@@ -285,7 +287,7 @@ class _TaskDetailBodyState extends ConsumerState<_TaskDetailBody>
               name: task.assignee.fullName,
               subtitle: task.assignee.employeeCode,
             ),
-            const Divider(height: 22, color: Color(0xffF0F2F5)),
+            const Divider(height: 22, color: AppColors.white),
             _PersonRow(
               icon: Icons.edit_note_rounded,
               role: 'Created by',
@@ -293,7 +295,7 @@ class _TaskDetailBodyState extends ConsumerState<_TaskDetailBody>
               subtitle: null,
             ),
             if (task.manager != null) ...[
-              const Divider(height: 22, color: Color(0xffF0F2F5)),
+              const Divider(height: 22, color: AppColors.white),
               _PersonRow(
                 icon: Icons.shield_moon_rounded,
                 role: 'Manager',
@@ -316,7 +318,7 @@ class _TaskDetailBodyState extends ConsumerState<_TaskDetailBody>
           child: Text(
             task.remarks!,
             style: const TextStyle(
-                fontSize: 14, height: 1.55, color: Color(0xff394452)),
+                fontSize: 14, height: 1.55, color: AppColors.blue2),
           ),
         ),
       ],

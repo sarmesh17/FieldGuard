@@ -1,5 +1,6 @@
 import 'package:fieldguard/features/fraud_alert_screen/fraud_alert_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:fieldguard/core/theme/app_colors.dart';
 
 class AlertCard extends StatelessWidget {
   final double width;
@@ -108,27 +109,27 @@ class AlertCard extends StatelessWidget {
                       Icon(
                         Icons.person_outline,
                         size: width * .045,
-                        color: const Color(0xff7A8190),
+                        color: AppColors.grey,
                       ),
                       SizedBox(width: width * .01),
                       Text(
                         person,
                         style: TextStyle(
                           fontSize: width * .042,
-                          color: const Color(0xff667085),
+                          color: AppColors.grey,
                         ),
                       ),
                       SizedBox(width: width * .025),
                       Icon(
                         Icons.arrow_forward,
                         size: width * .045,
-                        color: const Color(0xff98A2B3),
+                        color: AppColors.grey2,
                       ),
                       SizedBox(width: width * .025),
                       Icon(
                         Icons.storefront_outlined,
                         size: width * .045,
-                        color: const Color(0xff7A8190),
+                        color: AppColors.grey,
                       ),
                       SizedBox(width: width * .01),
                       Expanded(
@@ -137,7 +138,7 @@ class AlertCard extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize: width * .042,
-                            color: const Color(0xff667085),
+                            color: AppColors.grey,
                           ),
                         ),
                       ),
@@ -157,7 +158,7 @@ class AlertCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: width * .043,
                         height: 1.5,
-                        color: const Color(0xff2D2D2D),
+                        color: AppColors.grey13,
                       ),
                     ),
                   ),
@@ -193,7 +194,7 @@ class AlertCard extends StatelessWidget {
                       height: height * .055,
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xff045C38),
+                          backgroundColor: AppColors.green,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(width * .025),
@@ -215,7 +216,7 @@ class AlertCard extends StatelessWidget {
                       child: Text(
                         'Warn Rep',
                         style: TextStyle(
-                          color: const Color(0xffA4510B),
+                          color: AppColors.brown,
                           fontSize: width * .048,
                           fontWeight: FontWeight.w500,
                         ),
@@ -226,7 +227,7 @@ class AlertCard extends StatelessWidget {
                       child: Text(
                         'Dismiss',
                         style: TextStyle(
-                          color: const Color(0xff2D2D2D),
+                          color: AppColors.grey13,
                           fontSize: width * .046,
                         ),
                       ),
@@ -249,7 +250,7 @@ class AlertCard extends StatelessWidget {
           Icon(
             Icons.call_outlined,
             size: width * .05,
-            color: const Color(0xff2D2D2D),
+            color: AppColors.grey13,
           ),
           SizedBox(width: width * .02),
           Text(text, style: TextStyle(fontSize: width * .045)),

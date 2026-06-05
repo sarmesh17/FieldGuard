@@ -16,6 +16,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart' as geo;
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:fieldguard/core/theme/app_colors.dart';
 
 class UpdateShopScreen extends ConsumerStatefulWidget {
   final Shop shop;
@@ -73,6 +74,8 @@ class _UpdateShopScreenState extends ConsumerState<UpdateShopScreen> {
         TextEditingController(text: widget.shop.contactName);
     _contactPhoneController =
         TextEditingController(text: widget.shop.contactPhone);
+    // Pre-fill the PAN so the user doesn't have to re-type it on every edit.
+    _panNumberController.text = widget.shop.panNumber ?? '';
     _isActive = widget.shop.isActive;
     _uploadService = ImageUploadService(DioClient.createDio());
   }
@@ -270,7 +273,7 @@ class _UpdateShopScreenState extends ConsumerState<UpdateShopScreen> {
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             style:
-                TextButton.styleFrom(foregroundColor: const Color(0xffFF3B3B)),
+                TextButton.styleFrom(foregroundColor: AppColors.red2),
             child: const Text('Delete'),
           ),
         ],
@@ -286,7 +289,7 @@ class _UpdateShopScreenState extends ConsumerState<UpdateShopScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Shop deleted'),
-          backgroundColor: Color(0xff0E5A3B),
+          backgroundColor: AppColors.green,
         ),
       );
       Navigator.of(context).pop(true);
@@ -321,7 +324,7 @@ class _UpdateShopScreenState extends ConsumerState<UpdateShopScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Shop updated successfully'),
-            backgroundColor: Color(0xff0E5A3B),
+            backgroundColor: AppColors.green,
           ),
         );
         Navigator.of(context).pop(true);
@@ -342,9 +345,9 @@ class _UpdateShopScreenState extends ConsumerState<UpdateShopScreen> {
         ref.watch(updateShopNotifierProvider) is UpdateShopLoading;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAF9),
+      backgroundColor: AppColors.white,
       appBar: AppBar(
-        backgroundColor: const Color(0xff0E5A3B),
+        backgroundColor: AppColors.green,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
         leading: IconButton(
@@ -477,7 +480,7 @@ class _UpdateShopScreenState extends ConsumerState<UpdateShopScreen> {
                       width: double.infinity,
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xff0E5A3B),
+                          backgroundColor: AppColors.green,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),
                           ),
@@ -518,7 +521,7 @@ class _UpdateShopScreenState extends ConsumerState<UpdateShopScreen> {
                                   height: 18,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
-                                    color: Color(0xffFF3B3B),
+                                    color: AppColors.red2,
                                   ),
                                 )
                               : const Icon(Icons.delete_forever, size: 20),
@@ -530,9 +533,9 @@ class _UpdateShopScreenState extends ConsumerState<UpdateShopScreen> {
                             ),
                           ),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: const Color(0xffFF3B3B),
+                            foregroundColor: AppColors.red2,
                             side: const BorderSide(
-                              color: Color(0xffFF3B3B),
+                              color: AppColors.red2,
                               width: 1.5,
                             ),
                             padding: const EdgeInsets.symmetric(vertical: 16),
@@ -572,8 +575,8 @@ class _UpdateShopScreenState extends ConsumerState<UpdateShopScreen> {
               right: 0,
               child: LinearProgressIndicator(
                 minHeight: 3,
-                color: Color(0xff0E5A3B),
-                backgroundColor: Color(0xffDDF5E0),
+                color: AppColors.green,
+                backgroundColor: AppColors.green6,
               ),
             ),
           AnimatedOpacity(
@@ -582,19 +585,19 @@ class _UpdateShopScreenState extends ConsumerState<UpdateShopScreen> {
             curve: Curves.easeOut,
             child: _mapOverlayVisible
                 ? Container(
-                    color: const Color(0xFFF5F6FA),
+                    color: AppColors.white,
                     child: const Center(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           CircularProgressIndicator(
-                              color: Color(0xff0E5A3B)),
+                              color: AppColors.green),
                           SizedBox(height: 8),
                           Text(
                             'Loading map...',
                             style: TextStyle(
                               fontSize: 12,
-                              color: Color(0xff667085),
+                              color: AppColors.grey,
                             ),
                           ),
                         ],
@@ -614,14 +617,14 @@ class _UpdateShopScreenState extends ConsumerState<UpdateShopScreen> {
         padding:
             const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: const Color(0xFFF0FDF4),
+          color: AppColors.green6,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFD1FADF)),
+          border: Border.all(color: AppColors.green6),
         ),
         child: Row(
           children: [
             const Icon(Icons.my_location,
-                color: Color(0xff0E5A3B), size: 18),
+                color: AppColors.green, size: 18),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
@@ -630,7 +633,7 @@ class _UpdateShopScreenState extends ConsumerState<UpdateShopScreen> {
                 'Lng: ${_lng.toStringAsFixed(6)}',
                 style: const TextStyle(
                   fontSize: 13,
-                  color: Color(0xff0E5A3B),
+                  color: AppColors.green,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -643,9 +646,9 @@ class _UpdateShopScreenState extends ConsumerState<UpdateShopScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF8E1),
+        color: AppColors.yellow4,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFFFE082)),
+        border: Border.all(color: AppColors.yellow3),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -653,13 +656,13 @@ class _UpdateShopScreenState extends ConsumerState<UpdateShopScreen> {
           const Row(
             children: [
               Icon(Icons.location_searching,
-                  color: Color(0xFFFF8F00), size: 18),
+                  color: AppColors.orange2, size: 18),
               SizedBox(width: 8),
               Text(
                 'New Location Preview',
                 style: TextStyle(
                   fontSize: 13,
-                  color: Color(0xFFFF8F00),
+                  color: AppColors.orange2,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -671,7 +674,7 @@ class _UpdateShopScreenState extends ConsumerState<UpdateShopScreen> {
             'Lng: ${_lng.toStringAsFixed(6)}',
             style: const TextStyle(
               fontSize: 13,
-              color: Color(0xff111111),
+              color: AppColors.black,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -691,7 +694,7 @@ class _UpdateShopScreenState extends ConsumerState<UpdateShopScreen> {
                 width: 16,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: Color(0xff0E5A3B),
+                  color: AppColors.green,
                 ),
               )
             : const Icon(Icons.gps_fixed, size: 20),
@@ -703,8 +706,8 @@ class _UpdateShopScreenState extends ConsumerState<UpdateShopScreen> {
           ),
         ),
         style: OutlinedButton.styleFrom(
-          foregroundColor: const Color(0xff0E5A3B),
-          side: const BorderSide(color: Color(0xff0E5A3B), width: 1.5),
+          foregroundColor: AppColors.green,
+          side: const BorderSide(color: AppColors.green, width: 1.5),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -720,12 +723,12 @@ class _UpdateShopScreenState extends ConsumerState<UpdateShopScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(color: AppColors.grey4),
       ),
       child: Row(
         children: [
           const Icon(Icons.toggle_on_outlined,
-              color: Color(0xFF9CA3AF), size: 20),
+              color: AppColors.grey2, size: 20),
           const SizedBox(width: 12),
           const Expanded(
             child: Column(
@@ -736,14 +739,14 @@ class _UpdateShopScreenState extends ConsumerState<UpdateShopScreen> {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF374151),
+                    color: AppColors.blue2,
                   ),
                 ),
                 Text(
                   'Enable or disable this shop',
                   style: TextStyle(
                     fontSize: 12,
-                    color: Color(0xFF9CA3AF),
+                    color: AppColors.grey2,
                   ),
                 ),
               ],
@@ -752,8 +755,8 @@ class _UpdateShopScreenState extends ConsumerState<UpdateShopScreen> {
           Switch(
             value: _isActive,
             onChanged: (v) => setState(() => _isActive = v),
-            activeThumbColor: const Color(0xff0E5A3B),
-            activeTrackColor: const Color(0xffDDF5E0),
+            activeThumbColor: AppColors.green,
+            activeTrackColor: AppColors.green6,
           ),
         ],
       ),
@@ -840,7 +843,7 @@ class _UpdateShopScreenState extends ConsumerState<UpdateShopScreen> {
               child: Container(
                 padding: const EdgeInsets.all(4),
                 decoration: const BoxDecoration(
-                  color: Color(0xff0E5A3B),
+                  color: AppColors.green,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.check,
@@ -947,19 +950,19 @@ class _UpdateShopScreenState extends ConsumerState<UpdateShopScreen> {
         width: double.infinity,
         height: 120,
         decoration: BoxDecoration(
-          color: const Color(0xFFF9FAFB),
+          color: AppColors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFE5E7EB)),
+          border: Border.all(color: AppColors.grey4),
         ),
         child: const Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.add_photo_alternate_outlined,
-                size: 32, color: Color(0xFF9CA3AF)),
+                size: 32, color: AppColors.grey2),
             SizedBox(height: 8),
             Text(
               'Tap to add shop photo',
-              style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
+              style: TextStyle(fontSize: 13, color: AppColors.grey2),
             ),
           ],
         ),
@@ -987,26 +990,26 @@ class _UpdateShopScreenState extends ConsumerState<UpdateShopScreen> {
       decoration: InputDecoration(
         hintText: hint,
         hintStyle:
-            const TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
+            const TextStyle(color: AppColors.grey2, fontSize: 14),
         prefixIcon:
-            Icon(icon, color: const Color(0xFF9CA3AF), size: 20),
+            Icon(icon, color: AppColors.grey2, size: 20),
         filled: true,
-        fillColor: const Color(0xFFF9FAFB),
+        fillColor: AppColors.white,
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         counterText: '',
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+          borderSide: const BorderSide(color: AppColors.grey4),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+          borderSide: const BorderSide(color: AppColors.grey4),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide:
-              const BorderSide(color: Color(0xff0E5A3B), width: 1.5),
+              const BorderSide(color: AppColors.green, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -1032,7 +1035,7 @@ class _FieldLabel extends StatelessWidget {
       style: const TextStyle(
         fontSize: 13,
         fontWeight: FontWeight.w600,
-        color: Color(0xFF374151),
+        color: AppColors.blue2,
       ),
     );
   }

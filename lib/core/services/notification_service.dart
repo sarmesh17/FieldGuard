@@ -39,6 +39,17 @@ class NotificationService {
     importance: Importance.low,
   );
 
+  /// Channel for remote push (FCM) notifications shown while the app is in the
+  /// foreground — the OS displays them itself when backgrounded. High
+  /// importance so they surface a heads-up banner.
+  static const pushChannelId = 'push_notifications';
+  static const _pushChannel = AndroidNotificationChannel(
+    pushChannelId,
+    'Notifications',
+    description: 'General notifications from FieldGuard HQ.',
+    importance: Importance.high,
+  );
+
   bool _initialised = false;
 
   /// One-time setup: registers the channel and requests notification
@@ -61,6 +72,7 @@ class NotificationService {
       if (android != null) {
         await android.createNotificationChannel(_channel);
         await android.createNotificationChannel(_fgServiceChannel);
+        await android.createNotificationChannel(_pushChannel);
         // Requesting the permission needs a foreground Activity. In the
         // background-service isolate there is none (it throws a
         // NullPointerException), so make this non-fatal — the channels above
@@ -107,6 +119,31 @@ class NotificationService {
       await _plugin.show(id, title, body, details);
     } catch (e) {
       if (kDebugMode) debugPrint('[notification] show failed: $e');
+    }
+  }
+
+  /// Shows a remote (FCM) notification on the push channel. Used for foreground
+  /// messages, which the OS does not display automatically.
+  Future<void> showPush({
+    required int id,
+    required String title,
+    required String body,
+  }) async {
+    if (!_initialised) await init();
+    final details = NotificationDetails(
+      android: AndroidNotificationDetails(
+        _pushChannel.id,
+        _pushChannel.name,
+        channelDescription: _pushChannel.description,
+        importance: Importance.high,
+        priority: Priority.high,
+      ),
+      iOS: const DarwinNotificationDetails(),
+    );
+    try {
+      await _plugin.show(id, title, body, details);
+    } catch (e) {
+      if (kDebugMode) debugPrint('[notification] showPush failed: $e');
     }
   }
 }

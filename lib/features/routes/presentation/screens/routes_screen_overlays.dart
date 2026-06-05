@@ -15,7 +15,7 @@ class _TrackingOffOverlay extends StatelessWidget {
           children: [
             Icon(
               Icons.location_off_outlined,
-              color: Color(0xFF6B7280),
+              color: AppColors.grey,
               size: 34,
             ),
             SizedBox(height: 8),
@@ -24,14 +24,14 @@ class _TrackingOffOverlay extends StatelessWidget {
               style: TextStyle(
                 fontWeight: FontWeight.w700,
                 fontSize: 14,
-                color: Color(0xFF111827),
+                color: AppColors.ink,
               ),
             ),
             SizedBox(height: 2),
             Text(
               'Turn it on from the Home screen to see your route.',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+              style: TextStyle(fontSize: 12, color: AppColors.grey),
             ),
           ],
         ),
@@ -80,7 +80,7 @@ class _ActiveNavCard extends StatelessWidget {
           const Center(
             child: SizedBox(
               width: 40,
-              child: Divider(thickness: 3, color: Color(0xFFE5E7EB)),
+              child: Divider(thickness: 3, color: AppColors.grey4),
             ),
           ),
           const SizedBox(height: 12),
@@ -138,7 +138,7 @@ class _ActiveNavCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 14,
-                      color: reached ? _kBrand : const Color(0xFF6B7280),
+                      color: reached ? _kBrand : AppColors.grey,
                       fontWeight: reached ? FontWeight.w600 : FontWeight.normal,
                     ),
                   ),
@@ -226,7 +226,7 @@ class _ActiveNavCard extends StatelessWidget {
         Text(
           'NO ACTIVE TASK',
           style: TextStyle(
-            color: Color(0xFF6B7280),
+            color: AppColors.grey,
             fontWeight: FontWeight.w700,
             fontSize: 11,
             letterSpacing: 0.6,
@@ -240,7 +240,7 @@ class _ActiveNavCard extends StatelessWidget {
         SizedBox(height: 4),
         Text(
           'Start a task to see the route to its shop here.',
-          style: TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
+          style: TextStyle(fontSize: 13, color: AppColors.grey),
         ),
       ],
     );

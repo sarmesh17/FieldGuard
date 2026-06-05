@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fieldguard/features/routes/presentation/providers/route_tasks_provider.dart';
 import 'package:fieldguard/features/tasks/data/dto/tasks_list_response.dart';
 import 'package:fieldguard/features/tasks/presentation/screens/task_detail_screen.dart';
+import 'package:fieldguard/core/theme/app_colors.dart';
 
 /// "Today's Schedule" — today's tasks, active-first then by due time. Driven
 /// by [todayTasksProvider]; tapping a row opens the task detail.
@@ -199,57 +200,57 @@ class _ThemeFor {
       case 'IN_PROGRESS':
         return _ThemeFor._(
           background: Colors.white,
-          borderColor: const Color(0xFF0E5A3B),
-          avatarBackground: const Color(0xFF0E5A3B),
+          borderColor: AppColors.green,
+          avatarBackground: AppColors.green,
           avatarFg: Colors.white,
           avatarIcon: Icons.directions_walk,
-          titleColor: const Color(0xFF111827),
+          titleColor: AppColors.ink,
           titleStrike: false,
           subtitleIcon: Icons.timelapse,
-          subtitleColor: const Color(0xFF0E5A3B),
-          chevronColor: const Color(0xFF0E5A3B),
+          subtitleColor: AppColors.green,
+          chevronColor: AppColors.green,
           subtitle: (t) => t.isEmpty ? 'In progress' : 'In progress · $t',
         );
       case 'COMPLETED':
         return _ThemeFor._(
-          background: const Color(0xFFD1FADF),
+          background: AppColors.green6,
           borderColor: null,
           avatarBackground: Colors.white,
-          avatarFg: const Color(0xFF0E5A3B),
+          avatarFg: AppColors.green,
           avatarIcon: Icons.check,
-          titleColor: const Color(0xFF6B7280),
+          titleColor: AppColors.grey,
           titleStrike: true,
           subtitleIcon: Icons.check_circle,
-          subtitleColor: const Color(0xFF0E5A3B),
-          chevronColor: const Color(0xFF6B7280),
+          subtitleColor: AppColors.green,
+          chevronColor: AppColors.grey,
           subtitle: (t) => 'Completed',
         );
       case 'CANCELLED':
         return _ThemeFor._(
-          background: const Color(0xFFFEE2E2),
+          background: AppColors.red6,
           borderColor: null,
           avatarBackground: Colors.white,
-          avatarFg: const Color(0xFFB91C1C),
+          avatarFg: AppColors.red,
           avatarIcon: Icons.close,
-          titleColor: const Color(0xFF6B7280),
+          titleColor: AppColors.grey,
           titleStrike: true,
           subtitleIcon: Icons.cancel_outlined,
-          subtitleColor: const Color(0xFFB91C1C),
-          chevronColor: const Color(0xFF6B7280),
+          subtitleColor: AppColors.red,
+          chevronColor: AppColors.grey,
           subtitle: (t) => 'Cancelled',
         );
       default: // PENDING
         return _ThemeFor._(
           background: Colors.white,
-          borderColor: const Color(0xFFD1FADF),
-          avatarBackground: const Color(0xFFD1FADF),
-          avatarFg: const Color(0xFF0E5A3B),
+          borderColor: AppColors.green6,
+          avatarBackground: AppColors.green6,
+          avatarFg: AppColors.green,
           avatarIcon: null,
-          titleColor: const Color(0xFF111827),
+          titleColor: AppColors.ink,
           titleStrike: false,
           subtitleIcon: Icons.schedule,
-          subtitleColor: const Color(0xFF6B7280),
-          chevronColor: const Color(0xFF0E5A3B),
+          subtitleColor: AppColors.grey,
+          chevronColor: AppColors.green,
           subtitle: (t) => t.isEmpty ? 'Pending' : 'Due $t',
         );
     }
@@ -282,16 +283,16 @@ class _EmptyRow extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFE5E7EB)),
+          border: Border.all(color: AppColors.grey4),
         ),
         child: const Row(
           children: [
-            Icon(Icons.event_available_outlined, color: Color(0xFF6B7280)),
+            Icon(Icons.event_available_outlined, color: AppColors.grey),
             SizedBox(width: 12),
             Expanded(
               child: Text(
                 'No tasks scheduled for today',
-                style: TextStyle(color: Color(0xFF6B7280)),
+                style: TextStyle(color: AppColors.grey),
               ),
             ),
           ],

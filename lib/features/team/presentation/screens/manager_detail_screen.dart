@@ -9,6 +9,7 @@ import 'package:fieldguard/features/team/data/datasource/team_datasource_impl.da
 import 'package:fieldguard/features/team/data/dto/manager_detail_response.dart';
 import 'package:fieldguard/widgets/app_skeletons.dart';
 import 'package:flutter/material.dart';
+import 'package:fieldguard/core/theme/app_colors.dart';
 
 class ManagerDetailScreen extends StatefulWidget {
   final String managerId;
@@ -160,7 +161,7 @@ class _ManagerDetailScreenState extends State<ManagerDetailScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Manager deleted successfully'),
-            backgroundColor: Color(0xff0E5A3B),
+            backgroundColor: AppColors.green,
           ),
         );
         Navigator.pop(context, true); // Return to previous screen
@@ -192,7 +193,7 @@ class _ManagerDetailScreenState extends State<ManagerDetailScreen>
     return ResponsiveBuilder(
       builder: (context, screenType, orientation, constraints) {
         return Scaffold(
-          backgroundColor: const Color(0xFFF8FAF9),
+          backgroundColor: AppColors.white,
           body: _isLoading
               ? const SkeletonDetail()
               : _errorMessage != null
@@ -218,7 +219,7 @@ class _ManagerDetailScreenState extends State<ManagerDetailScreen>
             _errorMessage!,
             style: TextStyle(
               fontSize: SizeConfig.scaledFontSize(16),
-              color: const Color(0xff667085),
+              color: AppColors.grey,
             ),
             textAlign: TextAlign.center,
           ),
@@ -226,7 +227,7 @@ class _ManagerDetailScreenState extends State<ManagerDetailScreen>
           ElevatedButton(
             onPressed: _loadManagerDetail,
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xff0E5A3B),
+              backgroundColor: AppColors.green,
               padding: EdgeInsets.symmetric(
                 horizontal: SizeConfig.scale(32),
                 vertical: SizeConfig.scale(12),
@@ -248,7 +249,7 @@ class _ManagerDetailScreenState extends State<ManagerDetailScreen>
         SliverAppBar(
           expandedHeight: SizeConfig.heightPercent(30),
           pinned: true,
-          backgroundColor: const Color(0xff0E5A3B),
+          backgroundColor: AppColors.green,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back, color: Colors.white),
             onPressed: () => Navigator.pop(context),
@@ -290,7 +291,7 @@ class _ManagerDetailScreenState extends State<ManagerDetailScreen>
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [Color(0xff0E5A3B), Color(0xff1D7A51)],
+                  colors: [AppColors.green, AppColors.green],
                 ),
               ),
               child: Column(
@@ -324,7 +325,7 @@ class _ManagerDetailScreenState extends State<ManagerDetailScreen>
                                   child: Icon(
                                     Icons.person,
                                     size: SizeConfig.scale(50),
-                                    color: const Color(0xff0E5A3B),
+                                    color: AppColors.green,
                                   ),
                                 ),
                               ),
@@ -334,7 +335,7 @@ class _ManagerDetailScreenState extends State<ManagerDetailScreen>
                               child: Icon(
                                 Icons.person,
                                 size: SizeConfig.scale(50),
-                                color: const Color(0xff0E5A3B),
+                                color: AppColors.green,
                               ),
                             ),
                     ),
@@ -391,8 +392,8 @@ class _ManagerDetailScreenState extends State<ManagerDetailScreen>
                         ),
                         decoration: BoxDecoration(
                           color: _manager!.isActive
-                              ? const Color(0xffDDF5E0)
-                              : const Color(0xffFFE3E6),
+                              ? AppColors.green6
+                              : AppColors.red6,
                           borderRadius:
                               BorderRadius.circular(SizeConfig.scale(20)),
                         ),
@@ -405,8 +406,8 @@ class _ManagerDetailScreenState extends State<ManagerDetailScreen>
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 color: _manager!.isActive
-                                    ? const Color(0xff0E5A3B)
-                                    : const Color(0xffFF3B3B),
+                                    ? AppColors.green
+                                    : AppColors.red2,
                               ),
                             ),
                             SizedBox(width: SizeConfig.scale(8)),
@@ -415,8 +416,8 @@ class _ManagerDetailScreenState extends State<ManagerDetailScreen>
                               style: TextStyle(
                                 fontSize: SizeConfig.scaledFontSize(14),
                                 color: _manager!.isActive
-                                    ? const Color(0xff0E5A3B)
-                                    : const Color(0xffFF3B3B),
+                                    ? AppColors.green
+                                    : AppColors.red2,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -434,7 +435,7 @@ class _ManagerDetailScreenState extends State<ManagerDetailScreen>
                             'Assigned',
                             _manager!.assignedCount.toString(),
                             Icons.people,
-                            const Color(0xff0E5A3B),
+                            AppColors.green,
                           ),
                         ),
                         SizedBox(width: SizeConfig.scale(12)),
@@ -443,7 +444,7 @@ class _ManagerDetailScreenState extends State<ManagerDetailScreen>
                             'Created',
                             _manager!.createdCount.toString(),
                             Icons.person_add,
-                            const Color(0xff1D7A51),
+                            AppColors.green,
                           ),
                         ),
                       ],
@@ -457,7 +458,7 @@ class _ManagerDetailScreenState extends State<ManagerDetailScreen>
                       icon: Icons.phone,
                       label: 'Phone Number',
                       value: formatNepaliPhone(_manager!.phoneNumber),
-                      iconColor: const Color(0xff0E5A3B),
+                      iconColor: AppColors.green,
                     ),
                     if (_manager!.email != null) ...[
                       SizedBox(height: SizeConfig.scale(12)),
@@ -465,7 +466,7 @@ class _ManagerDetailScreenState extends State<ManagerDetailScreen>
                         icon: Icons.email,
                         label: 'Email',
                         value: _manager!.email!,
-                        iconColor: const Color(0xff0E5A3B),
+                        iconColor: AppColors.green,
                       ),
                     ],
                     SizedBox(height: SizeConfig.heightPercent(3)),
@@ -477,21 +478,21 @@ class _ManagerDetailScreenState extends State<ManagerDetailScreen>
                       icon: Icons.badge,
                       label: 'Role',
                       value: _manager!.role,
-                      iconColor: const Color(0xff1D7A51),
+                      iconColor: AppColors.green,
                     ),
                     SizedBox(height: SizeConfig.scale(12)),
                     _buildInfoCard(
                       icon: Icons.business,
                       label: 'Company ID',
                       value: _manager!.companyId,
-                      iconColor: const Color(0xff1D7A51),
+                      iconColor: AppColors.green,
                     ),
                     SizedBox(height: SizeConfig.scale(12)),
                     _buildInfoCard(
                       icon: Icons.calendar_today,
                       label: 'Joined Date',
                       value: _formatDate(_manager!.createdAt),
-                      iconColor: const Color(0xff1D7A51),
+                      iconColor: AppColors.green,
                     ),
                     SizedBox(height: SizeConfig.heightPercent(3)),
                   ],
@@ -559,7 +560,7 @@ class _ManagerDetailScreenState extends State<ManagerDetailScreen>
       style: TextStyle(
         fontSize: SizeConfig.scaledFontSize(18),
         fontWeight: FontWeight.w700,
-        color: const Color(0xff111111),
+        color: AppColors.black,
       ),
     );
   }
@@ -575,7 +576,7 @@ class _ManagerDetailScreenState extends State<ManagerDetailScreen>
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(SizeConfig.scale(12)),
-        border: Border.all(color: const Color(0xffE8E3DD)),
+        border: Border.all(color: AppColors.grey3),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -608,7 +609,7 @@ class _ManagerDetailScreenState extends State<ManagerDetailScreen>
                   label,
                   style: TextStyle(
                     fontSize: SizeConfig.scaledFontSize(12),
-                    color: const Color(0xff667085),
+                    color: AppColors.grey,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -617,7 +618,7 @@ class _ManagerDetailScreenState extends State<ManagerDetailScreen>
                   value,
                   style: TextStyle(
                     fontSize: SizeConfig.scaledFontSize(15),
-                    color: const Color(0xff111111),
+                    color: AppColors.black,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
