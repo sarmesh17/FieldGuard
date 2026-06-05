@@ -15,6 +15,7 @@ import 'package:fieldguard/widgets/app_skeletons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fieldguard/core/theme/app_colors.dart';
+import 'package:fieldguard/core/constant/api_constant.dart';
 
 class AdminProfileScreen extends ConsumerStatefulWidget {
   const AdminProfileScreen({super.key});
@@ -527,9 +528,7 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen>
       child: ClipOval(
         child: profileImage != null
             ? Image.network(
-                profileImage.startsWith('http')
-                    ? profileImage
-                    : 'https://fieldguard-be.onrender.com/$profileImage',
+                ApiConstant.imageUrl(profileImage),
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) {
                   return Container(

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:fieldguard/core/constant/app_strings.dart';
 import 'package:fieldguard/core/errors/app_exception.dart';
 import 'package:fieldguard/core/services/auth_event_bus.dart';
+import 'package:fieldguard/core/services/push_notification_service.dart';
 import 'package:fieldguard/core/services/token_storage.dart';
 import 'package:fieldguard/core/utils/results.dart';
 import 'package:fieldguard/features/auth/approval/data/datasource/company_approval_datasource.dart';
@@ -128,6 +129,9 @@ class LoginNotifier extends StateNotifier<LoginState> {
   }
 
   Future<void> logout() async {
+    // Drop this device's push token server-side first, while the JWT is still
+    // valid (the DELETE is authenticated). Best-effort — never blocks logout.
+    await PushNotificationService.instance.unregisterToken();
     await TokenStorage.clearTokens();
     state = const LoginInitial();
   }

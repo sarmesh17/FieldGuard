@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:fieldguard/core/services/session.dart';
 import 'package:fieldguard/core/utils/results.dart';
 import 'package:fieldguard/features/collections/data/dto/create_collection_request.dart';
 import 'package:fieldguard/features/collections/presentation/providers/collection_provider.dart';
@@ -22,10 +23,15 @@ class CollectPaymentScreen extends ConsumerStatefulWidget {
   final int shopId;
   final String shopName;
 
+  /// Task this collection is being made under (optional). Passed straight to
+  /// the API so the task's manager is also notified.
+  final int? taskId;
+
   const CollectPaymentScreen({
     super.key,
     required this.shopId,
     required this.shopName,
+    this.taskId,
   });
 
   @override
@@ -39,11 +45,37 @@ class _CollectPaymentScreenState extends ConsumerState<CollectPaymentScreen> {
   final _chequeNumberCtrl = TextEditingController();
   final _chequeBankCtrl = TextEditingController();
   final _notesCtrl = TextEditingController();
+  final _onlineRefCtrl = TextEditingController();
+  final _onlineProviderOtherCtrl = TextEditingController();
   DateTime? _chequeDate;
 
   CollectionMethod _method = CollectionMethod.cash;
+  // ONLINE provider preset: ESEWA | KHALTI | BANK | OTHER (OTHER → free text).
+  String? _onlineProvider;
+  // Method visibility by role (server enforces the same; we just hide options
+  // that would 403): EMPLOYEE → CASH/CHEQUE, MANAGER → all three,
+  // ADMIN → ONLINE only. Resolved once from the JWT role.
+  bool _canOnline = false;
+  bool _isAdmin = false;
   bool _submitting = false;
   String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _resolveRole();
+  }
+
+  Future<void> _resolveRole() async {
+    final role = (await Session.role())?.toUpperCase();
+    if (!mounted) return;
+    setState(() {
+      _isAdmin = role == 'ADMIN';
+      _canOnline = role == 'ADMIN' || role == 'MANAGER';
+      // ADMIN can't record CASH/CHEQUE (403), so start them on ONLINE.
+      if (_isAdmin) _method = CollectionMethod.online;
+    });
+  }
 
   @override
   void dispose() {
@@ -51,6 +83,8 @@ class _CollectPaymentScreenState extends ConsumerState<CollectPaymentScreen> {
     _chequeNumberCtrl.dispose();
     _chequeBankCtrl.dispose();
     _notesCtrl.dispose();
+    _onlineRefCtrl.dispose();
+    _onlineProviderOtherCtrl.dispose();
     super.dispose();
   }
 
@@ -77,6 +111,7 @@ class _CollectPaymentScreenState extends ConsumerState<CollectPaymentScreen> {
     final amount = double.parse(_amountCtrl.text.trim());
     final request = CreateCollectionRequest(
       shopId: widget.shopId,
+      taskId: widget.taskId,
       amount: amount,
       method: _method,
       chequeNumber: _method == CollectionMethod.cheque
@@ -88,6 +123,15 @@ class _CollectPaymentScreenState extends ConsumerState<CollectPaymentScreen> {
           : null,
       chequeDate: _method == CollectionMethod.cheque && _chequeDate != null
           ? _formatChequeDate(_chequeDate!)
+          : null,
+      onlineProvider: _method == CollectionMethod.online
+          ? (_onlineProvider == 'OTHER'
+              ? _onlineProviderOtherCtrl.text.trim()
+              : _onlineProvider)
+          : null,
+      onlineRef: _method == CollectionMethod.online &&
+              _onlineRefCtrl.text.trim().isNotEmpty
+          ? _onlineRefCtrl.text.trim()
           : null,
       notes: _notesCtrl.text.trim().isNotEmpty ? _notesCtrl.text.trim() : null,
     );
@@ -153,6 +197,11 @@ class _CollectPaymentScreenState extends ConsumerState<CollectPaymentScreen> {
               const SizedBox(height: 10),
               _MethodToggle(
                 value: _method,
+                methods: [
+                  if (!_isAdmin) CollectionMethod.cash,
+                  if (!_isAdmin) CollectionMethod.cheque,
+                  if (_canOnline) CollectionMethod.online,
+                ],
                 onChanged: (m) => setState(() {
                   _method = m;
                   _errorMessage = null;
@@ -223,6 +272,65 @@ class _CollectPaymentScreenState extends ConsumerState<CollectPaymentScreen> {
                   onClear: _chequeDate == null
                       ? null
                       : () => setState(() => _chequeDate = null),
+                ),
+              ],
+              if (_method == CollectionMethod.online) ...[
+                const SizedBox(height: 22),
+                const _SectionLabel('Provider *'),
+                const SizedBox(height: 10),
+                DropdownButtonFormField<String>(
+                  initialValue: _onlineProvider,
+                  isExpanded: true,
+                  hint: const Text('Select provider'),
+                  decoration: _inputDecoration(hint: 'Select provider'),
+                  items: const [
+                    DropdownMenuItem(value: 'ESEWA', child: Text('eSewa')),
+                    DropdownMenuItem(value: 'KHALTI', child: Text('Khalti')),
+                    DropdownMenuItem(
+                        value: 'BANK', child: Text('Bank transfer')),
+                    DropdownMenuItem(value: 'OTHER', child: Text('Other')),
+                  ],
+                  onChanged: (v) => setState(() {
+                    _onlineProvider = v;
+                    _errorMessage = null;
+                  }),
+                  validator: (v) {
+                    if (_method != CollectionMethod.online) return null;
+                    if (v == null) return 'Select a provider';
+                    return null;
+                  },
+                ),
+                if (_onlineProvider == 'OTHER') ...[
+                  const SizedBox(height: 14),
+                  const _SectionLabel('Provider name *'),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: _onlineProviderOtherCtrl,
+                    maxLength: 40,
+                    decoration:
+                        _inputDecoration(hint: 'e.g. IME Pay', counter: ''),
+                    validator: (v) {
+                      if (_method != CollectionMethod.online ||
+                          _onlineProvider != 'OTHER') {
+                        return null;
+                      }
+                      if ((v?.trim() ?? '').isEmpty) {
+                        return 'Provider name is required';
+                      }
+                      return null;
+                    },
+                  ),
+                ],
+                const SizedBox(height: 18),
+                const _SectionLabel('Transaction reference'),
+                const SizedBox(height: 10),
+                TextFormField(
+                  controller: _onlineRefCtrl,
+                  maxLength: 100,
+                  decoration: _inputDecoration(
+                    hint: 'e.g. ESW-7F3K9P2',
+                    counter: '',
+                  ),
                 ),
               ],
               const SizedBox(height: 22),
@@ -397,33 +505,40 @@ class _ShopChip extends StatelessWidget {
 
 class _MethodToggle extends StatelessWidget {
   final CollectionMethod value;
+  final List<CollectionMethod> methods;
   final ValueChanged<CollectionMethod> onChanged;
 
-  const _MethodToggle({required this.value, required this.onChanged});
+  const _MethodToggle({
+    required this.value,
+    required this.methods,
+    required this.onChanged,
+  });
+
+  static (String, IconData) _meta(CollectionMethod m) => switch (m) {
+        CollectionMethod.cash => ('Cash', Icons.payments_rounded),
+        CollectionMethod.cheque => ('Cheque', Icons.receipt_long_rounded),
+        CollectionMethod.online => ('Online', Icons.account_balance_rounded),
+      };
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
+    final children = <Widget>[];
+    for (var i = 0; i < methods.length; i++) {
+      if (i > 0) children.add(const SizedBox(width: 10));
+      final m = methods[i];
+      final (label, icon) = _meta(m);
+      children.add(
         Expanded(
           child: _MethodChip(
-            label: 'Cash',
-            icon: Icons.payments_rounded,
-            selected: value == CollectionMethod.cash,
-            onTap: () => onChanged(CollectionMethod.cash),
+            label: label,
+            icon: icon,
+            selected: value == m,
+            onTap: () => onChanged(m),
           ),
         ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _MethodChip(
-            label: 'Cheque',
-            icon: Icons.receipt_long_rounded,
-            selected: value == CollectionMethod.cheque,
-            onTap: () => onChanged(CollectionMethod.cheque),
-          ),
-        ),
-      ],
-    );
+      );
+    }
+    return Row(children: children);
   }
 }
 

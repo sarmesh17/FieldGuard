@@ -36,11 +36,13 @@ class CollectionRecord {
   final int shopId;
   final int collectedBy;
   final String amount; // Decimal as string
-  final String method; // CASH | CHEQUE
+  final String method; // CASH | CHEQUE | ONLINE
   final String status; // CLEARED | PENDING
   final String? chequeNumber;
   final String? chequeBank;
   final String? chequeDate;
+  final String? onlineProvider; // ONLINE only
+  final String? onlineRef; // ONLINE only
   final String? notes;
   final int? settledBy;
   final String? clearedAt;
@@ -61,6 +63,8 @@ class CollectionRecord {
     this.chequeNumber,
     this.chequeBank,
     this.chequeDate,
+    this.onlineProvider,
+    this.onlineRef,
     this.notes,
     this.settledBy,
     this.clearedAt,
@@ -81,6 +85,8 @@ class CollectionRecord {
       chequeNumber: json['cheque_number'] as String?,
       chequeBank: json['cheque_bank'] as String?,
       chequeDate: json['cheque_date'] as String?,
+      onlineProvider: json['online_provider'] as String?,
+      onlineRef: json['online_ref'] as String?,
       notes: json['notes'] as String?,
       settledBy: (json['settled_by'] as num?)?.toInt(),
       clearedAt: json['cleared_at'] as String?,

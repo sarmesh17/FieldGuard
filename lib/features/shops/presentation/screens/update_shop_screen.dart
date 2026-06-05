@@ -74,6 +74,8 @@ class _UpdateShopScreenState extends ConsumerState<UpdateShopScreen> {
         TextEditingController(text: widget.shop.contactName);
     _contactPhoneController =
         TextEditingController(text: widget.shop.contactPhone);
+    // Pre-fill the PAN so the user doesn't have to re-type it on every edit.
+    _panNumberController.text = widget.shop.panNumber ?? '';
     _isActive = widget.shop.isActive;
     _uploadService = ImageUploadService(DioClient.createDio());
   }

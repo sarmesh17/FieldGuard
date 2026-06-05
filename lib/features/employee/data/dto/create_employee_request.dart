@@ -27,7 +27,8 @@ class CreateEmployeeRequest {
     }
 
     if (managerId != null && managerId!.isNotEmpty) {
-      data['managerId'] = managerId;
+      // Backend expects an integer (e.g. 7), not the string "7".
+      data['managerId'] = int.parse(managerId!);
     }
 
     if (imageKey != null && imageKey!.isNotEmpty) {

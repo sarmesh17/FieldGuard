@@ -6,6 +6,7 @@ import 'edit_profile_screen.dart';
 import '../providers/profile_provider.dart';
 import '../providers/profile_state.dart';
 import 'package:fieldguard/core/theme/app_colors.dart';
+import 'package:fieldguard/core/constant/api_constant.dart';
 
 class PersonalInformationScreen extends ConsumerStatefulWidget {
   const PersonalInformationScreen({super.key});
@@ -144,9 +145,7 @@ class _PersonalInformationScreenState
                                                   .profile.profileImage !=
                                               null
                                           ? Image.network(
-                                              profileState.profile.profileImage!.startsWith('http')
-                                                  ? profileState.profile.profileImage!
-                                                  : 'https://fieldguard-be.onrender.com/${profileState.profile.profileImage}',
+                                              ApiConstant.imageUrl(profileState.profile.profileImage!),
                                               fit: BoxFit.cover,
                                               errorBuilder:
                                                   (context, error, stackTrace) {

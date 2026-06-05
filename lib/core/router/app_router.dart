@@ -32,11 +32,16 @@ import 'package:go_router/go_router.dart';
 /// recreate the router, or every intermediate state during a login attempt
 /// (`LoginLoading`, `LoginFailure`, …) would reset navigation back to
 /// [AppRoutes.splash].
+/// Root navigator key — lets non-widget code (e.g. a push-notification tap)
+/// deep-link without a BuildContext.
+final rootNavigatorKey = GlobalKey<NavigatorState>();
+
 final goRouterProvider = Provider<GoRouter>((ref) {
   final authListenable = _RiverpodGoRouterRefresh(ref);
   ref.onDispose(authListenable.dispose);
 
   return GoRouter(
+    navigatorKey: rootNavigatorKey,
     initialLocation: AppRoutes.splash,
     debugLogDiagnostics: false,
     refreshListenable: authListenable,

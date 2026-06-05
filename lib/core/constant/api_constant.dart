@@ -1,5 +1,11 @@
 class ApiConstant {
-  static const String baseUrl = "https://fieldguard-be.onrender.com";
+  static const String baseUrl = "https://fieldguard.duckdns.org";
+
+  /// Resolves a stored asset value (e.g. a profile-image path) to an
+  /// absolute URL: already-absolute values pass through, relative paths
+  /// join onto [baseUrl]. The single place the asset host lives.
+  static String imageUrl(String pathOrUrl) =>
+      pathOrUrl.startsWith('http') ? pathOrUrl : '$baseUrl/$pathOrUrl';
 
   // ─── API Endpoints ─────────────────────────────────────────────────────────────
   static const String loginEndpoint = "$baseUrl/api/v1/auth/login";
@@ -22,6 +28,15 @@ class ApiConstant {
   // The endpoint for the current legal (Terms/Privacy) version — public, no auth.
   // Source of truth for the `termsVersion` sent on register/login.
   static const String legalVersionEndpoint = "$baseUrl/api/v1/legal/version";
+
+  // The full Terms & Privacy content — public, no auth. Rendered verbatim.
+  static const String legalContentEndpoint = "$baseUrl/api/v1/legal/content";
+
+  // Registers this device's FCM push token against the signed-in user (auth).
+  static const String pushTokenEndpoint = "$baseUrl/api/v1/device/push-token";
+
+  // In-app notification center (auth; approved company only).
+  static const String notificationsEndpoint = "$baseUrl/api/v1/notifications";
 
   // The endpoint for confirming company documents (PATCH)
   static const String companyEndpoint = "$baseUrl/api/v1/company";

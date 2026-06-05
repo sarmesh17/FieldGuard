@@ -45,6 +45,10 @@
 -dontwarn okhttp3.**
 -dontwarn okio.**
 
+# --- Firebase Cloud Messaging (FCM) -----------------------------------------
+-keep class com.google.firebase.** { *; }
+-dontwarn com.google.firebase.**
+
 # --- Keep every JNI native binding (matched by name from native code) -------
 -keepclasseswithmembernames class * {
     native <methods>;

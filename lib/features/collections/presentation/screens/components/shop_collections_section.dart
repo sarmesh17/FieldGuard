@@ -9,6 +9,7 @@ import 'package:fieldguard/features/collections/data/dto/collections_list_respon
 import 'package:fieldguard/features/collections/data/dto/create_collection_response.dart';
 import 'package:fieldguard/features/collections/presentation/providers/collection_provider.dart';
 import 'package:fieldguard/features/collections/presentation/providers/collections_list_state.dart';
+import 'package:fieldguard/features/collections/presentation/screens/collect_payment_screen.dart';
 import 'package:fieldguard/features/collections/presentation/screens/collection_success_screen.dart';
 import 'package:fieldguard/features/collections/presentation/screens/components/settle_collection_sheet.dart';
 import 'package:fieldguard/core/theme/app_colors.dart';
@@ -49,6 +50,26 @@ class _ShopCollectionsSectionState
     setState(() => _canSettle = role == 'ADMIN' || role == 'MANAGER');
   }
 
+  /// Office entry point (ADMIN/MANAGER): opens the collect form for this shop
+  /// with no task context — used to record an ONLINE payment (or, for a
+  /// manager, CASH/CHEQUE). Refreshes the money snapshot + list afterwards.
+  Future<void> _recordPayment() async {
+    final out = ref.read(shopOutstandingProvider(widget.shopId)).asData?.value;
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => CollectPaymentScreen(
+          shopId: widget.shopId,
+          shopName: out?.shopName ?? 'Shop',
+        ),
+      ),
+    );
+    if (!mounted) return;
+    // We can't tell a recorded collection from a cancelled one here, so just
+    // re-sync both views — cheap and always correct.
+    ref.read(shopCollectionsProvider(widget.shopId).notifier).load();
+    ref.invalidate(shopOutstandingProvider(widget.shopId));
+  }
+
   /// Opens the settle sheet for a PENDING cheque; on success shows the result
   /// screen and refreshes the list so the row flips to CLEARED/BOUNCED.
   Future<void> _settle(CollectionRecord item) async {
@@ -84,6 +105,26 @@ class _ShopCollectionsSectionState
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _OutstandingBanner(shopId: shopId, canSetDue: _canSettle),
+        if (_canSettle) ...[
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: _recordPayment,
+              icon: const Icon(Icons.add_rounded, size: 18),
+              label: const Text('Record Payment'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _kBrand,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 0,
+              ),
+            ),
+          ),
+        ],
         const SizedBox(height: 18),
         Row(
           children: [
@@ -488,6 +529,16 @@ class _FilterBar extends StatelessWidget {
                 ),
               ),
             ),
+            const SizedBox(width: 8),
+            _Chip(
+              label: 'Online',
+              selected: filters.method == 'ONLINE',
+              onTap: () => onChanged(
+                filters.copyWith(
+                  method: filters.method == 'ONLINE' ? null : 'ONLINE',
+                ),
+              ),
+            ),
             const Spacer(),
             InkWell(
               onTap: () => _pickRange(context),
@@ -744,9 +795,17 @@ class _CollectionTile extends StatelessWidget {
         _ => _kMuted,
       };
 
-  IconData get _methodIcon => item.method == 'CHEQUE'
-      ? Icons.receipt_long_rounded
-      : Icons.payments_rounded;
+  IconData get _methodIcon => switch (item.method) {
+        'CHEQUE' => Icons.receipt_long_rounded,
+        'ONLINE' => Icons.account_balance_rounded,
+        _ => Icons.payments_rounded,
+      };
+
+  String get _methodLabel => switch (item.method) {
+        'CHEQUE' => 'Cheque',
+        'ONLINE' => 'Online',
+        _ => 'Cash',
+      };
 
   @override
   Widget build(BuildContext context) {
@@ -791,8 +850,7 @@ class _CollectionTile extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${item.method == 'CHEQUE' ? 'Cheque' : 'Cash'} · '
-                  '${item.collector.fullName}',
+                  '$_methodLabel · ${item.collector.fullName}',
                   style: const TextStyle(fontSize: 12.5, color: _kMuted),
                 ),
                 if (item.method == 'CHEQUE' &&
@@ -801,6 +859,15 @@ class _CollectionTile extends StatelessWidget {
                   Text(
                     'Cheque #${item.chequeNumber}'
                     '${item.chequeBank != null ? ' · ${item.chequeBank}' : ''}',
+                    style: const TextStyle(fontSize: 11.5, color: _kMuted),
+                  ),
+                ],
+                if (item.method == 'ONLINE' &&
+                    item.onlineProvider != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    '${item.onlineProvider}'
+                    '${item.onlineRef != null && item.onlineRef!.isNotEmpty ? ' · Ref ${item.onlineRef}' : ''}',
                     style: const TextStyle(fontSize: 11.5, color: _kMuted),
                   ),
                 ],
