@@ -3,12 +3,13 @@ import 'package:fieldguard/features/auth/login/presentation/providers/login_prov
 import 'package:fieldguard/features/auth/login/presentation/providers/login_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fieldguard/core/theme/app_colors.dart';
 
 // ─── Palette ─────────────────────────────────────────────────────────────────
-const _kDark = Color(0xFF1A4731);
-const _kMid = Color(0xFF2E6F4F);
-const _kDanger = Color(0xFFB91C1C);
-const _kDangerSoft = Color(0xFFFEE2E2);
+const _kDark = AppColors.green;
+const _kMid = AppColors.gradientStart;
+const _kDanger = AppColors.red;
+const _kDangerSoft = AppColors.red6;
 
 /// Shown when the company's registration was rejected by an administrator.
 ///

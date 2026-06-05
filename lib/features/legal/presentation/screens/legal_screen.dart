@@ -1,11 +1,14 @@
 import 'package:fieldguard/core/responsive/responsive.dart';
 import 'package:fieldguard/features/legal/legal_content.dart';
+import 'package:fieldguard/features/legal/presentation/providers/legal_version_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fieldguard/core/theme/app_colors.dart';
 
 // ─── Brand colours (match the app's green palette) ───────────────────────────
-const _kDark = Color(0xff072A1C);
-const _kPrimary = Color(0xff0E5A3B);
-const _kMid = Color(0xff1D7A51);
+const _kDark = AppColors.green;
+const _kPrimary = AppColors.green;
+const _kMid = AppColors.green;
 
 /// Which document the [LegalScreen] should open on.
 enum LegalTab { terms, privacy }
@@ -14,15 +17,15 @@ enum LegalTab { terms, privacy }
 ///
 /// Push it with [initialTab] to land on the relevant document. Content lives in
 /// `legal_content.dart` so the text can be revised without touching the UI.
-class LegalScreen extends StatefulWidget {
+class LegalScreen extends ConsumerStatefulWidget {
   final LegalTab initialTab;
   const LegalScreen({super.key, this.initialTab = LegalTab.terms});
 
   @override
-  State<LegalScreen> createState() => _LegalScreenState();
+  ConsumerState<LegalScreen> createState() => _LegalScreenState();
 }
 
-class _LegalScreenState extends State<LegalScreen>
+class _LegalScreenState extends ConsumerState<LegalScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
 
@@ -45,29 +48,40 @@ class _LegalScreenState extends State<LegalScreen>
   @override
   Widget build(BuildContext context) {
     SizeConfig.init(context);
+    final contentAsync = ref.watch(legalContentProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F6FA),
+      backgroundColor: AppColors.white,
       body: Column(
         children: [
           _Header(tabController: _tabController),
           Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: const [
-                _DocumentView(
-                  intro:
-                      'Please read these Terms & Conditions carefully before '
-                      'using FieldGuard.',
-                  sections: kTermsSections,
-                ),
-                _DocumentView(
-                  intro:
-                      'This Privacy Policy explains how we handle your data '
-                      'under the laws of Nepal.',
-                  sections: kPrivacySections,
-                ),
-              ],
+            child: contentAsync.when(
+              loading: () => const Center(
+                child: CircularProgressIndicator(color: _kPrimary),
+              ),
+              error: (_, _) => _ErrorRetry(
+                onRetry: () => ref.invalidate(legalContentProvider),
+              ),
+              data: (content) => TabBarView(
+                controller: _tabController,
+                children: [
+                  _DocumentView(
+                    intro:
+                        'Please read these Terms & Conditions carefully before '
+                        'using FieldGuard.',
+                    sections: content.terms.sections,
+                    lastUpdated: content.lastUpdated,
+                  ),
+                  _DocumentView(
+                    intro:
+                        'This Privacy Policy explains how we handle your data '
+                        'under the laws of Nepal.',
+                    sections: content.privacy.sections,
+                    lastUpdated: content.lastUpdated,
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -93,7 +107,7 @@ class _Header extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: Color(0x330E5A3B),
+            color: AppColors.green20,
             blurRadius: 16,
             offset: Offset(0, 6),
           ),
@@ -163,7 +177,12 @@ class _Header extends StatelessWidget {
 class _DocumentView extends StatelessWidget {
   final String intro;
   final List<LegalSection> sections;
-  const _DocumentView({required this.intro, required this.sections});
+  final String lastUpdated;
+  const _DocumentView({
+    required this.intro,
+    required this.sections,
+    required this.lastUpdated,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -176,10 +195,10 @@ class _DocumentView extends StatelessWidget {
       ),
       children: [
         Text(
-          'Last updated: $kLegalLastUpdated',
+          'Last updated: $lastUpdated',
           style: TextStyle(
             fontSize: SizeConfig.scaledFontSize(12),
-            color: const Color(0xff9CA3AF),
+            color: AppColors.grey2,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -188,7 +207,7 @@ class _DocumentView extends StatelessWidget {
           intro,
           style: TextStyle(
             fontSize: SizeConfig.scaledFontSize(14),
-            color: const Color(0xff4B5563),
+            color: AppColors.grey,
             height: 1.5,
           ),
         ),
@@ -237,7 +256,7 @@ class _SectionTitle extends StatelessWidget {
             style: TextStyle(
               fontSize: SizeConfig.scaledFontSize(16),
               fontWeight: FontWeight.w800,
-              color: const Color(0xff111827),
+              color: AppColors.ink,
               letterSpacing: -0.2,
             ),
           ),
@@ -259,7 +278,7 @@ class _LegalNodeView extends StatelessWidget {
         node.text,
         style: TextStyle(
           fontSize: SizeConfig.scaledFontSize(13.5),
-          color: const Color(0xff374151),
+          color: AppColors.blue2,
           height: 1.6,
         ),
       );
@@ -291,7 +310,7 @@ class _LegalNodeView extends StatelessWidget {
                       item,
                       style: TextStyle(
                         fontSize: SizeConfig.scaledFontSize(13.5),
-                        color: const Color(0xff374151),
+                        color: AppColors.blue2,
                         height: 1.6,
                       ),
                     ),
@@ -306,6 +325,48 @@ class _LegalNodeView extends StatelessWidget {
   }
 }
 
+class _ErrorRetry extends StatelessWidget {
+  final VoidCallback onRetry;
+  const _ErrorRetry({required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.all(SizeConfig.scale(24)),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.cloud_off_rounded,
+                size: SizeConfig.scale(40), color: AppColors.grey2),
+            SizedBox(height: SizeConfig.scale(12)),
+            Text(
+              "Couldn't load the legal documents. Please check your "
+              'connection and try again.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: SizeConfig.scaledFontSize(14),
+                color: AppColors.grey,
+                height: 1.5,
+              ),
+            ),
+            SizedBox(height: SizeConfig.scale(16)),
+            OutlinedButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh_rounded, size: 18),
+              label: const Text('Retry'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: _kPrimary,
+                side: const BorderSide(color: _kPrimary),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _Disclaimer extends StatelessWidget {
   const _Disclaimer();
 
@@ -314,16 +375,16 @@ class _Disclaimer extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(SizeConfig.scale(14)),
       decoration: BoxDecoration(
-        color: const Color(0xffFFF7E6),
+        color: AppColors.orange8,
         borderRadius: BorderRadius.circular(SizeConfig.scale(12)),
-        border: Border.all(color: const Color(0xffFFE0A3)),
+        border: Border.all(color: AppColors.orange8),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(
             Icons.info_outline_rounded,
-            color: const Color(0xffB7791F),
+            color: AppColors.brown,
             size: SizeConfig.scale(18),
           ),
           SizedBox(width: SizeConfig.scale(10)),
@@ -334,7 +395,7 @@ class _Disclaimer extends StatelessWidget {
               'not legal advice.',
               style: TextStyle(
                 fontSize: SizeConfig.scaledFontSize(11.5),
-                color: const Color(0xff92722A),
+                color: AppColors.brown,
                 height: 1.5,
               ),
             ),

@@ -5,6 +5,8 @@ import 'package:fieldguard/widgets/app_skeletons.dart';
 import 'edit_profile_screen.dart';
 import '../providers/profile_provider.dart';
 import '../providers/profile_state.dart';
+import 'package:fieldguard/core/theme/app_colors.dart';
+import 'package:fieldguard/core/constant/api_constant.dart';
 
 class PersonalInformationScreen extends ConsumerStatefulWidget {
   const PersonalInformationScreen({super.key});
@@ -33,9 +35,9 @@ class _PersonalInformationScreenState
     final h = size.height;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F6FA),
+      backgroundColor: AppColors.white,
       appBar: AppBar(
-        backgroundColor: const Color(0xff0E5A3B),
+        backgroundColor: AppColors.green,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
@@ -94,7 +96,7 @@ class _PersonalInformationScreenState
                         icon: const Icon(Icons.refresh_rounded),
                         label: const Text('Retry'),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xff0E5A3B),
+                          backgroundColor: AppColors.green,
                           foregroundColor: Colors.white,
                           padding: EdgeInsets.symmetric(
                             horizontal: w * 0.08,
@@ -126,12 +128,12 @@ class _PersonalInformationScreenState
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
                                       border: Border.all(
-                                        color: const Color(0xff0E5A3B),
+                                        color: AppColors.green,
                                         width: 3,
                                       ),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: const Color(0xff0E5A3B)
+                                          color: AppColors.green
                                               .withValues(alpha: 0.2),
                                           blurRadius: 20,
                                           offset: const Offset(0, 10),
@@ -143,30 +145,28 @@ class _PersonalInformationScreenState
                                                   .profile.profileImage !=
                                               null
                                           ? Image.network(
-                                              profileState.profile.profileImage!.startsWith('http')
-                                                  ? profileState.profile.profileImage!
-                                                  : 'https://fieldguard-be.onrender.com/${profileState.profile.profileImage}',
+                                              ApiConstant.imageUrl(profileState.profile.profileImage!),
                                               fit: BoxFit.cover,
                                               errorBuilder:
                                                   (context, error, stackTrace) {
                                                 return Container(
                                                   color:
-                                                      const Color(0xffE5E7EB),
+                                                      AppColors.grey4,
                                                   child: Icon(
                                                     Icons.person_rounded,
                                                     size: w * 0.15,
                                                     color:
-                                                        const Color(0xff9CA3AF),
+                                                        AppColors.grey2,
                                                   ),
                                                 );
                                               },
                                             )
                                           : Container(
-                                              color: const Color(0xffE5E7EB),
+                                              color: AppColors.grey4,
                                               child: Icon(
                                                 Icons.person_rounded,
                                                 size: w * 0.15,
-                                                color: const Color(0xff9CA3AF),
+                                                color: AppColors.grey2,
                                               ),
                                             ),
                                     ),
@@ -179,7 +179,7 @@ class _PersonalInformationScreenState
                                       height: w * 0.1,
                                       decoration: BoxDecoration(
                                         shape: BoxShape.circle,
-                                        color: const Color(0xff0E5A3B),
+                                        color: AppColors.green,
                                         border: Border.all(
                                           color: Colors.white,
                                           width: 2.5,
@@ -256,7 +256,7 @@ class _PersonalInformationScreenState
                                       ? 'Active'
                                       : 'Inactive',
                                   valueColor: profileState.profile.isActive
-                                      ? const Color(0xff0E5A3B)
+                                      ? AppColors.green
                                       : Colors.red.shade600,
                                 ),
                               ],
@@ -356,7 +356,7 @@ class _PersonalInformationScreenState
                                 icon: const Icon(Icons.edit_rounded),
                                 label: const Text('Edit Profile'),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xff0E5A3B),
+                                  backgroundColor: AppColors.green,
                                   foregroundColor: Colors.white,
                                   padding: EdgeInsets.symmetric(
                                     vertical: h * 0.018,
@@ -406,7 +406,7 @@ class _PersonalInformationScreenState
                   width: w * 0.01,
                   height: w * 0.05,
                   decoration: BoxDecoration(
-                    color: const Color(0xff0E5A3B),
+                    color: AppColors.green,
                     borderRadius: BorderRadius.circular(w * 0.01),
                   ),
                 ),
@@ -416,7 +416,7 @@ class _PersonalInformationScreenState
                   style: TextStyle(
                     fontSize: w * 0.045,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xff111827),
+                    color: AppColors.ink,
                     letterSpacing: 0.2,
                   ),
                 ),
@@ -447,12 +447,12 @@ class _PersonalInformationScreenState
             width: w * 0.11,
             height: w * 0.11,
             decoration: BoxDecoration(
-              color: const Color(0xff0E5A3B).withValues(alpha: 0.1),
+              color: AppColors.green.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(w * 0.03),
             ),
             child: Icon(
               icon,
-              color: const Color(0xff0E5A3B),
+              color: AppColors.green,
               size: w * 0.055,
             ),
           ),
@@ -465,7 +465,7 @@ class _PersonalInformationScreenState
                   label,
                   style: TextStyle(
                     fontSize: w * 0.032,
-                    color: const Color(0xff6B7280),
+                    color: AppColors.grey,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -474,7 +474,7 @@ class _PersonalInformationScreenState
                   value,
                   style: TextStyle(
                     fontSize: w * 0.04,
-                    color: valueColor ?? const Color(0xff111827),
+                    color: valueColor ?? AppColors.ink,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -490,7 +490,7 @@ class _PersonalInformationScreenState
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: w * 0.045),
       child: Divider(
-        color: const Color(0xffE5E7EB),
+        color: AppColors.grey4,
         thickness: 1,
         height: 1,
       ),

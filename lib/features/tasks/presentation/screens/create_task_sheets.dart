@@ -75,7 +75,7 @@ class _PersonSelectorBottomSheetState extends State<_PersonSelectorBottomSheet> 
                   width: SizeConfig.scale(40),
                   height: SizeConfig.scale(4),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE5E7EB),
+                    color: AppColors.grey4,
                     borderRadius: BorderRadius.circular(SizeConfig.scale(2)),
                   ),
                 ),
@@ -85,7 +85,7 @@ class _PersonSelectorBottomSheetState extends State<_PersonSelectorBottomSheet> 
                   style: TextStyle(
                     fontSize: SizeConfig.scaledFontSize(18),
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xff111111),
+                    color: AppColors.black,
                   ),
                 ),
                 SizedBox(height: SizeConfig.scale(16)),
@@ -97,19 +97,19 @@ class _PersonSelectorBottomSheetState extends State<_PersonSelectorBottomSheet> 
                   decoration: InputDecoration(
                     hintText: 'Search by name or code...',
                     hintStyle: TextStyle(
-                      color: const Color(0xff667085),
+                      color: AppColors.grey,
                       fontSize: SizeConfig.scaledFontSize(14),
                     ),
                     prefixIcon: Icon(
                       Icons.search,
-                      color: const Color(0xff667085),
+                      color: AppColors.grey,
                       size: SizeConfig.scale(20),
                     ),
                     suffixIcon: _searchController.text.isNotEmpty
                         ? IconButton(
                             icon: Icon(
                               Icons.clear,
-                              color: const Color(0xff667085),
+                              color: AppColors.grey,
                               size: SizeConfig.scale(20),
                             ),
                             onPressed: () {
@@ -119,22 +119,22 @@ class _PersonSelectorBottomSheetState extends State<_PersonSelectorBottomSheet> 
                           )
                         : null,
                     filled: true,
-                    fillColor: const Color(0xFFF9FAFB),
+                    fillColor: AppColors.white,
                     contentPadding: EdgeInsets.symmetric(
                       horizontal: SizeConfig.scale(16),
                       vertical: SizeConfig.scale(12),
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(SizeConfig.scale(12)),
-                      borderSide: const BorderSide(color: Color(0xffE8E3DD)),
+                      borderSide: const BorderSide(color: AppColors.grey3),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(SizeConfig.scale(12)),
-                      borderSide: const BorderSide(color: Color(0xffE8E3DD)),
+                      borderSide: const BorderSide(color: AppColors.grey3),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(SizeConfig.scale(12)),
-                      borderSide: const BorderSide(color: Color(0xff0E5A3B), width: 2),
+                      borderSide: const BorderSide(color: AppColors.green, width: 2),
                     ),
                   ),
                 ),
@@ -152,7 +152,7 @@ class _PersonSelectorBottomSheetState extends State<_PersonSelectorBottomSheet> 
                   '${_filteredPeople.length} ${_filteredPeople.length == 1 ? 'result' : 'results'}',
                   style: TextStyle(
                     fontSize: SizeConfig.scaledFontSize(13),
-                    color: const Color(0xff667085),
+                    color: AppColors.grey,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -170,14 +170,14 @@ class _PersonSelectorBottomSheetState extends State<_PersonSelectorBottomSheet> 
                         Icon(
                           Icons.search_off,
                           size: SizeConfig.scale(64),
-                          color: const Color(0xffE8E3DD),
+                          color: AppColors.grey3,
                         ),
                         SizedBox(height: SizeConfig.scale(16)),
                         Text(
                           'No results found',
                           style: TextStyle(
                             fontSize: SizeConfig.scaledFontSize(16),
-                            color: const Color(0xff667085),
+                            color: AppColors.grey,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -186,7 +186,7 @@ class _PersonSelectorBottomSheetState extends State<_PersonSelectorBottomSheet> 
                           'Try a different search term',
                           style: TextStyle(
                             fontSize: SizeConfig.scaledFontSize(13),
-                            color: const Color(0xff667085),
+                            color: AppColors.grey,
                           ),
                         ),
                       ],
@@ -243,13 +243,13 @@ class _PersonSelectorBottomSheetState extends State<_PersonSelectorBottomSheet> 
           color: Colors.white,
           borderRadius: BorderRadius.circular(SizeConfig.scale(12)),
           border: Border.all(
-            color: isSelected ? const Color(0xff0E5A3B) : const Color(0xffE8E3DD),
+            color: isSelected ? AppColors.green : AppColors.grey3,
             width: isSelected ? 2 : 1,
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: const Color(0xff0E5A3B).withValues(alpha: 0.1),
+                    color: AppColors.green.withValues(alpha: 0.1),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -260,7 +260,7 @@ class _PersonSelectorBottomSheetState extends State<_PersonSelectorBottomSheet> 
           children: [
             CircleAvatar(
               radius: SizeConfig.scale(24),
-              backgroundColor: const Color(0xff0E5A3B).withValues(alpha: 0.1),
+              backgroundColor: AppColors.green.withValues(alpha: 0.1),
               backgroundImage: profileImage != null && profileImage.isNotEmpty
                   ? NetworkImage(profileImage)
                   : null,
@@ -270,7 +270,7 @@ class _PersonSelectorBottomSheetState extends State<_PersonSelectorBottomSheet> 
                       style: TextStyle(
                         fontSize: SizeConfig.scaledFontSize(18),
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xff0E5A3B),
+                        color: AppColors.green,
                       ),
                     )
                   : null,
@@ -285,7 +285,7 @@ class _PersonSelectorBottomSheetState extends State<_PersonSelectorBottomSheet> 
                     style: TextStyle(
                       fontSize: SizeConfig.scaledFontSize(15),
                       fontWeight: FontWeight.w600,
-                      color: const Color(0xff111111),
+                      color: AppColors.black,
                     ),
                   ),
                   SizedBox(height: SizeConfig.scale(2)),
@@ -293,7 +293,7 @@ class _PersonSelectorBottomSheetState extends State<_PersonSelectorBottomSheet> 
                     code,
                     style: TextStyle(
                       fontSize: SizeConfig.scaledFontSize(13),
-                      color: const Color(0xff667085),
+                      color: AppColors.grey,
                     ),
                   ),
                 ],
@@ -306,14 +306,14 @@ class _PersonSelectorBottomSheetState extends State<_PersonSelectorBottomSheet> 
                   vertical: SizeConfig.scale(4),
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xffFFE3E6),
+                  color: AppColors.red6,
                   borderRadius: BorderRadius.circular(SizeConfig.scale(4)),
                 ),
                 child: Text(
                   'Inactive',
                   style: TextStyle(
                     fontSize: SizeConfig.scaledFontSize(11),
-                    color: const Color(0xffFF3B3B),
+                    color: AppColors.red2,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -322,7 +322,7 @@ class _PersonSelectorBottomSheetState extends State<_PersonSelectorBottomSheet> 
             if (isSelected)
               Icon(
                 Icons.check_circle,
-                color: const Color(0xff0E5A3B),
+                color: AppColors.green,
                 size: SizeConfig.scale(24),
               ),
           ],
@@ -397,7 +397,7 @@ class _ShopSelectorBottomSheetState extends State<_ShopSelectorBottomSheet> {
                   width: SizeConfig.scale(40),
                   height: SizeConfig.scale(4),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE5E7EB),
+                    color: AppColors.grey4,
                     borderRadius: BorderRadius.circular(SizeConfig.scale(2)),
                   ),
                 ),
@@ -407,7 +407,7 @@ class _ShopSelectorBottomSheetState extends State<_ShopSelectorBottomSheet> {
                   style: TextStyle(
                     fontSize: SizeConfig.scaledFontSize(18),
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xff111111),
+                    color: AppColors.black,
                   ),
                 ),
                 SizedBox(height: SizeConfig.scale(16)),
@@ -419,19 +419,19 @@ class _ShopSelectorBottomSheetState extends State<_ShopSelectorBottomSheet> {
                   decoration: InputDecoration(
                     hintText: 'Search by name or address...',
                     hintStyle: TextStyle(
-                      color: const Color(0xff667085),
+                      color: AppColors.grey,
                       fontSize: SizeConfig.scaledFontSize(14),
                     ),
                     prefixIcon: Icon(
                       Icons.search,
-                      color: const Color(0xff667085),
+                      color: AppColors.grey,
                       size: SizeConfig.scale(20),
                     ),
                     suffixIcon: _searchController.text.isNotEmpty
                         ? IconButton(
                             icon: Icon(
                               Icons.clear,
-                              color: const Color(0xff667085),
+                              color: AppColors.grey,
                               size: SizeConfig.scale(20),
                             ),
                             onPressed: () {
@@ -441,23 +441,23 @@ class _ShopSelectorBottomSheetState extends State<_ShopSelectorBottomSheet> {
                           )
                         : null,
                     filled: true,
-                    fillColor: const Color(0xFFF9FAFB),
+                    fillColor: AppColors.white,
                     contentPadding: EdgeInsets.symmetric(
                       horizontal: SizeConfig.scale(16),
                       vertical: SizeConfig.scale(12),
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(SizeConfig.scale(12)),
-                      borderSide: const BorderSide(color: Color(0xffE8E3DD)),
+                      borderSide: const BorderSide(color: AppColors.grey3),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(SizeConfig.scale(12)),
-                      borderSide: const BorderSide(color: Color(0xffE8E3DD)),
+                      borderSide: const BorderSide(color: AppColors.grey3),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(SizeConfig.scale(12)),
                       borderSide:
-                          const BorderSide(color: Color(0xff0E5A3B), width: 2),
+                          const BorderSide(color: AppColors.green, width: 2),
                     ),
                   ),
                 ),
@@ -475,7 +475,7 @@ class _ShopSelectorBottomSheetState extends State<_ShopSelectorBottomSheet> {
                   '${_filteredShops.length} ${_filteredShops.length == 1 ? 'result' : 'results'}',
                   style: TextStyle(
                     fontSize: SizeConfig.scaledFontSize(13),
-                    color: const Color(0xff667085),
+                    color: AppColors.grey,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -493,14 +493,14 @@ class _ShopSelectorBottomSheetState extends State<_ShopSelectorBottomSheet> {
                         Icon(
                           Icons.search_off,
                           size: SizeConfig.scale(64),
-                          color: const Color(0xffE8E3DD),
+                          color: AppColors.grey3,
                         ),
                         SizedBox(height: SizeConfig.scale(16)),
                         Text(
                           'No shops found',
                           style: TextStyle(
                             fontSize: SizeConfig.scaledFontSize(16),
-                            color: const Color(0xff667085),
+                            color: AppColors.grey,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -509,7 +509,7 @@ class _ShopSelectorBottomSheetState extends State<_ShopSelectorBottomSheet> {
                           'Try a different search term',
                           style: TextStyle(
                             fontSize: SizeConfig.scaledFontSize(13),
-                            color: const Color(0xff667085),
+                            color: AppColors.grey,
                           ),
                         ),
                       ],
@@ -545,13 +545,13 @@ class _ShopSelectorBottomSheetState extends State<_ShopSelectorBottomSheet> {
           borderRadius: BorderRadius.circular(SizeConfig.scale(12)),
           border: Border.all(
             color:
-                isSelected ? const Color(0xff0E5A3B) : const Color(0xffE8E3DD),
+                isSelected ? AppColors.green : AppColors.grey3,
             width: isSelected ? 2 : 1,
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: const Color(0xff0E5A3B).withValues(alpha: 0.1),
+                    color: AppColors.green.withValues(alpha: 0.1),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -565,7 +565,7 @@ class _ShopSelectorBottomSheetState extends State<_ShopSelectorBottomSheet> {
               child: Container(
                 width: SizeConfig.scale(48),
                 height: SizeConfig.scale(48),
-                color: const Color(0xff0E5A3B).withValues(alpha: 0.1),
+                color: AppColors.green.withValues(alpha: 0.1),
                 child: (shop.shopImage != null && shop.shopImage!.isNotEmpty)
                     ? Image.network(
                         shop.shopImage!,
@@ -578,20 +578,20 @@ class _ShopSelectorBottomSheetState extends State<_ShopSelectorBottomSheet> {
                               height: SizeConfig.scale(18),
                               child: const CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: Color(0xff0E5A3B),
+                                color: AppColors.green,
                               ),
                             ),
                           );
                         },
                         errorBuilder: (context, _, _) => Icon(
                           Icons.store,
-                          color: const Color(0xff0E5A3B),
+                          color: AppColors.green,
                           size: SizeConfig.scale(24),
                         ),
                       )
                     : Icon(
                         Icons.store,
-                        color: const Color(0xff0E5A3B),
+                        color: AppColors.green,
                         size: SizeConfig.scale(24),
                       ),
               ),
@@ -606,7 +606,7 @@ class _ShopSelectorBottomSheetState extends State<_ShopSelectorBottomSheet> {
                     style: TextStyle(
                       fontSize: SizeConfig.scaledFontSize(15),
                       fontWeight: FontWeight.w600,
-                      color: const Color(0xff111111),
+                      color: AppColors.black,
                     ),
                   ),
                   SizedBox(height: SizeConfig.scale(2)),
@@ -616,7 +616,7 @@ class _ShopSelectorBottomSheetState extends State<_ShopSelectorBottomSheet> {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: SizeConfig.scaledFontSize(13),
-                      color: const Color(0xff667085),
+                      color: AppColors.grey,
                     ),
                   ),
                 ],
@@ -629,14 +629,14 @@ class _ShopSelectorBottomSheetState extends State<_ShopSelectorBottomSheet> {
                   vertical: SizeConfig.scale(4),
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xffFFE3E6),
+                  color: AppColors.red6,
                   borderRadius: BorderRadius.circular(SizeConfig.scale(4)),
                 ),
                 child: Text(
                   'Inactive',
                   style: TextStyle(
                     fontSize: SizeConfig.scaledFontSize(11),
-                    color: const Color(0xffFF3B3B),
+                    color: AppColors.red2,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -645,7 +645,7 @@ class _ShopSelectorBottomSheetState extends State<_ShopSelectorBottomSheet> {
             if (isSelected)
               Icon(
                 Icons.check_circle,
-                color: const Color(0xff0E5A3B),
+                color: AppColors.green,
                 size: SizeConfig.scale(24),
               ),
           ],

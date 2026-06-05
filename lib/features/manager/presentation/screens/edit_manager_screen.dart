@@ -10,6 +10,8 @@ import 'package:fieldguard/features/manager/data/dto/update_manager_request.dart
 import 'package:fieldguard/features/uploads/image_upload_service.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:fieldguard/core/theme/app_colors.dart';
+import 'package:fieldguard/core/constant/api_constant.dart';
 
 class EditManagerScreen extends StatefulWidget {
   final int managerId;
@@ -105,7 +107,7 @@ class _EditManagerScreenState extends State<EditManagerScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Image uploaded successfully'),
-            backgroundColor: Color(0xff6558FF),
+            backgroundColor: AppColors.blue,
           ),
         );
       }
@@ -153,7 +155,7 @@ class _EditManagerScreenState extends State<EditManagerScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Manager updated successfully'),
-            backgroundColor: Color(0xff6558FF),
+            backgroundColor: AppColors.blue,
           ),
         );
         Navigator.pop(context, true); // Return true to indicate success
@@ -206,9 +208,9 @@ class _EditManagerScreenState extends State<EditManagerScreen> {
     return ResponsiveBuilder(
       builder: (context, screenType, orientation, constraints) {
         return Scaffold(
-          backgroundColor: const Color(0xFFF8FAF9),
+          backgroundColor: AppColors.white,
           appBar: AppBar(
-            backgroundColor: const Color(0xff6558FF),
+            backgroundColor: AppColors.blue,
             elevation: 0,
             leading: IconButton(
               icon: const Icon(Icons.arrow_back, color: Colors.white),
@@ -241,12 +243,12 @@ class _EditManagerScreenState extends State<EditManagerScreen> {
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: const Color(0xff6558FF),
+                              color: AppColors.blue,
                               width: 3,
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xff6558FF).withValues(alpha: 0.2),
+                                color: AppColors.blue.withValues(alpha: 0.2),
                                 blurRadius: 20,
                                 offset: const Offset(0, 10),
                               ),
@@ -255,10 +257,10 @@ class _EditManagerScreenState extends State<EditManagerScreen> {
                           child: ClipOval(
                             child: _isUploadingImage
                                 ? Container(
-                                    color: const Color(0xffE5E7EB),
+                                    color: AppColors.grey4,
                                     child: const Center(
                                       child: CircularProgressIndicator(
-                                        color: Color(0xff6558FF),
+                                        color: AppColors.blue,
                                       ),
                                     ),
                                   )
@@ -269,27 +271,25 @@ class _EditManagerScreenState extends State<EditManagerScreen> {
                                       )
                                     : widget.currentProfileImage != null
                                         ? Image.network(
-                                            widget.currentProfileImage!.startsWith('http')
-                                                ? widget.currentProfileImage!
-                                                : 'https://fieldguard-be.onrender.com/${widget.currentProfileImage}',
+                                            ApiConstant.imageUrl(widget.currentProfileImage!),
                                             fit: BoxFit.cover,
                                             errorBuilder: (context, error, stackTrace) {
                                               return Container(
-                                                color: const Color(0xffE5E7EB),
+                                                color: AppColors.grey4,
                                                 child: Icon(
                                                   Icons.person_rounded,
                                                   size: SizeConfig.scale(50),
-                                                  color: const Color(0xff9CA3AF),
+                                                  color: AppColors.grey2,
                                                 ),
                                               );
                                             },
                                           )
                                         : Container(
-                                            color: const Color(0xffE5E7EB),
+                                            color: AppColors.grey4,
                                             child: Icon(
                                               Icons.person_rounded,
                                               size: SizeConfig.scale(50),
-                                              color: const Color(0xff9CA3AF),
+                                              color: AppColors.grey2,
                                             ),
                                           ),
                           ),
@@ -304,14 +304,14 @@ class _EditManagerScreenState extends State<EditManagerScreen> {
                               height: SizeConfig.scale(40),
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: const Color(0xff6558FF),
+                                color: AppColors.blue,
                                 border: Border.all(
                                   color: Colors.white,
                                   width: 2.5,
                                 ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: const Color(0xff6558FF).withValues(alpha: 0.4),
+                                    color: AppColors.blue.withValues(alpha: 0.4),
                                     blurRadius: 8,
                                     offset: const Offset(0, 3),
                                   ),
@@ -395,7 +395,7 @@ class _EditManagerScreenState extends State<EditManagerScreen> {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(SizeConfig.scale(12)),
-                      border: Border.all(color: const Color(0xffE8E3DD)),
+                      border: Border.all(color: AppColors.grey3),
                     ),
                     child: Row(
                       children: [
@@ -403,12 +403,12 @@ class _EditManagerScreenState extends State<EditManagerScreen> {
                           width: SizeConfig.scale(48),
                           height: SizeConfig.scale(48),
                           decoration: BoxDecoration(
-                            color: const Color(0xff6558FF).withValues(alpha: 0.1),
+                            color: AppColors.blue.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(SizeConfig.scale(12)),
                           ),
                           child: Icon(
                             Icons.toggle_on,
-                            color: const Color(0xff6558FF),
+                            color: AppColors.blue,
                             size: SizeConfig.scale(24),
                           ),
                         ),
@@ -422,7 +422,7 @@ class _EditManagerScreenState extends State<EditManagerScreen> {
                                 style: TextStyle(
                                   fontSize: SizeConfig.scaledFontSize(16),
                                   fontWeight: FontWeight.w600,
-                                  color: const Color(0xff111111),
+                                  color: AppColors.black,
                                 ),
                               ),
                               SizedBox(height: SizeConfig.scale(4)),
@@ -430,7 +430,7 @@ class _EditManagerScreenState extends State<EditManagerScreen> {
                                 _isActive ? 'Manager is active' : 'Manager is inactive',
                                 style: TextStyle(
                                   fontSize: SizeConfig.scaledFontSize(13),
-                                  color: const Color(0xff667085),
+                                  color: AppColors.grey,
                                 ),
                               ),
                             ],
@@ -441,7 +441,7 @@ class _EditManagerScreenState extends State<EditManagerScreen> {
                           onChanged: (value) {
                             setState(() => _isActive = value);
                           },
-                          activeColor: const Color(0xff6558FF),
+                          activeColor: AppColors.blue,
                         ),
                       ],
                     ),
@@ -452,7 +452,7 @@ class _EditManagerScreenState extends State<EditManagerScreen> {
                   ElevatedButton(
                     onPressed: _isLoading ? null : _updateManager,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xff6558FF),
+                      backgroundColor: AppColors.blue,
                       padding: EdgeInsets.symmetric(
                         vertical: SizeConfig.scale(16),
                       ),
@@ -505,18 +505,18 @@ class _EditManagerScreenState extends State<EditManagerScreen> {
       onChanged: onChanged,
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: Icon(icon, color: const Color(0xff6558FF)),
+        prefixIcon: Icon(icon, color: AppColors.blue),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(SizeConfig.scale(12)),
-          borderSide: const BorderSide(color: Color(0xffE8E3DD)),
+          borderSide: const BorderSide(color: AppColors.grey3),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(SizeConfig.scale(12)),
-          borderSide: const BorderSide(color: Color(0xffE8E3DD)),
+          borderSide: const BorderSide(color: AppColors.grey3),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(SizeConfig.scale(12)),
-          borderSide: const BorderSide(color: Color(0xff6558FF), width: 2),
+          borderSide: const BorderSide(color: AppColors.blue, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(SizeConfig.scale(12)),

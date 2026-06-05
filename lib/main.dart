@@ -2,6 +2,9 @@ import 'package:fieldguard/core/security/root_detection_service.dart';
 import 'package:fieldguard/core/security/security_blocked_screen.dart';
 import 'package:fieldguard/core/services/background_location_service.dart';
 import 'package:fieldguard/core/services/notification_service.dart';
+import 'package:fieldguard/core/services/push_notification_service.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:fieldguard/features/auth/login/presentation/providers/login_provider.dart';
 import 'package:fieldguard/features/auth/login/presentation/providers/login_state.dart';
 import 'package:fieldguard/features/auto_geofence/presentation/active_tasks_provider.dart';
@@ -25,9 +28,18 @@ void main() async {
 
   await dotenv.load(fileName: '.env');
   MapboxOptions.setAccessToken(dotenv.env['MAPBOX_PUBLIC_TOKEN']!);
+
+  // Firebase + push (FCM). Initialise before any FirebaseMessaging use and
+  // register the background handler at startup so backgrounded/terminated
+  // messages are handled. On Android the config comes from google-services.json.
+  await Firebase.initializeApp();
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
   // Register the notification channels + prompt for permission before any
   // call site (e.g. geofence enter/exit) tries to show one.
   await NotificationService.instance.init();
+  // Wire FCM: permission, token, and foreground message rendering.
+  await PushNotificationService.instance.init();
   // Register the background-service isolate (does NOT start it — start/stop is
   // driven by whether a task is IN_PROGRESS). Geofence detection runs inside
   // this isolate so enter/exit alerts survive the app being swipe-killed.
@@ -56,6 +68,9 @@ class MyApp extends ConsumerWidget {
         // is rarely on the Routes screen when they walk into a geofence
         // (phone in pocket), so this must outlive that screen's lifecycle.
         ref.read(geofenceEventBridgeProvider);
+        // Now that we're authenticated, register this device's FCM token so
+        // backend push can target it (best-effort; safe to call repeatedly).
+        PushNotificationService.instance.registerToken();
       } else if (next is LoginInitial || next is LoginFailure) {
         // Stop the background service and tear the bridges down.
         BackgroundLocationService.stop();

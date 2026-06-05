@@ -26,15 +26,16 @@ import 'package:fieldguard/features/shops/presentation/providers/shops_provider.
 import 'package:fieldguard/features/shops/presentation/providers/shops_state.dart';
 import 'package:fieldguard/features/tasks/data/dto/tasks_list_response.dart';
 import 'package:fieldguard/features/tasks/presentation/screens/task_detail_screen.dart';
+import 'package:fieldguard/core/theme/app_colors.dart';
 
 part 'routes_screen_overlays.dart';
 part 'routes_screen_sheets.dart';
 
-const _kBrand = Color(0xFF0E5A3B);
-const _kBrandSoft = Color(0xFFD1FADF);
+const _kBrand = AppColors.green;
+const _kBrandSoft = AppColors.green6;
 // Header gradient stops — consistent with Team / Profile / Login.
-const _kDark = Color(0xff072A1C);
-const _kMid = Color(0xff1D7A51);
+const _kDark = AppColors.green;
+const _kMid = AppColors.green;
 
 // Width-based [SizeConfig.scale] balloons on landscape phones. These helpers
 // scale off the SHORTER screen side so paddings/fonts stay phone-sized in
@@ -597,7 +598,7 @@ class _RoutesScreenState extends ConsumerState<RoutesScreen> {
   Widget build(BuildContext context) {
     if (!_roleResolved) {
       return const Scaffold(
-        backgroundColor: Color(0xFFF8FAF9),
+        backgroundColor: AppColors.white,
         body: SkeletonList(),
       );
     }
@@ -647,7 +648,7 @@ class _RoutesScreenState extends ConsumerState<RoutesScreen> {
     final hasReached = activeTask != null && reachedId == activeTask.id;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAF9),
+      backgroundColor: AppColors.white,
       body: SingleChildScrollView(
         physics: const ClampingScrollPhysics(),
         child: Column(
@@ -697,7 +698,7 @@ class _RoutesScreenState extends ConsumerState<RoutesScreen> {
                     style: TextStyle(
                       fontSize: _sf(18),
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF111827),
+                      color: AppColors.ink,
                       letterSpacing: -0.2,
                     ),
                   ),
@@ -719,7 +720,7 @@ class _RoutesScreenState extends ConsumerState<RoutesScreen> {
     _consumeNavigateTarget(ref.watch(navigateTargetProvider));
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAF9),
+      backgroundColor: AppColors.white,
       body: SingleChildScrollView(
         physics: const ClampingScrollPhysics(),
         child: Column(
@@ -967,14 +968,14 @@ class _RoutesScreenState extends ConsumerState<RoutesScreen> {
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: Color(0xff667085),
+            color: AppColors.grey,
             letterSpacing: 0.5,
           ),
         ),
         const SizedBox(height: 8),
         const Text(
           'Pick a shop to see the route',
-          style: TextStyle(fontSize: 16, color: Color(0xff667085)),
+          style: TextStyle(fontSize: 16, color: AppColors.grey),
         ),
         const SizedBox(height: 16),
         SizedBox(
@@ -1010,7 +1011,7 @@ class _RoutesScreenState extends ConsumerState<RoutesScreen> {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: Color(0xff667085),
+                color: AppColors.grey,
                 letterSpacing: 0.5,
               ),
             ),
@@ -1020,7 +1021,7 @@ class _RoutesScreenState extends ConsumerState<RoutesScreen> {
               child: const Icon(
                 Icons.close,
                 size: 20,
-                color: Color(0xff667085),
+                color: AppColors.grey,
               ),
             ),
           ],
@@ -1031,7 +1032,7 @@ class _RoutesScreenState extends ConsumerState<RoutesScreen> {
           style: const TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.w700,
-            color: Color(0xff111111),
+            color: AppColors.black,
           ),
         ),
         const SizedBox(height: 8),
@@ -1040,13 +1041,13 @@ class _RoutesScreenState extends ConsumerState<RoutesScreen> {
             const Icon(
               Icons.location_on_outlined,
               size: 16,
-              color: Color(0xff667085),
+              color: AppColors.grey,
             ),
             const SizedBox(width: 4),
             Expanded(
               child: Text(
                 dest.address ?? '',
-                style: const TextStyle(fontSize: 14, color: Color(0xff667085)),
+                style: const TextStyle(fontSize: 14, color: AppColors.grey),
               ),
             ),
           ],
@@ -1066,7 +1067,7 @@ class _RoutesScreenState extends ConsumerState<RoutesScreen> {
               SizedBox(width: 8),
               Text(
                 'Calculating route…',
-                style: TextStyle(fontSize: 14, color: Color(0xff667085)),
+                style: TextStyle(fontSize: 14, color: AppColors.grey),
               ),
             ],
           )
@@ -1086,14 +1087,14 @@ class _RoutesScreenState extends ConsumerState<RoutesScreen> {
               const SizedBox(width: 8),
               Text(
                 _formatDuration(route.durationSeconds),
-                style: const TextStyle(fontSize: 14, color: Color(0xff667085)),
+                style: const TextStyle(fontSize: 14, color: AppColors.grey),
               ),
             ],
           )
         else
           const Text(
             'Route unavailable — check your connection.',
-            style: TextStyle(fontSize: 13, color: Color(0xffC0392B)),
+            style: TextStyle(fontSize: 13, color: AppColors.red),
           ),
         const SizedBox(height: 20),
         SizedBox(

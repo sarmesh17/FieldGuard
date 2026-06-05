@@ -46,7 +46,7 @@ class _ShopPickerSheetState extends State<_ShopPickerSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: const Color(0xffE0E4EA),
+                color: AppColors.grey4,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -57,7 +57,7 @@ class _ShopPickerSheetState extends State<_ShopPickerSheet> {
             style: TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.w800,
-              color: Color(0xff111111),
+              color: AppColors.black,
             ),
           ),
           const SizedBox(height: 14),
@@ -65,9 +65,9 @@ class _ShopPickerSheetState extends State<_ShopPickerSheet> {
             onChanged: (v) => setState(() => _query = v),
             decoration: InputDecoration(
               hintText: 'Search shops…',
-              prefixIcon: const Icon(Icons.search, color: Color(0xff9CA3AF)),
+              prefixIcon: const Icon(Icons.search, color: AppColors.grey2),
               filled: true,
-              fillColor: const Color(0xffF2F4F7),
+              fillColor: AppColors.white,
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 14,
                 vertical: 12,
@@ -85,7 +85,7 @@ class _ShopPickerSheetState extends State<_ShopPickerSheet> {
               child: Center(
                 child: Text(
                   'No shops found',
-                  style: TextStyle(color: Color(0xff667085)),
+                  style: TextStyle(color: AppColors.grey),
                 ),
               ),
             )
@@ -95,7 +95,7 @@ class _ShopPickerSheetState extends State<_ShopPickerSheet> {
                 shrinkWrap: true,
                 itemCount: filtered.length,
                 separatorBuilder: (_, _) =>
-                    const Divider(height: 1, color: Color(0xffF0F2F5)),
+                    const Divider(height: 1, color: AppColors.white),
                 itemBuilder: (_, i) {
                   final s = filtered[i];
                   final hasCoords =
@@ -120,25 +120,25 @@ class _ShopPickerSheetState extends State<_ShopPickerSheet> {
                       s.shop.name,
                       style: const TextStyle(
                         fontWeight: FontWeight.w700,
-                        color: Color(0xff111111),
+                        color: AppColors.black,
                       ),
                     ),
                     subtitle: Text(
                       s.shop.address,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: Color(0xff667085)),
+                      style: const TextStyle(color: AppColors.grey),
                     ),
                     trailing: hasCoords
                         ? const Icon(
                             Icons.chevron_right,
-                            color: Color(0xff667085),
+                            color: AppColors.grey,
                           )
                         : const Tooltip(
                             message: 'No saved location',
                             child: Icon(
                               Icons.location_off_outlined,
-                              color: Color(0xffC0392B),
+                              color: AppColors.red,
                               size: 18,
                             ),
                           ),
@@ -207,7 +207,7 @@ class _MapLoadingOverlayState extends State<_MapLoadingOverlay>
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: const Color(0xFFF5F6FA),
+      color: AppColors.white,
       child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -249,7 +249,7 @@ class _MapLoadingOverlayState extends State<_MapLoadingOverlay>
               base: 'Getting your location',
               style: const TextStyle(
                 fontSize: 13,
-                color: Color(0xff667085),
+                color: AppColors.grey,
                 fontWeight: FontWeight.w500,
               ),
             ),
