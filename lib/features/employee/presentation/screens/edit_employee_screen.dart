@@ -11,6 +11,7 @@ import 'package:fieldguard/features/uploads/image_upload_service.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:fieldguard/core/theme/app_colors.dart';
+import 'package:fieldguard/core/constant/api_constant.dart';
 
 class EditEmployeeScreen extends StatefulWidget {
   final int employeeId;
@@ -270,9 +271,7 @@ class _EditEmployeeScreenState extends State<EditEmployeeScreen> {
                                       )
                                     : widget.currentProfileImage != null
                                         ? Image.network(
-                                            widget.currentProfileImage!.startsWith('http')
-                                                ? widget.currentProfileImage!
-                                                : 'https://fieldguard-be.onrender.com/${widget.currentProfileImage}',
+                                            ApiConstant.imageUrl(widget.currentProfileImage!),
                                             fit: BoxFit.cover,
                                             errorBuilder: (context, error, stackTrace) {
                                               return Container(

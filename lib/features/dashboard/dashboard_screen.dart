@@ -715,18 +715,6 @@ class _QuickActionsSection extends ConsumerWidget {
               },
             ),
           ],
-          const SizedBox(width: 12),
-          _ActionButton(
-            icon: Icons.campaign_rounded,
-            label: 'Broadcast',
-            color: AppColors.white,
-            iconColor: AppColors.red2,
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Broadcast feature coming soon')),
-              );
-            },
-          ),
         ],
       ),
     );

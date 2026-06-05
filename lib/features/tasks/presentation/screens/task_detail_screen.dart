@@ -151,9 +151,9 @@ class _TaskDetailBodyState extends ConsumerState<_TaskDetailBody>
         : '';
   }
 
-  /// Opens the collection form for this task's shop. The collection endpoint
-  /// is task-independent (only needs shopId), so we pass through from the
-  /// linked shop directly.
+  /// Opens the collection form for this task's shop. We pass both the shop
+  /// (from the linked shop) and the task id, so the API can also notify the
+  /// task's responsible manager.
   void _collectPayment(TaskData task) {
     final shop = task.shop;
     if (shop == null) return;
@@ -162,6 +162,7 @@ class _TaskDetailBodyState extends ConsumerState<_TaskDetailBody>
         builder: (_) => CollectPaymentScreen(
           shopId: shop.id,
           shopName: shop.name,
+          taskId: task.id,
         ),
       ),
     );

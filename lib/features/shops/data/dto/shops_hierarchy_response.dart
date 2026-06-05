@@ -163,6 +163,7 @@ class Shop {
   final String longitude;
   final String contactName;
   final String contactPhone;
+  final String? panNumber;
   final bool isActive;
   final String createdAt;
   final String? shopImage;
@@ -176,6 +177,7 @@ class Shop {
     required this.longitude,
     required this.contactName,
     required this.contactPhone,
+    this.panNumber,
     required this.isActive,
     required this.createdAt,
     this.shopImage,
@@ -191,6 +193,7 @@ class Shop {
       longitude: json['longitude'] as String,
       contactName: json['contact_name'] as String,
       contactPhone: json['contact_phone'] as String,
+      panNumber: (json['pan_number'] ?? json['panNumber']) as String?,
       isActive: json['is_active'] as bool? ?? true,
       createdAt: json['created_at'] as String,
       shopImage: json['shop_image'] as String?,

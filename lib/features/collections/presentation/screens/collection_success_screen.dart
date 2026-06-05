@@ -57,6 +57,7 @@ class CollectionSuccessScreen extends StatelessWidget {
               amount: c.amount,
               method: c.method,
               status: c.status,
+              provider: c.onlineProvider,
             ),
             const SizedBox(height: 18),
             _OutstandingCard(snapshot: out),
@@ -102,11 +103,13 @@ class _SuccessHero extends StatelessWidget {
   final String amount;
   final String method;
   final String status;
+  final String? provider;
 
   const _SuccessHero({
     required this.amount,
     required this.method,
     required this.status,
+    this.provider,
   });
 
   @override
@@ -159,7 +162,9 @@ class _SuccessHero extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '$method · $status',
+                      provider != null && provider!.isNotEmpty
+                          ? '$method · $provider · $status'
+                          : '$method · $status',
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.85),
                         fontSize: 12.5,

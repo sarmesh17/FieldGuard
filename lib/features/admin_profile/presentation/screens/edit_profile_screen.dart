@@ -13,6 +13,7 @@ import '../../data/dto/update_profile_request.dart';
 import '../providers/profile_provider.dart';
 import '../providers/profile_state.dart';
 import 'package:fieldguard/core/theme/app_colors.dart';
+import 'package:fieldguard/core/constant/api_constant.dart';
 
 class EditProfileScreen extends ConsumerStatefulWidget {
   final ProfileResponse profile;
@@ -40,15 +41,33 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   String? _phoneError;
   String? _companyPhoneError;
 
+  static const String _countryCode = '+977';
+
+  /// Phones are stored with the +977 country code, but the UI edits only the
+  /// 10-digit local number — strip it for display, re-attach it on save.
+  String _localPhone(String? full) {
+    final p = (full ?? '').trim();
+    return p.startsWith(_countryCode) ? p.substring(_countryCode.length) : p;
+  }
+
+  String? _fullPhone(String local) {
+    final d = local.trim();
+    return d.isEmpty ? null : '$_countryCode$d';
+  }
+
   @override
   void initState() {
     super.initState();
     _fullNameController = TextEditingController(text: widget.profile.fullName);
-    _phoneNumberController = TextEditingController(text: widget.profile.phoneNumber);
+    _phoneNumberController =
+        TextEditingController(text: _localPhone(widget.profile.phoneNumber));
     _emailController = TextEditingController(text: widget.profile.email ?? '');
-    _companyNameController = TextEditingController(text: widget.profile.company?.companyName ?? '');
-    _companyEmailController = TextEditingController(text: widget.profile.company?.email ?? '');
-    _companyPhoneController = TextEditingController(text: widget.profile.company?.phoneNumber ?? '');
+    _companyNameController = TextEditingController(
+        text: widget.profile.company?.companyName ?? '');
+    _companyEmailController =
+        TextEditingController(text: widget.profile.company?.email ?? '');
+    _companyPhoneController = TextEditingController(
+        text: _localPhone(widget.profile.company?.phoneNumber));
   }
 
   @override
@@ -173,9 +192,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         fullName: _fullNameController.text.trim() != widget.profile.fullName
             ? _fullNameController.text.trim()
             : null,
-        phoneNumber: _phoneNumberController.text.trim() != widget.profile.phoneNumber
-            ? _phoneNumberController.text.trim()
-            : null,
+        phoneNumber:
+            _fullPhone(_phoneNumberController.text) != widget.profile.phoneNumber
+                ? _fullPhone(_phoneNumberController.text)
+                : null,
         email: _emailController.text.trim() != (widget.profile.email ?? '')
             ? _emailController.text.trim()
             : null,
@@ -188,11 +208,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 (widget.profile.company?.email ?? '')
             ? _companyEmailController.text.trim()
             : null,
-        companyPhone: _companyPhoneController.text.trim() !=
-                (widget.profile.company?.phoneNumber ?? '')
-            ? _companyPhoneController.text.trim().isNotEmpty
-                ? _companyPhoneController.text.trim()
-                : null
+        companyPhone: _fullPhone(_companyPhoneController.text) !=
+                widget.profile.company?.phoneNumber
+            ? _fullPhone(_companyPhoneController.text)
             : null,
       );
 
@@ -323,9 +341,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                   ? Image.file(_selectedImage!, fit: BoxFit.cover)
                                   : widget.profile.profileImage != null
                                       ? Image.network(
-                                          widget.profile.profileImage!.startsWith('http')
-                                              ? widget.profile.profileImage!
-                                              : 'https://fieldguard-be.onrender.com/${widget.profile.profileImage}',
+                                          ApiConstant.imageUrl(widget.profile.profileImage!),
                                           fit: BoxFit.cover,
                                           errorBuilder: (context, error, stackTrace) =>
                                               _avatarPlaceholder(w),
@@ -395,11 +411,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   keyboardType: TextInputType.emailAddress,
                   w: w,
                   validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Please enter your email';
-                    }
+                    final v = value?.trim() ?? '';
+                    if (v.isEmpty) return null; // Email is optional.
                     if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                        .hasMatch(value)) {
+                        .hasMatch(v)) {
                       return 'Please enter a valid email';
                     }
                     return null;

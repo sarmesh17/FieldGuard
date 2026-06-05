@@ -1,6 +1,8 @@
 import 'package:fieldguard/core/responsive/responsive.dart';
 import 'package:fieldguard/features/legal/legal_content.dart';
+import 'package:fieldguard/features/legal/presentation/providers/legal_version_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fieldguard/core/theme/app_colors.dart';
 
 // ─── Brand colours (match the app's green palette) ───────────────────────────
@@ -15,15 +17,15 @@ enum LegalTab { terms, privacy }
 ///
 /// Push it with [initialTab] to land on the relevant document. Content lives in
 /// `legal_content.dart` so the text can be revised without touching the UI.
-class LegalScreen extends StatefulWidget {
+class LegalScreen extends ConsumerStatefulWidget {
   final LegalTab initialTab;
   const LegalScreen({super.key, this.initialTab = LegalTab.terms});
 
   @override
-  State<LegalScreen> createState() => _LegalScreenState();
+  ConsumerState<LegalScreen> createState() => _LegalScreenState();
 }
 
-class _LegalScreenState extends State<LegalScreen>
+class _LegalScreenState extends ConsumerState<LegalScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
 
@@ -46,6 +48,7 @@ class _LegalScreenState extends State<LegalScreen>
   @override
   Widget build(BuildContext context) {
     SizeConfig.init(context);
+    final contentAsync = ref.watch(legalContentProvider);
 
     return Scaffold(
       backgroundColor: AppColors.white,
@@ -53,22 +56,32 @@ class _LegalScreenState extends State<LegalScreen>
         children: [
           _Header(tabController: _tabController),
           Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: const [
-                _DocumentView(
-                  intro:
-                      'Please read these Terms & Conditions carefully before '
-                      'using FieldGuard.',
-                  sections: kTermsSections,
-                ),
-                _DocumentView(
-                  intro:
-                      'This Privacy Policy explains how we handle your data '
-                      'under the laws of Nepal.',
-                  sections: kPrivacySections,
-                ),
-              ],
+            child: contentAsync.when(
+              loading: () => const Center(
+                child: CircularProgressIndicator(color: _kPrimary),
+              ),
+              error: (_, _) => _ErrorRetry(
+                onRetry: () => ref.invalidate(legalContentProvider),
+              ),
+              data: (content) => TabBarView(
+                controller: _tabController,
+                children: [
+                  _DocumentView(
+                    intro:
+                        'Please read these Terms & Conditions carefully before '
+                        'using FieldGuard.',
+                    sections: content.terms.sections,
+                    lastUpdated: content.lastUpdated,
+                  ),
+                  _DocumentView(
+                    intro:
+                        'This Privacy Policy explains how we handle your data '
+                        'under the laws of Nepal.',
+                    sections: content.privacy.sections,
+                    lastUpdated: content.lastUpdated,
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -164,7 +177,12 @@ class _Header extends StatelessWidget {
 class _DocumentView extends StatelessWidget {
   final String intro;
   final List<LegalSection> sections;
-  const _DocumentView({required this.intro, required this.sections});
+  final String lastUpdated;
+  const _DocumentView({
+    required this.intro,
+    required this.sections,
+    required this.lastUpdated,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -177,7 +195,7 @@ class _DocumentView extends StatelessWidget {
       ),
       children: [
         Text(
-          'Last updated: $kLegalLastUpdated',
+          'Last updated: $lastUpdated',
           style: TextStyle(
             fontSize: SizeConfig.scaledFontSize(12),
             color: AppColors.grey2,
@@ -304,6 +322,48 @@ class _LegalNodeView extends StatelessWidget {
       );
     }
     return const SizedBox.shrink();
+  }
+}
+
+class _ErrorRetry extends StatelessWidget {
+  final VoidCallback onRetry;
+  const _ErrorRetry({required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.all(SizeConfig.scale(24)),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.cloud_off_rounded,
+                size: SizeConfig.scale(40), color: AppColors.grey2),
+            SizedBox(height: SizeConfig.scale(12)),
+            Text(
+              "Couldn't load the legal documents. Please check your "
+              'connection and try again.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: SizeConfig.scaledFontSize(14),
+                color: AppColors.grey,
+                height: 1.5,
+              ),
+            ),
+            SizedBox(height: SizeConfig.scale(16)),
+            OutlinedButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh_rounded, size: 18),
+              label: const Text('Retry'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: _kPrimary,
+                side: const BorderSide(color: _kPrimary),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
