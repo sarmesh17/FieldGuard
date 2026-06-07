@@ -23,9 +23,18 @@ class NotificationItem {
     required this.createdAt,
   });
 
+  // Push delivers all data values as strings; in-app JSON keeps numbers. The
+  // `?.toString()` normalises both (e.g. taskId 123 or "123" -> "123").
   String? get kind => data['kind']?.toString();
   String? get shopId => data['shopId']?.toString();
   String? get collectionId => data['collectionId']?.toString();
+  String? get taskId => data['taskId']?.toString();
+
+  // Collection extras (COLLECTION_RECEIVED / CHEQUE_* ) for the rich tile.
+  String? get method => data['method']?.toString();
+  String? get amount => data['amount']?.toString();
+  String? get outstanding => data['outstanding']?.toString();
+  String? get status => data['status']?.toString();
 
   factory NotificationItem.fromJson(Map<String, dynamic> json) {
     return NotificationItem(

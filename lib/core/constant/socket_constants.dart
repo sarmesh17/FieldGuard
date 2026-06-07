@@ -36,6 +36,11 @@ class SocketConstants {
   static const String employeeOnline = 'employee:online';
   static const String employeeOffline = 'employee:offline';
 
+  /// A team employee started / stopped a live field session — drives the live
+  /// list in real time (add a row on start, remove on stop).
+  static const String employeeTrackingStarted = 'employee:tracking_started';
+  static const String employeeTrackingStopped = 'employee:tracking_stopped';
+
   /// The watched task's assignee moved — `{ taskId, employeeId,
   /// employee, latitude, longitude, accuracy, speed, bearing, recordedAt }`.
   static const String taskLocation = 'task:location';
@@ -43,6 +48,14 @@ class SocketConstants {
   /// The watched task's status changed — `{ taskId, status,
   /// previousStatus, at }`. Emitted on IN_PROGRESS / COMPLETED / etc.
   static const String taskStatusChanged = 'task:status_changed';
+
+  /// A checklist item on the watched task was ticked/unticked — `{ taskId,
+  /// item:{id,text,done,...}, progress:{total,done}, by, at }`.
+  static const String taskItemUpdated = 'task:item_updated';
+
+  /// A new in-app notification for this user (server auto-joins the
+  /// `user:<id>` room on connect). Payload = a `/notifications` list item.
+  static const String notificationNew = 'notification:new';
 
   /// Socket.IO lifecycle events.
   static const String connect = 'connect';

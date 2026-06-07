@@ -1,3 +1,5 @@
+import 'dart:ui' show Color;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
@@ -50,6 +52,17 @@ class NotificationService {
     importance: Importance.high,
   );
 
+  /// Small icon (a white-on-transparent silhouette drawable) shown for every
+  /// notification, plus the accent colour applied to it + the app name.
+  static const String _smallIcon = 'ic_notification';
+  static const Color _accent = Color(0xFF1B5E4F);
+
+  /// Full-colour app icon shown as the notification's large icon (right side),
+  /// so users recognise FieldGuard HQ by its colours. The small [_smallIcon]
+  /// stays monochrome — Android forces the status-bar icon to be a silhouette.
+  static const DrawableResourceAndroidBitmap _largeIcon =
+      DrawableResourceAndroidBitmap('ic_notification_large');
+
   bool _initialised = false;
 
   /// One-time setup: registers the channel and requests notification
@@ -59,7 +72,7 @@ class NotificationService {
     _initialised = true;
 
     try {
-      const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
+      const androidInit = AndroidInitializationSettings(_smallIcon);
       const iosInit = DarwinInitializationSettings();
       await _plugin.initialize(
         const InitializationSettings(android: androidInit, iOS: iosInit),
@@ -112,6 +125,9 @@ class NotificationService {
         channelDescription: _channel.description,
         importance: Importance.high,
         priority: Priority.high,
+        icon: _smallIcon,
+        color: _accent,
+        largeIcon: _largeIcon,
       ),
       iOS: const DarwinNotificationDetails(),
     );
@@ -137,6 +153,9 @@ class NotificationService {
         channelDescription: _pushChannel.description,
         importance: Importance.high,
         priority: Priority.high,
+        icon: _smallIcon,
+        color: _accent,
+        largeIcon: _largeIcon,
       ),
       iOS: const DarwinNotificationDetails(),
     );

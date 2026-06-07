@@ -1,4 +1,8 @@
+import 'dart:async';
+
 import 'package:fieldguard/core/networks/dio_client.dart';
+import 'package:fieldguard/core/services/live_tracking_socket.dart';
+import 'package:fieldguard/core/services/push_notification_service.dart';
 import 'package:fieldguard/core/utils/results.dart';
 import 'package:fieldguard/features/notifications/data/notifications_datasource.dart';
 import 'package:fieldguard/features/notifications/data/notifications_response.dart';
@@ -63,10 +67,49 @@ class NotificationsState {
 class NotificationsNotifier extends StateNotifier<NotificationsState> {
   NotificationsNotifier(this._ds) : super(const NotificationsState()) {
     load();
+    // Live (foreground/connected): the socket delivers the full item with its
+    // real id — prepend it instantly.
+    _socketSub =
+        LiveTrackingSocket.instance.onNotification.listen(_onSocketNotification);
+    // After a (re)connect, refetch — the socket doesn't replay anything missed
+    // while it was disconnected.
+    _statusSub = LiveTrackingSocket.instance.onStatus.listen((s) {
+      if (s == SocketStatus.connected) load();
+    });
+    // FCM is the fallback list source: only refetch when the socket is down
+    // (when connected, the socket already prepended it — avoids a double fetch
+    // and a duplicate). The FCM heads-up banner still shows regardless.
+    _pushSub =
+        PushNotificationService.instance.onNotificationReceived.listen((_) {
+      if (!LiveTrackingSocket.instance.isConnected) load();
+    });
   }
 
   final NotificationsDatasource _ds;
+  StreamSubscription<void>? _pushSub;
+  StreamSubscription<Map<String, dynamic>>? _socketSub;
+  StreamSubscription<SocketStatus>? _statusSub;
   static const int _limit = 20;
+
+  /// Prepend a notification pushed live over the socket (dedup by id, bump the
+  /// unread badge).
+  void _onSocketNotification(Map<String, dynamic> json) {
+    final item = NotificationItem.fromJson(json);
+    if (state.items.any((n) => n.id == item.id)) return;
+    state = state.copyWith(
+      items: [item, ...state.items],
+      total: state.total + 1,
+      unreadCount: item.isRead ? state.unreadCount : state.unreadCount + 1,
+    );
+  }
+
+  @override
+  void dispose() {
+    _pushSub?.cancel();
+    _socketSub?.cancel();
+    _statusSub?.cancel();
+    super.dispose();
+  }
 
   Future<void> load() async {
     state = state.copyWith(loading: true, error: null);

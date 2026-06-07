@@ -66,6 +66,22 @@ class TaskDataSourceImpl {
     return TaskDetailResponse.fromJson(response.data as Map<String, dynamic>);
   }
 
+  /// `PATCH /api/v1/tasks/{taskId}/items/{itemId}` — tick/untick a checklist
+  /// item. Assignee only; errors on a COMPLETED/CANCELLED task. Returns the
+  /// updated task (items + itemsProgress).
+  Future<TaskDetailResponse> toggleTaskItem(
+    int taskId,
+    int itemId, {
+    required bool done,
+  }) async {
+    final response = await _dio.patch(
+      '${ApiConstant.tasksEndpoint}/$taskId/items/$itemId',
+      data: {'done': done},
+      options: Options(contentType: 'application/json'),
+    );
+    return TaskDetailResponse.fromJson(response.data as Map<String, dynamic>);
+  }
+
   /// `PATCH /api/v1/tasks/{id}` — update status and/or details. The body is
   /// a partial update; the server validates `changeReason` requirements and
   /// role permissions (EMPLOYEE editing priority/dueDate → 403).
