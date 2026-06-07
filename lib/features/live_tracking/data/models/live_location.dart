@@ -213,6 +213,86 @@ class TaskStatusChangedEvent {
   }
 }
 
+/// `task:item_updated` socket payload — a checklist item was ticked/unticked
+/// on the watched task. Primitive fields only (no tasks-feature dependency).
+class TaskItemUpdatedEvent {
+  final String taskId;
+  final int itemId;
+  final String text;
+  final bool done;
+  final int? doneBy;
+  final String? doneAt;
+  final int progressTotal;
+  final int progressDone;
+
+  const TaskItemUpdatedEvent({
+    required this.taskId,
+    required this.itemId,
+    required this.text,
+    required this.done,
+    required this.progressTotal,
+    required this.progressDone,
+    this.doneBy,
+    this.doneAt,
+  });
+
+  static TaskItemUpdatedEvent? tryParse(dynamic raw) {
+    if (raw is! Map) return null;
+    final map = raw.cast<String, dynamic>();
+    final taskId =
+        (map['taskId'] ?? map['task_id'] ?? map['id'])?.toString();
+    final item = (map['item'] as Map?)?.cast<String, dynamic>();
+    if (taskId == null || taskId.isEmpty || item == null) return null;
+    final itemId = (item['id'] as num?)?.toInt();
+    if (itemId == null) return null;
+    final progress = (map['progress'] as Map?)?.cast<String, dynamic>();
+    return TaskItemUpdatedEvent(
+      taskId: taskId,
+      itemId: itemId,
+      text: item['text']?.toString() ?? '',
+      done: item['done'] as bool? ?? false,
+      doneBy: (item['doneBy'] as num?)?.toInt(),
+      doneAt: item['doneAt']?.toString(),
+      progressTotal: (progress?['total'] as num?)?.toInt() ?? 0,
+      progressDone: (progress?['done'] as num?)?.toInt() ?? 0,
+    );
+  }
+}
+
+/// `employee:tracking_started` socket payload — a teammate just went live.
+/// Carries the employee block so the live list can add a row immediately.
+class EmployeeTrackingStartedEvent {
+  final String employeeId;
+  final String fullName;
+  final String employeeCode;
+  final String? role;
+
+  const EmployeeTrackingStartedEvent({
+    required this.employeeId,
+    required this.fullName,
+    required this.employeeCode,
+    this.role,
+  });
+
+  static EmployeeTrackingStartedEvent? tryParse(dynamic raw) {
+    if (raw is! Map) return null;
+    final map = raw.cast<String, dynamic>();
+    final id = (map['employeeId'] ??
+            map['employee_id'] ??
+            map['id'] ??
+            map['userId'])
+        ?.toString();
+    if (id == null || id.isEmpty) return null;
+    final emp = (map['employee'] as Map?)?.cast<String, dynamic>() ?? const {};
+    return EmployeeTrackingStartedEvent(
+      employeeId: id,
+      fullName: (emp['full_name'] ?? emp['fullName'] ?? '').toString(),
+      employeeCode: (emp['employee_code'] ?? emp['employeeCode'] ?? '').toString(),
+      role: emp['role']?.toString(),
+    );
+  }
+}
+
 /// `employee:online` / `employee:offline` socket payload.
 class EmployeeOnlineEvent {
   final String employeeId;

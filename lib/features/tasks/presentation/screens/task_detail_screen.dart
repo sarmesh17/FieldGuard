@@ -1,7 +1,11 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:fieldguard/core/networks/dio_client.dart';
+import 'package:fieldguard/core/services/live_tracking_socket.dart';
 import 'package:fieldguard/core/utils/results.dart';
+import 'package:fieldguard/features/live_tracking/data/models/live_location.dart';
+import 'package:fieldguard/features/tasks/data/datasource/task_datasource_impl.dart';
 import 'package:fieldguard/features/auth/login/presentation/providers/login_provider.dart';
 import 'package:fieldguard/features/auth/login/presentation/providers/login_state.dart';
 import 'package:fieldguard/features/dashboard/dashboard_provider.dart';
@@ -109,6 +113,16 @@ class _TaskDetailBody extends ConsumerStatefulWidget {
 class _TaskDetailBodyState extends ConsumerState<_TaskDetailBody>
     with TickerProviderStateMixin {
   late final AnimationController _entrance;
+  final _socket = LiveTrackingSocket.instance;
+
+  // Local, mutable checklist state — patched by the assignee's PATCH response
+  // and by live `task:item_updated` socket events (viewer side), so the list
+  // + progress badge update without a full refetch.
+  late List<TaskItem> _items;
+  late int _progressTotal;
+  late int _progressDone;
+  int? _togglingItemId; // item being PATCHed (shows a spinner, blocks re-tap)
+  StreamSubscription<TaskItemUpdatedEvent>? _itemSub;
 
   @override
   void initState() {
@@ -117,12 +131,72 @@ class _TaskDetailBodyState extends ConsumerState<_TaskDetailBody>
       vsync: this,
       duration: const Duration(milliseconds: 1000),
     )..forward();
+
+    _items = List.of(widget.task.items);
+    _progressTotal = widget.task.itemsProgress.total;
+    _progressDone = widget.task.itemsProgress.done;
+
+    // Join the task's room and listen for live checklist changes (a manager/
+    // admin watches the assignee tick items in real time). Harmless for the
+    // assignee — their own ticks echo back and match the PATCH result.
+    _socket.emitTaskWatch(widget.task.id);
+    _itemSub = _socket.onTaskItemUpdated.listen(_onItemUpdated);
   }
 
   @override
   void dispose() {
+    _itemSub?.cancel();
+    _socket.emitTaskUnwatch(widget.task.id);
     _entrance.dispose();
     super.dispose();
+  }
+
+  /// Live checklist update from another device (the assignee ticking an item).
+  void _onItemUpdated(TaskItemUpdatedEvent e) {
+    if (!mounted || e.taskId != widget.task.id.toString()) return;
+    final idx = _items.indexWhere((i) => i.id == e.itemId);
+    setState(() {
+      if (idx >= 0) {
+        _items[idx] = _items[idx]
+            .copyWith(done: e.done, doneAt: e.doneAt, doneBy: e.doneBy);
+      }
+      _progressTotal = e.progressTotal;
+      _progressDone = e.progressDone;
+    });
+  }
+
+  /// True when the logged-in user is this task's assignee (only they may tick).
+  bool get _isAssignee {
+    final login = ref.read(loginNotifierProvider);
+    return login is LoginSuccess &&
+        widget.task.assignedTo != null &&
+        login.response.user.id == widget.task.assignedTo;
+  }
+
+  /// Assignee taps a checkbox → PATCH the item, then reconcile from the server
+  /// response (items + progress). A failure (e.g. task already COMPLETED)
+  /// surfaces a snackbar and leaves the box unchanged.
+  Future<void> _toggleItem(TaskItem item) async {
+    final id = item.id;
+    if (id == null || _togglingItemId != null) return;
+    setState(() => _togglingItemId = id);
+    try {
+      final res = await TaskDataSourceImpl(DioClient.createDio())
+          .toggleTaskItem(widget.task.id, id, done: !item.done);
+      if (!mounted) return;
+      setState(() {
+        _items = List.of(res.task.items);
+        _progressTotal = res.task.itemsProgress.total;
+        _progressDone = res.task.itemsProgress.done;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Couldn't update the item. Try again.")),
+      );
+    } finally {
+      if (mounted) setState(() => _togglingItemId = null);
+    }
   }
 
   bool _canUpdate(String status) {
@@ -254,17 +328,30 @@ class _TaskDetailBodyState extends ConsumerState<_TaskDetailBody>
         ),
         const SizedBox(height: 14),
       ],
-      if (task.items.isNotEmpty) ...[
+      if (_items.isNotEmpty) ...[
         _LabeledCard(
           icon: Icons.checklist_rounded,
           title: 'Checklist',
-          trailing: _CountPill(count: task.items.length),
+          trailing: _ProgressPill(done: _progressDone, total: _progressTotal),
           child: Column(
             children: [
-              for (var i = 0; i < task.items.length; i++) ...[
+              for (var i = 0; i < _items.length; i++) ...[
                 if (i > 0)
                   const Divider(height: 18, color: AppColors.white),
-                _ChecklistItem(text: task.items[i], index: i),
+                _ChecklistItem(
+                  text: _items[i].text,
+                  index: i,
+                  done: _items[i].done,
+                  busy: _togglingItemId != null &&
+                      _togglingItemId == _items[i].id,
+                  // Only the assignee may tick, and only while the task is
+                  // still open (PENDING / IN_PROGRESS). Others see it read-only.
+                  onToggle: (_isAssignee &&
+                          _items[i].id != null &&
+                          _canUpdate(task.status))
+                      ? () => _toggleItem(_items[i])
+                      : null,
+                ),
               ],
             ],
           ),

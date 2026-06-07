@@ -103,6 +103,7 @@ class _UpgradeScreenState extends ConsumerState<UpgradeScreen> {
     });
 
     final result = await ref.read(subscriptionDataSourceProvider).submitRequest(
+          plan: widget.plan.code,
           months: _months,
           paymentProofImageKey: imageKey,
         );
@@ -150,7 +151,7 @@ class _UpgradeScreenState extends ConsumerState<UpgradeScreen> {
               onPressed: () => Navigator.pop(context),
             ),
             title: Text(
-              'Upgrade to ${widget.plan.code}',
+              'Upgrade to ${widget.plan.label}',
               style: const TextStyle(
                 color: AppColors.black,
                 fontWeight: FontWeight.w700,

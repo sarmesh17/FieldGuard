@@ -9,6 +9,12 @@ class UpdateShopRequest {
   final bool isActive;
   final String? imageKey;
 
+  /// Who can see the shop (full replace within the caller's scope).
+  ///   null → field omitted from the wire (visibility unchanged)
+  ///   []   → clears visibility
+  ///   [ids]→ sets exactly these users
+  final List<int>? visibleTo;
+
   const UpdateShopRequest({
     required this.name,
     this.panNumber,
@@ -19,6 +25,7 @@ class UpdateShopRequest {
     required this.contactPhone,
     required this.isActive,
     this.imageKey,
+    this.visibleTo,
   });
 
   Map<String, dynamic> toJson() {
@@ -36,6 +43,10 @@ class UpdateShopRequest {
     }
     if (imageKey != null) {
       map['imageKey'] = imageKey;
+    }
+    // Only send when set — including an empty list (which clears visibility).
+    if (visibleTo != null) {
+      map['visibleTo'] = visibleTo;
     }
     return map;
   }
