@@ -55,6 +55,9 @@ class CurrentSubscription {
 
   final bool canAddStaff;
 
+  /// Monthly SMS meter. Null on older payloads that don't send it yet.
+  final SmsUsage? smsUsage;
+
   const CurrentSubscription({
     required this.plan,
     required this.priceNpr,
@@ -66,6 +69,7 @@ class CurrentSubscription {
     required this.staffRemaining,
     required this.totalMemberLimit,
     required this.canAddStaff,
+    this.smsUsage,
   });
 
   factory CurrentSubscription.fromJson(Map<String, dynamic> json) {
@@ -80,14 +84,73 @@ class CurrentSubscription {
       staffRemaining: (json['staffRemaining'] as num?)?.toInt(),
       totalMemberLimit: (json['totalMemberLimit'] as num?)?.toInt(),
       canAddStaff: json['canAddStaff'] == true,
+      smsUsage: json['smsUsage'] is Map
+          ? SmsUsage.fromJson((json['smsUsage'] as Map).cast<String, dynamic>())
+          : null,
     );
   }
 
   bool get isUnlimitedStaff => staffSeatLimit == null;
 }
 
+/// Monthly SMS meter from `subscription.smsUsage`. Enforced on every plan
+/// (FREE 50, PRO 300, ENTERPRISE unlimited) — `overQuota` means SMS is BLOCKED.
+class SmsUsage {
+  final String month; // "2026-06"
+  final int used;
+
+  /// null = unlimited (ENTERPRISE).
+  final int? quota;
+
+  /// null = unlimited.
+  final int? remaining;
+  final bool unlimited;
+  final bool overQuota;
+
+  const SmsUsage({
+    required this.month,
+    required this.used,
+    required this.quota,
+    required this.remaining,
+    required this.unlimited,
+    required this.overQuota,
+  });
+
+  factory SmsUsage.fromJson(Map<String, dynamic> json) {
+    return SmsUsage(
+      month: (json['month'] as String?) ?? '',
+      used: (json['used'] as num?)?.toInt() ?? 0,
+      quota: (json['quota'] as num?)?.toInt(),
+      remaining: (json['remaining'] as num?)?.toInt(),
+      unlimited: json['unlimited'] == true,
+      overQuota: json['overQuota'] == true,
+    );
+  }
+
+  /// 0..1 fraction of quota used (1.0 when over / unknown quota). Unlimited → 0.
+  double get fraction {
+    if (unlimited) return 0;
+    final q = quota ?? 0;
+    if (q <= 0) return overQuota ? 1 : 0;
+    return (used / q).clamp(0, 1).toDouble();
+  }
+
+  /// Near the cap (≤10% left) but not yet blocked — nudge an early upgrade.
+  bool get nearLimit {
+    if (unlimited || overQuota) return false;
+    final q = quota ?? 0;
+    if (q <= 0) return false;
+    final rem = remaining ?? (q - used);
+    return rem > 0 && rem <= (q * 0.1).ceil();
+  }
+}
+
 class PlanOption {
-  final String code; // FREE / PRO / ENTERPRISE
+  final String code; // FREE / STARTER / GROWTH / ENTERPRISE
+
+  /// Display name from the API ("Free Trial", "Starter", …). Falls back to the
+  /// code if the backend omits it.
+  final String label;
 
   /// null for ENTERPRISE (custom pricing).
   final int? priceNpr;
@@ -102,23 +165,33 @@ class PlanOption {
   /// When true, show "Talk to us" instead of a pay/upgrade button.
   final bool contactSales;
 
+  /// Monthly SMS quota for this plan. null = unlimited (ENTERPRISE).
+  final int? smsQuota;
+
   const PlanOption({
     required this.code,
+    required this.label,
     required this.priceNpr,
     required this.billing,
     required this.staffSeats,
     required this.totalMembers,
     required this.contactSales,
+    required this.smsQuota,
   });
 
   factory PlanOption.fromJson(Map<String, dynamic> json) {
+    final code = (json['code'] as String?) ?? '';
     return PlanOption(
-      code: (json['code'] as String?) ?? '',
+      code: code,
+      label: (json['label'] as String?)?.trim().isNotEmpty == true
+          ? (json['label'] as String)
+          : code,
       priceNpr: (json['priceNpr'] as num?)?.toInt(),
       billing: json['billing'] as String?,
       staffSeats: (json['staffSeats'] as num?)?.toInt(),
       totalMembers: (json['totalMembers'] as num?)?.toInt(),
       contactSales: json['contactSales'] == true,
+      smsQuota: (json['smsQuota'] as num?)?.toInt(),
     );
   }
 }

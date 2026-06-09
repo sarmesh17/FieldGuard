@@ -609,7 +609,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                   SizedBox(height: SizeConfig.scale(16)),
 
                   // Description
-                  _buildSectionTitle('Description'),
+                  _buildSectionTitle('Description (Optional)'),
                   SizedBox(height: SizeConfig.scale(8)),
                   Container(
                     decoration: BoxDecoration(
@@ -690,9 +690,8 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                             controller: _descriptionController,
                             maxLines: 5,
                             maxLength: 500,
-                            validator: (v) => (v == null || v.trim().isEmpty)
-                                ? 'Description is required'
-                                : null,
+                            // Optional — backend accepts a task without a
+                            // description (stored as null/empty).
                             style: TextStyle(
                               fontSize: SizeConfig.scaledFontSize(14),
                               color: AppColors.black,

@@ -51,6 +51,9 @@ class ApiConstant {
   // List upgrade requests (newest first) — polled while one is pending.
   static const String subscriptionRequestsEndpoint =
       "$baseUrl/api/v1/company/subscription/requests";
+  // Subscription invoices (auto-generated on payment approval) — read-only.
+  static const String subscriptionInvoicesEndpoint =
+      "$baseUrl/api/v1/company/subscription/invoices";
 
   // ─── ENTERPRISE "Talk to us" call requests (company ADMIN) ──────────────────
   // Submit a call-back lead (contact phone + optional staff count / note). Only

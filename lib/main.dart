@@ -1,8 +1,10 @@
 import 'package:fieldguard/core/security/root_detection_service.dart';
 import 'package:fieldguard/core/security/security_blocked_screen.dart';
 import 'package:fieldguard/core/services/background_location_service.dart';
+import 'package:fieldguard/core/services/live_tracking_socket.dart';
 import 'package:fieldguard/core/services/notification_service.dart';
 import 'package:fieldguard/core/services/push_notification_service.dart';
+import 'package:fieldguard/features/notifications/presentation/notifications_notifier.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:fieldguard/features/auth/login/presentation/providers/login_provider.dart';
@@ -47,11 +49,41 @@ void main() async {
   runApp(const ProviderScope(child: MyApp()));
 }
 
-class MyApp extends ConsumerWidget {
+class MyApp extends ConsumerStatefulWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Coming back to the foreground: re-sync notifications so the unread badge
+    // reflects anything delivered while the app was backgrounded.
+    if (state == AppLifecycleState.resumed &&
+        ref.read(loginNotifierProvider) is LoginSuccess) {
+      // Reconnect the socket (live notifications + tracking) and refetch — the
+      // socket doesn't replay anything missed while backgrounded.
+      LiveTrackingSocket.instance.ensureConnected();
+      ref.read(notificationsNotifierProvider.notifier).refresh();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final router = ref.watch(goRouterProvider);
 
     // Couple the auto-geofence tracker's lifetime to the auth session.
@@ -71,9 +103,14 @@ class MyApp extends ConsumerWidget {
         // Now that we're authenticated, register this device's FCM token so
         // backend push can target it (best-effort; safe to call repeatedly).
         PushNotificationService.instance.registerToken();
+        // Open the shared socket app-wide so notifications arrive live on any
+        // screen (server auto-joins the user:<id> room). Idempotent — tracking
+        // reuses this same connection.
+        LiveTrackingSocket.instance.connect();
       } else if (next is LoginInitial || next is LoginFailure) {
         // Stop the background service and tear the bridges down.
         BackgroundLocationService.stop();
+        LiveTrackingSocket.instance.disconnect();
         ref.invalidate(geofenceTaskSyncProvider);
         ref.invalidate(geofenceEventBridgeProvider);
       }
