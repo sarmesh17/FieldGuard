@@ -199,6 +199,10 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen>
 
     // Only an admin can create managers — that endpoint is admin-only.
     final isManager = profile.role.toUpperCase() == 'MANAGER';
+    // Billing/subscription/invoices are ADMIN-only — the backend 403s these for
+    // managers (and GET /company returns subscription:null), so don't surface
+    // the entry point. Explicit ADMIN check (not just !isManager).
+    final isAdmin = profile.role.toUpperCase() == 'ADMIN';
 
     return Scaffold(
       backgroundColor: AppColors.white,
@@ -335,7 +339,7 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen>
                           ),
                           SizedBox(height: unit * 0.018),
                           // Subscription — ADMIN only (plan + seats + billing).
-                          if (!isManager)
+                          if (isAdmin)
                             Padding(
                               padding: EdgeInsets.symmetric(
                                 horizontal: unit * 0.05,
@@ -359,7 +363,7 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen>
                                 ),
                               ),
                             ),
-                          if (!isManager) SizedBox(height: unit * 0.018),
+                          if (isAdmin) SizedBox(height: unit * 0.018),
                           // Account
                           Padding(
                             padding: EdgeInsets.symmetric(

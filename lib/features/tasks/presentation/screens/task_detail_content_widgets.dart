@@ -603,44 +603,98 @@ class _CountPill extends StatelessWidget {
   }
 }
 
+class _ProgressPill extends StatelessWidget {
+  final int done;
+  final int total;
+
+  const _ProgressPill({required this.done, required this.total});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: _kBrand.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        '$done/$total',
+        style: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w800,
+          color: _kBrand,
+        ),
+      ),
+    );
+  }
+}
+
+/// One checklist row. Shows a checkbox reflecting [done]; tappable only when
+/// [onToggle] is non-null (the assignee on an open task). [busy] swaps the box
+/// for a spinner while its PATCH is in flight. Read-only viewers
+/// (manager/admin) still see the live done-state.
 class _ChecklistItem extends StatelessWidget {
   final String text;
   final int index;
+  final bool done;
+  final bool busy;
+  final VoidCallback? onToggle;
 
-  const _ChecklistItem({required this.text, required this.index});
+  const _ChecklistItem({
+    required this.text,
+    required this.index,
+    this.done = false,
+    this.busy = false,
+    this.onToggle,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          width: 22,
-          height: 22,
-          decoration: BoxDecoration(
-            color: _kBrand.withValues(alpha: 0.10),
-            borderRadius: BorderRadius.circular(7),
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            '${index + 1}',
-            style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
-              color: _kBrand,
+        GestureDetector(
+          onTap: busy ? null : onToggle,
+          behavior: HitTestBehavior.opaque,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            width: 24,
+            height: 24,
+            decoration: BoxDecoration(
+              color: done ? _kBrand : _kBrand.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(7),
+              border: Border.all(
+                color: done ? _kBrand : _kBrand.withValues(alpha: 0.35),
+                width: 1.5,
+              ),
             ),
+            alignment: Alignment.center,
+            child: busy
+                ? const SizedBox(
+                    width: 13,
+                    height: 13,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: _kBrand),
+                  )
+                : (done
+                    ? const Icon(Icons.check_rounded,
+                        size: 16, color: Colors.white)
+                    : null),
           ),
         ),
         const SizedBox(width: 12),
         Expanded(
           child: Padding(
-            padding: const EdgeInsets.only(top: 2),
+            padding: const EdgeInsets.only(top: 3),
             child: Text(
               text,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 height: 1.4,
-                color: AppColors.blue2,
+                color: done ? AppColors.grey : AppColors.blue2,
+                decoration:
+                    done ? TextDecoration.lineThrough : TextDecoration.none,
+                decorationColor: AppColors.grey,
               ),
             ),
           ),

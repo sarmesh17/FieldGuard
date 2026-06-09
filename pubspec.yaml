@@ -62,14 +62,33 @@ dependencies:
   firebase_core: ^4.10.0
   firebase_messaging: ^16.3.0
   package_info_plus: ^9.0.1
+  printing: ^5.14.3
+  pdf: ^3.12.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
 
 flutter:
   uses-material-design: true
   assets:
     - assets/images/
     - .env
+
+# ─── App launcher icon ───────────────────────────────────────────────────────
+# Put a 1024×1024 PNG at assets/icon/app_icon.png, then run:
+#   dart run flutter_launcher_icons
+# Generates every Android density (+ adaptive icon) and the iOS AppIcon set.
+flutter_launcher_icons:
+  image_path: "assets/icon/FieldGuard-HQ.png"
+  android: "ic_launcher"
+  min_sdk_android: 21
+  # Adaptive icon (Android 8+): cream background (matches the icon) + the icon
+  # as foreground. Tip: give the foreground some padding — the OS masks it to a
+  # circle/squircle and only the centre ~66% is always visible.
+  adaptive_icon_background: "#F8F6F1"
+  adaptive_icon_foreground: "assets/icon/FieldGuard-HQ.png"
+  ios: true
+  remove_alpha_ios: true

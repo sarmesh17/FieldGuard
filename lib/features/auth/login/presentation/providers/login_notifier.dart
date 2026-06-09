@@ -50,6 +50,13 @@ class LoginNotifier extends StateNotifier<LoginState> {
             employeeCode: '',
           ),
         );
+        // A stored EMPLOYEE token (e.g. signed in before this guard existed)
+        // must not silently restore into the admin/manager app.
+        if (_isBlockedRole(restoredResponse.user.role)) {
+          await TokenStorage.clearTokens();
+          state = const LoginInitial();
+          return;
+        }
         state = await _resolveApproval(restoredResponse);
       } else {
         state = const LoginInitial();
@@ -82,6 +89,24 @@ class LoginNotifier extends StateNotifier<LoginState> {
         approvalStatus: ApprovalStatus.unknown,
       ),
     };
+  }
+
+  /// This is the managers/admins app — field employees must sign in through the
+  /// FieldGuard employee app instead. EMPLOYEE is the only field-level role.
+  static bool _isBlockedRole(String role) =>
+      role.trim().toUpperCase() == 'EMPLOYEE';
+
+  /// Gates a fresh login on role: an EMPLOYEE is rejected (and the tokens the
+  /// repository just saved are cleared) so they can't get past the login screen.
+  Future<LoginState> _gateRole(LoginResponse response) async {
+    if (_isBlockedRole(response.user.role)) {
+      await TokenStorage.clearTokens();
+      return const LoginFailure(
+        'This app is for managers and admins only. Please use the FieldGuard '
+        'employee app to sign in.',
+      );
+    }
+    return _resolveApproval(response);
   }
 
   /// Re-checks approval for the already-authenticated user. Used by the
@@ -120,7 +145,7 @@ class LoginNotifier extends StateNotifier<LoginState> {
     );
 
     state = switch (result) {
-      Success(:final data) => await _resolveApproval(data),
+      Success(:final data) => await _gateRole(data),
       Failure(:final exception) => LoginFailure(
         exception is AppException ? exception.message : AppStrings.serverError,
         rateLimited: exception is RateLimitException,

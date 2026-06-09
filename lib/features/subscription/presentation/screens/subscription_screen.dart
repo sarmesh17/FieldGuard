@@ -2,6 +2,7 @@ import 'package:fieldguard/core/responsive/responsive.dart';
 import 'package:fieldguard/features/subscription/data/dto/subscription_response.dart';
 import 'package:fieldguard/features/subscription/presentation/providers/subscription_provider.dart';
 import 'package:fieldguard/features/subscription/presentation/screens/enterprise_inquiry_screen.dart';
+import 'package:fieldguard/features/subscription/presentation/screens/invoices_screen.dart';
 import 'package:fieldguard/features/subscription/presentation/screens/subscription_status_screen.dart';
 import 'package:fieldguard/features/subscription/presentation/screens/upgrade_screen.dart';
 import 'package:fieldguard/features/subscription/presentation/widgets/subscription_widgets.dart';
@@ -24,6 +25,13 @@ class SubscriptionScreen extends ConsumerWidget {
       MaterialPageRoute(
         builder: (_) => UpgradeScreen(plan: plan, payment: payment),
       ),
+    );
+  }
+
+  void _openInvoices(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const InvoicesScreen()),
     );
   }
 
@@ -65,9 +73,9 @@ class SubscriptionScreen extends ConsumerWidget {
             ),
             actions: [
               IconButton(
-                tooltip: 'Request status',
+                tooltip: 'Invoices',
                 icon: const Icon(Icons.receipt_long_rounded, color: kSubPrimary),
-                onPressed: () => _openStatus(context),
+                onPressed: () => _openInvoices(context),
               ),
             ],
           ),
@@ -114,6 +122,26 @@ class _Body extends StatelessWidget {
     final current = data.subscription;
     final maxW = MediaQuery.of(context).size.width.clamp(0.0, 600.0);
 
+    // SMS over-quota CTA: prefer the next payable plan (FREE → PRO), else fall
+    // back to "Talk to us" when the only step up is ENTERPRISE (contactSales).
+    PlanOption? payableUpgrade;
+    bool hasContactPlan = false;
+    String currentLabel = current.plan; // fall back to the code
+    for (final p in data.plans) {
+      if (p.code == current.plan) {
+        currentLabel = p.label;
+        continue;
+      }
+      if (p.contactSales) {
+        hasContactPlan = true;
+        continue;
+      }
+      if ((p.priceNpr ?? 0) > 0 && payableUpgrade == null) payableUpgrade = p;
+    }
+    final smsUpgradeCta = payableUpgrade != null
+        ? () => onUpgrade(payableUpgrade!)
+        : (hasContactPlan ? onContactSales : null);
+
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
       padding: EdgeInsets.all(SizeConfig.scale(16)),
@@ -124,9 +152,23 @@ class _Body extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _CurrentPlanBanner(subscription: current),
+                _CurrentPlanBanner(
+                  subscription: current,
+                  planLabel: currentLabel,
+                ),
+                if (current.expired) ...[
+                  SizedBox(height: SizeConfig.scale(12)),
+                  _ExpiredLockBanner(onUpgrade: smsUpgradeCta),
+                ],
                 SizedBox(height: SizeConfig.scale(14)),
                 SeatUsageCard(subscription: current),
+                if (current.smsUsage != null) ...[
+                  SizedBox(height: SizeConfig.scale(14)),
+                  SmsUsageCard(
+                    usage: current.smsUsage!,
+                    onUpgrade: smsUpgradeCta,
+                  ),
+                ],
                 SizedBox(height: SizeConfig.scale(22)),
                 Text(
                   'Available plans',
@@ -176,12 +218,17 @@ class _Body extends StatelessWidget {
 
 class _CurrentPlanBanner extends StatelessWidget {
   final CurrentSubscription subscription;
-  const _CurrentPlanBanner({required this.subscription});
+  final String planLabel;
+  const _CurrentPlanBanner({
+    required this.subscription,
+    required this.planLabel,
+  });
 
   @override
   Widget build(BuildContext context) {
     final expired = subscription.expired;
     final expiry = subscription.expiresAt;
+    final isFreeTrial = subscription.plan == 'FREE' && !expired;
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(SizeConfig.scale(20)),
@@ -216,13 +263,16 @@ class _CurrentPlanBanner extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(
-                subscription.plan,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: SizeConfig.scaledFontSize(30),
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: -0.5,
+              Flexible(
+                child: Text(
+                  planLabel,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: SizeConfig.scaledFontSize(30),
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -0.5,
+                  ),
                 ),
               ),
               SizedBox(width: SizeConfig.scale(8)),
@@ -260,7 +310,9 @@ class _CurrentPlanBanner extends StatelessWidget {
                   Icon(
                     expired
                         ? Icons.error_outline_rounded
-                        : Icons.event_available_rounded,
+                        : isFreeTrial
+                            ? Icons.hourglass_bottom_rounded
+                            : Icons.event_available_rounded,
                     color: Colors.white,
                     size: SizeConfig.scale(13),
                   ),
@@ -268,7 +320,9 @@ class _CurrentPlanBanner extends StatelessWidget {
                   Text(
                     expired
                         ? 'Expired on ${_fmtDate(expiry)}'
-                        : 'Renews / expires ${_fmtDate(expiry)}',
+                        : isFreeTrial
+                            ? 'Free Trial · ${_daysLeft(expiry)}'
+                            : 'Renews / expires ${_fmtDate(expiry)}',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: SizeConfig.scaledFontSize(11),
@@ -290,6 +344,100 @@ class _CurrentPlanBanner extends StatelessWidget {
       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
     ];
     return '${d.day} ${months[d.month - 1]} ${d.year}';
+  }
+
+  /// Human countdown to [expiry] for the Free Trial chip.
+  String _daysLeft(DateTime expiry) {
+    final days = expiry.difference(DateTime.now()).inDays;
+    if (days <= 0) return 'ends today';
+    if (days == 1) return '1 day left';
+    return '$days days left';
+  }
+}
+
+/// Prominent lock shown when the plan has expired — adding staff returns 402
+/// and SMS is paused (existing data/team stay safe). CTA → upgrade flow.
+class _ExpiredLockBanner extends StatelessWidget {
+  final VoidCallback? onUpgrade;
+  const _ExpiredLockBanner({this.onUpgrade});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(SizeConfig.scale(16)),
+      decoration: BoxDecoration(
+        color: AppColors.red6,
+        borderRadius: BorderRadius.circular(SizeConfig.scale(16)),
+        border: Border.all(color: AppColors.red2.withValues(alpha: 0.5)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.lock_rounded,
+                  color: AppColors.red2, size: SizeConfig.scale(20)),
+              SizedBox(width: SizeConfig.scale(8)),
+              Expanded(
+                child: Text(
+                  'Plan expired',
+                  style: TextStyle(
+                    fontSize: SizeConfig.scaledFontSize(15),
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.red9,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: SizeConfig.scale(6)),
+          Text(
+            'Subscribe to add staff and send shop receipt SMS again. Your '
+            'existing data and team stay safe.',
+            style: TextStyle(
+              fontSize: SizeConfig.scaledFontSize(12),
+              color: AppColors.red9,
+              height: 1.4,
+            ),
+          ),
+          if (onUpgrade != null) ...[
+            SizedBox(height: SizeConfig.scale(12)),
+            SizedBox(
+              width: double.infinity,
+              child: Material(
+                color: AppColors.red2,
+                borderRadius: BorderRadius.circular(SizeConfig.scale(12)),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(SizeConfig.scale(12)),
+                  onTap: onUpgrade,
+                  child: Padding(
+                    padding:
+                        EdgeInsets.symmetric(vertical: SizeConfig.scale(12)),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.upgrade_rounded,
+                            color: Colors.white, size: SizeConfig.scale(18)),
+                        SizedBox(width: SizeConfig.scale(8)),
+                        Text(
+                          'Subscribe now',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: SizeConfig.scaledFontSize(14),
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
   }
 }
 

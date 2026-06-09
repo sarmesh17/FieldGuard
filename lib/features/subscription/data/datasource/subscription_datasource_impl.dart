@@ -7,6 +7,7 @@ import 'package:fieldguard/core/utils/network_exception_mapper.dart';
 import 'package:fieldguard/core/utils/results.dart';
 import 'package:fieldguard/features/subscription/data/datasource/subscription_datasource.dart';
 import 'package:fieldguard/features/subscription/data/dto/enterprise_inquiry.dart';
+import 'package:fieldguard/features/subscription/data/dto/invoice.dart';
 import 'package:fieldguard/features/subscription/data/dto/subscription_request_item.dart';
 import 'package:fieldguard/features/subscription/data/dto/subscription_response.dart';
 
@@ -26,7 +27,18 @@ class SubscriptionDataSourceImpl extends SubscriptionDataSource with ApiRunner {
       });
 
   @override
+  Future<Result<List<Invoice>>> getInvoices() => safeCall(() async {
+        final response = await _dio.get(
+          ApiConstant.subscriptionInvoicesEndpoint,
+        );
+        return InvoicesResponse.fromJson(
+          response.data as Map<String, dynamic>,
+        ).invoices;
+      });
+
+  @override
   Future<Result<SubscriptionRequestItem>> submitRequest({
+    required String plan, // STARTER / GROWTH
     required int months,
     required String paymentProofImageKey,
   }) async {
@@ -34,6 +46,7 @@ class SubscriptionDataSourceImpl extends SubscriptionDataSource with ApiRunner {
       final response = await _dio.post(
         ApiConstant.subscriptionRequestEndpoint,
         data: {
+          'plan': plan,
           'months': months,
           'paymentProofImageKey': paymentProofImageKey,
         },

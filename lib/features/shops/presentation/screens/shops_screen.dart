@@ -84,7 +84,10 @@ class _ShopsScreenState extends ConsumerState<ShopsScreen> {
   List<String> _getAvailableSourcesForRole(String role) {
     switch (role) {
       case 'admin':
-        return ['', 'admin', 'manager', 'employee'];
+        // No 'admin' chip for an admin — "Self" (no param) already returns the
+        // admin's own (admin-created) shops, so an "Admin" filter is a
+        // confusing duplicate.
+        return ['', 'manager', 'employee'];
       case 'manager':
         // For manager: Self (no param), Admin (shared), Employee (team)
         // Note: source=manager is INVALID for MANAGER role per API docs
