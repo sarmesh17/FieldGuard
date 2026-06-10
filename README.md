@@ -136,9 +136,3 @@ lib/
 1. Branch off `main` (e.g. `feature/your-feature`)
 2. Keep changes within the relevant feature module and follow the existing `data` / `domain` / `presentation` split
 3. Run `flutter analyze` and `flutter test` before opening a PR
-
----
-
-## 📄 License
-
-This project is currently private and not published to pub.dev (`publish_to: "none"`). Add a license here before making it public.
