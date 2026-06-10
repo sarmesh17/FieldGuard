@@ -10,6 +10,72 @@ class CreateTaskResponse {
   }
 }
 
+/// One checklist item. Tolerates both the legacy plain-string shape (create
+/// request / older responses) and the new object shape (detail / my-tasks),
+/// `{ id, text, done, doneAt, doneBy }`.
+class TaskItem {
+  final int? id;
+  final String text;
+  final bool done;
+  final String? doneAt;
+  final int? doneBy;
+
+  const TaskItem({
+    this.id,
+    required this.text,
+    this.done = false,
+    this.doneAt,
+    this.doneBy,
+  });
+
+  static TaskItem fromDynamic(dynamic raw) {
+    if (raw is Map) {
+      final m = raw.cast<String, dynamic>();
+      return TaskItem(
+        id: (m['id'] as num?)?.toInt(),
+        text: m['text']?.toString() ?? '',
+        done: m['done'] as bool? ?? false,
+        doneAt: m['doneAt']?.toString(),
+        doneBy: (m['doneBy'] as num?)?.toInt(),
+      );
+    }
+    return TaskItem(text: raw?.toString() ?? '');
+  }
+
+  TaskItem copyWith({bool? done, String? doneAt, int? doneBy}) => TaskItem(
+        id: id,
+        text: text,
+        done: done ?? this.done,
+        doneAt: doneAt ?? this.doneAt,
+        doneBy: doneBy ?? this.doneBy,
+      );
+}
+
+/// Checklist progress — `{ total, done }`.
+class ItemsProgress {
+  final int total;
+  final int done;
+
+  const ItemsProgress({this.total = 0, this.done = 0});
+
+  factory ItemsProgress.fromJson(
+    Map<String, dynamic>? json, {
+    List<dynamic>? rawItems,
+  }) {
+    if (json != null) {
+      return ItemsProgress(
+        total: (json['total'] as num?)?.toInt() ?? 0,
+        done: (json['done'] as num?)?.toInt() ?? 0,
+      );
+    }
+    // Fallback: derive from the items array (older payloads with no progress).
+    final items = rawItems ?? const [];
+    final done =
+        items.whereType<Map>().where((m) => m['done'] == true).length;
+    return ItemsProgress(total: items.length, done: done);
+  }
+}
+
 class TaskData {
   final int id;
   final int? companyId;
@@ -18,7 +84,8 @@ class TaskData {
   final int? managerId;
   final String title;
   final String description;
-  final List<String> items;
+  final List<TaskItem> items;
+  final ItemsProgress itemsProgress;
   final String status;
   final String priority;
   // Legacy fields: tasks created before the shopId-only migration may still
@@ -51,6 +118,7 @@ class TaskData {
     required this.title,
     required this.description,
     required this.items,
+    this.itemsProgress = const ItemsProgress(),
     required this.status,
     required this.priority,
     this.shopLatitude,
@@ -77,8 +145,15 @@ class TaskData {
       assignedBy: json['assigned_by'] as int?,
       managerId: json['manager_id'] as int?,
       title: json['title'] as String,
-      description: json['description'] as String,
-      items: (json['items'] as List<dynamic>).map((e) => e.toString()).toList(),
+      // Optional on the backend — null when no description was sent.
+      description: json['description'] as String? ?? '',
+      items: (json['items'] as List<dynamic>? ?? const [])
+          .map(TaskItem.fromDynamic)
+          .toList(),
+      itemsProgress: ItemsProgress.fromJson(
+        json['itemsProgress'] as Map<String, dynamic>?,
+        rawItems: json['items'] as List<dynamic>?,
+      ),
       status: json['status'] as String,
       priority: json['priority'] as String,
       shopLatitude: json['shop_latitude'] as String?,

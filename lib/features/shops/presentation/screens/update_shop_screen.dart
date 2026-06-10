@@ -4,8 +4,10 @@ import 'package:dio/dio.dart';
 import 'package:fieldguard/core/networks/dio_client.dart';
 import 'package:fieldguard/core/services/session.dart';
 import 'package:fieldguard/features/shops/data/datasource/shop_datasource_impl.dart';
+import 'package:fieldguard/features/shops/data/datasource/shop_detail_datasource_impl.dart';
 import 'package:fieldguard/features/shops/data/dto/shops_hierarchy_response.dart';
 import 'package:fieldguard/features/shops/data/dto/update_shop_request.dart';
+import 'package:fieldguard/features/shops/presentation/widgets/shop_visibility_field.dart';
 import 'package:fieldguard/features/shops/presentation/providers/update_shop_provider.dart';
 import 'package:fieldguard/features/shops/presentation/providers/update_shop_state.dart';
 import 'package:fieldguard/features/uploads/image_upload_service.dart';
@@ -62,10 +64,17 @@ class _UpdateShopScreenState extends ConsumerState<UpdateShopScreen> {
   bool _isAdmin = false;
   bool _isDeleting = false;
 
+  // Visibility ("Shared With"). Pre-filled from the shop detail; the picker
+  // reports the value to send (null = omit / no change, list = full replace).
+  List<int> _initialVisibleTo = const [];
+  bool _visibilityLoaded = false;
+  List<int>? _visibleTo;
+
   @override
   void initState() {
     super.initState();
     _loadRole();
+    _loadVisibility();
     _lat = double.tryParse(widget.shop.latitude) ?? 0.0;
     _lng = double.tryParse(widget.shop.longitude) ?? 0.0;
     _nameController = TextEditingController(text: widget.shop.name);
@@ -83,6 +92,22 @@ class _UpdateShopScreenState extends ConsumerState<UpdateShopScreen> {
   Future<void> _loadRole() async {
     final r = await Session.role();
     if (mounted) setState(() => _isAdmin = r?.toUpperCase() == 'ADMIN');
+  }
+
+  /// Fetch the shop detail to pre-fill the "Shared With" picker (the list model
+  /// passed in doesn't carry visibleTo).
+  Future<void> _loadVisibility() async {
+    try {
+      final ds = ShopDetailDataSourceImpl(DioClient.createDio());
+      final res = await ds.getShopDetail(widget.shop.id.toString());
+      if (!mounted) return;
+      setState(() {
+        _initialVisibleTo = res.shop.visibleToIds;
+        _visibilityLoaded = true;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _visibilityLoaded = true);
+    }
   }
 
   @override
@@ -248,6 +273,7 @@ class _UpdateShopScreenState extends ConsumerState<UpdateShopScreen> {
             contactPhone: _contactPhoneController.text.trim(),
             isActive: _isActive,
             imageKey: _imageKey,
+            visibleTo: _visibleTo,
           ),
         );
   }
@@ -473,6 +499,13 @@ class _UpdateShopScreenState extends ConsumerState<UpdateShopScreen> {
                         return null;
                       },
                     ),
+                    // "Shared With" visibility — only an admin/manager sees it;
+                    // pre-filled from the shop's current visibleTo.
+                    if (_visibilityLoaded)
+                      ShopVisibilityField(
+                        initialSelected: Set.of(_initialVisibleTo),
+                        onChanged: (v) => _visibleTo = v,
+                      ),
                     const SizedBox(height: 16),
                     _buildActiveToggle(),
                     const SizedBox(height: 28),

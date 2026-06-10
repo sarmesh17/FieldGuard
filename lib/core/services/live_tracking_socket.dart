@@ -27,6 +27,14 @@ class LiveTrackingSocket {
   final _status = StreamController<SocketStatus>.broadcast();
   final _taskLocation = StreamController<TaskLocationEvent>.broadcast();
   final _taskStatus = StreamController<TaskStatusChangedEvent>.broadcast();
+  final _taskItem = StreamController<TaskItemUpdatedEvent>.broadcast();
+  // Raw `/notifications` list-item payload; the notifications feature parses it
+  // (kept as a Map so this core service doesn't depend on a feature model).
+  final _notification = StreamController<Map<String, dynamic>>.broadcast();
+  // Live-list membership: a teammate started (carries employee info) / stopped.
+  final _trackingStarted =
+      StreamController<EmployeeTrackingStartedEvent>.broadcast();
+  final _trackingStopped = StreamController<String>.broadcast(); // employeeId
 
   SocketStatus _current = SocketStatus.idle;
   bool _reauthing = false;
@@ -42,6 +50,19 @@ class LiveTrackingSocket {
   Stream<TaskLocationEvent> get onTaskLocation => _taskLocation.stream;
   Stream<TaskStatusChangedEvent> get onTaskStatusChanged =>
       _taskStatus.stream;
+
+  /// A checklist item on a watched task was ticked/unticked.
+  Stream<TaskItemUpdatedEvent> get onTaskItemUpdated => _taskItem.stream;
+
+  /// A new in-app notification arrived in real time (raw list-item payload).
+  Stream<Map<String, dynamic>> get onNotification => _notification.stream;
+
+  /// A teammate started a live session (add to the live list).
+  Stream<EmployeeTrackingStartedEvent> get onTrackingStarted =>
+      _trackingStarted.stream;
+
+  /// A teammate ended their live session (employeeId — remove from the list).
+  Stream<String> get onTrackingStopped => _trackingStopped.stream;
   Stream<SocketStatus> get onStatus => _status.stream;
   SocketStatus get status => _current;
   bool get isConnected => _socket?.connected ?? false;
@@ -139,6 +160,35 @@ class LiveTrackingSocket {
     socket.on(SocketConstants.taskStatusChanged, (data) {
       final event = TaskStatusChangedEvent.tryParse(data);
       if (event != null && !_taskStatus.isClosed) _taskStatus.add(event);
+    });
+
+    socket.on(SocketConstants.taskItemUpdated, (data) {
+      final event = TaskItemUpdatedEvent.tryParse(data);
+      if (event != null && !_taskItem.isClosed) _taskItem.add(event);
+    });
+
+    socket.on(SocketConstants.notificationNew, (data) {
+      if (data is Map && !_notification.isClosed) {
+        _notification.add(Map<String, dynamic>.from(data));
+      }
+    });
+
+    socket.on(SocketConstants.employeeTrackingStarted, (data) {
+      final e = EmployeeTrackingStartedEvent.tryParse(data);
+      if (e != null && !_trackingStarted.isClosed) _trackingStarted.add(e);
+    });
+
+    socket.on(SocketConstants.employeeTrackingStopped, (data) {
+      final id = (data is Map)
+          ? (data['employeeId'] ??
+                  data['employee_id'] ??
+                  data['id'] ??
+                  data['userId'])
+              ?.toString()
+          : null;
+      if (id != null && id.isNotEmpty && !_trackingStopped.isClosed) {
+        _trackingStopped.add(id);
+      }
     });
 
     _socket = socket;

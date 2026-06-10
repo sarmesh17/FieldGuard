@@ -25,6 +25,10 @@ class ShopDetailData {
   final String updatedAt;
   final Creator creator;
 
+  /// Ids of users who can currently see this shop — used to pre-fill the
+  /// "Shared With" picker on the edit form.
+  final List<int> visibleToIds;
+
   const ShopDetailData({
     required this.id,
     required this.name,
@@ -39,6 +43,7 @@ class ShopDetailData {
     required this.createdAt,
     required this.updatedAt,
     required this.creator,
+    this.visibleToIds = const [],
   });
 
   factory ShopDetailData.fromJson(Map<String, dynamic> json) {
@@ -56,6 +61,11 @@ class ShopDetailData {
       createdAt: json['created_at'] as String,
       updatedAt: json['updated_at'] as String,
       creator: Creator.fromJson(json['creator'] as Map<String, dynamic>),
+      visibleToIds: (json['visibleTo'] as List<dynamic>? ?? const [])
+          .whereType<Map<String, dynamic>>()
+          .map((u) => (u['id'] as num?)?.toInt())
+          .whereType<int>()
+          .toList(),
     );
   }
 }

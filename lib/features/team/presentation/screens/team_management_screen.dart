@@ -1,8 +1,12 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:fieldguard/core/networks/dio_client.dart';
 import 'package:fieldguard/core/responsive/responsive.dart';
 import 'package:fieldguard/core/services/session.dart';
+import 'package:fieldguard/core/services/live_tracking_socket.dart';
 import 'package:fieldguard/core/utils/phone_format.dart';
+import 'package:fieldguard/features/live_tracking/data/models/live_location.dart';
 import 'package:fieldguard/features/team/data/datasource/team_datasource_impl.dart';
 import 'package:fieldguard/features/team/data/dto/employees_list_response.dart';
 import 'package:fieldguard/features/live_tracking/presentation/screens/live_map_screen.dart';
@@ -78,6 +82,16 @@ class _TeamManagementScreenState extends State<TeamManagementScreen>
   String _onlineQuery = '';
   String _liveFilter = 'all'; // 'all' | 'managers' | 'employees'
 
+  // Real-time live list over the shared socket (no pull-to-refresh needed).
+  final _socket = LiveTrackingSocket.instance;
+  StreamSubscription<EmployeeTrackingStartedEvent>? _startedSub;
+  StreamSubscription<String>? _stoppedSub;
+  StreamSubscription<EmployeeOnlineEvent>? _presSub;
+  StreamSubscription<SocketStatus>? _statusSub;
+  // Socket events broadcast company-wide; a manager must ignore anyone outside
+  // their team. Built from the loaded employee ids (admin = whole company).
+  Set<String> _teamIds = {};
+
   // "My Team" tab uses the same search + filter pattern as Live Team.
   final TextEditingController _myTeamSearchController = TextEditingController();
   String _myTeamQuery = '';
@@ -88,14 +102,67 @@ class _TeamManagementScreenState extends State<TeamManagementScreen>
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _loadData();
+    // Patch the live list in real time (scope-filtered to this user's team).
+    _startedSub = _socket.onTrackingStarted.listen(_onTrackingStarted);
+    _stoppedSub = _socket.onTrackingStopped.listen(_removeLive);
+    _presSub = _socket.onEmployeeOnline.listen(_onPresence);
+    _statusSub = _socket.onStatus.listen(_onSocketStatus);
+    _socket.connect();
   }
 
   @override
   void dispose() {
+    _startedSub?.cancel();
+    _stoppedSub?.cancel();
+    _presSub?.cancel();
+    _statusSub?.cancel();
     _myTeamSearchController.dispose();
     _onlineSearchController.dispose();
     _tabController.dispose();
     super.dispose();
+  }
+
+  // ── Real-time live-list patches ────────────────────────────────────────────
+
+  void _onTrackingStarted(EmployeeTrackingStartedEvent e) {
+    if (!mounted || !_teamIds.contains(e.employeeId)) return; // out of scope
+    final next = [..._onlineEmployees];
+    final idx = next.indexWhere((x) => x.employeeId == e.employeeId);
+    final item = LiveEmployeeItem(
+      employeeId: e.employeeId,
+      employee: LiveEmployeeInfo(
+        id: e.employeeId,
+        fullName: e.fullName,
+        employeeCode: e.employeeCode,
+      ),
+      online: true,
+    );
+    setState(() {
+      if (idx >= 0) {
+        next[idx] = item;
+      } else {
+        next.insert(0, item);
+      }
+      _onlineEmployees = next;
+    });
+  }
+
+  void _removeLive(String employeeId) {
+    if (!mounted) return;
+    final next =
+        _onlineEmployees.where((x) => x.employeeId != employeeId).toList();
+    if (next.length != _onlineEmployees.length) {
+      setState(() => _onlineEmployees = next);
+    }
+  }
+
+  void _onPresence(EmployeeOnlineEvent e) {
+    if (!e.online) _removeLive(e.employeeId);
+  }
+
+  void _onSocketStatus(SocketStatus s) {
+    // The socket doesn't replay; resync the snapshot after a (re)connect.
+    if (s == SocketStatus.connected) _loadOnlineEmployees();
   }
 
   Future<void> _loadData() async {
@@ -121,6 +188,9 @@ class _TeamManagementScreenState extends State<TeamManagementScreen>
         _isManagerUser = isManager;
         _employees = employeesResponse.employees;
         _managers = managersResponse?.managers ?? const [];
+        // Scope for the real-time live list (admin → whole company,
+        // manager → their team).
+        _teamIds = employeesResponse.employees.map((e) => e.id).toSet();
         _isLoading = false;
       });
       _loadOnlineEmployees();

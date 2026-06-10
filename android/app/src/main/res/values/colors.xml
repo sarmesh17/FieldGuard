@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Accent colour applied to the notification small icon + app name.
+         Matches the FieldGuard HQ bird (teal green). -->
+    <color name="fg_notification">#1B5E4F</color>
+	<color name="ic_launcher_background">#F8F6F1</color>
+</resources>

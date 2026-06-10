@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 
@@ -5,11 +6,10 @@ import 'package:fieldguard/core/constant/api_constant.dart';
 import 'package:fieldguard/core/networks/dio_client.dart';
 import 'package:fieldguard/core/router/app_router.dart';
 import 'package:fieldguard/core/services/notification_service.dart';
-import 'package:fieldguard/features/shops/presentation/screens/shop_detail_screen.dart';
+import 'package:fieldguard/features/notifications/presentation/notification_router.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
@@ -42,6 +42,12 @@ class PushNotificationService {
   /// The current FCM registration token (null until [init] resolves). Send this
   /// to the backend to target push at this device.
   String? get token => _token;
+
+  /// Fires whenever a push arrives while the app is in the FOREGROUND. The
+  /// notification center listens to this to re-sync its list + unread badge
+  /// live (without the user pulling to refresh).
+  final StreamController<void> _received = StreamController<void>.broadcast();
+  Stream<void> get onNotificationReceived => _received.stream;
 
   /// One-time setup. Call after `Firebase.initializeApp()` in `main`.
   Future<void> init() async {
@@ -120,6 +126,9 @@ class PushNotificationService {
   }
 
   void _showForeground(RemoteMessage message) {
+    // Tell the notification center to re-sync (live badge + list update),
+    // including for data-only messages that have nothing to display.
+    _received.add(null);
     final n = message.notification;
     if (n == null) return; // data-only message — nothing to display
     NotificationService.instance.showPush(
@@ -133,16 +142,14 @@ class PushNotificationService {
   void _onOpened(RemoteMessage message) {
     final data = message.data;
     if (kDebugMode) debugPrint('[fcm] opened from notification: $data');
-    // Deep-link: a cheque-received push opens that shop (collections live on
-    // the shop detail screen). All FCM data values are strings.
-    if (data['kind'] == 'CHEQUE_RECEIVED') {
-      final shopId = data['shopId']?.toString();
-      if (shopId != null && shopId.isNotEmpty) {
-        rootNavigatorKey.currentState?.push(
-          MaterialPageRoute(builder: (_) => ShopDetailScreen(shopId: shopId)),
-        );
-      }
-    }
+    final nav = rootNavigatorKey.currentState;
+    if (nav == null) return;
+    routeNotification(
+      nav,
+      kind: data['kind']?.toString(),
+      shopId: data['shopId']?.toString(),
+      taskId: data['taskId']?.toString(),
+    );
   }
 
   static const FlutterSecureStorage _storage = FlutterSecureStorage(
